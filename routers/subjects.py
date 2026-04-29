@@ -40,7 +40,6 @@ class SubjectCreate(BaseModel):
 async def list_subjects(
     branch: Optional[str] = None,
     semester: Optional[int] = None,
-    user=Depends(get_current_user),
 ):
     subjects = _get_all_subjects()
     if branch:
