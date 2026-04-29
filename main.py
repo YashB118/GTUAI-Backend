@@ -34,11 +34,14 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _localhost_origins = [f"http://localhost:{p}" for p in range(3000, 3010)]
+_production_origins = [
+    "https://gtuai-frontend-qipq.vercel.app",
+]
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(set(settings.allowed_origins + _localhost_origins)),
+    allow_origins=list(set(settings.allowed_origins + _localhost_origins + _production_origins)),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
