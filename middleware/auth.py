@@ -10,12 +10,37 @@ async def get_current_user(token=Depends(security)):
     try:
         payload = jwt.decode(
             token.credentials,
-            options={"verify_signature": False},
+            settings.jwt_secret,
             algorithms=["HS256"],
+            options={"verify_exp": True},
+            audience="authenticated",
         )
-        return payload
-    except Exception:
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    # Block suspended users at auth layer
+    user_id = payload.get("sub")
+    if user_id:
+        try:
+            from database import get_supabase
+            res = (
+                get_supabase()
+                .table("users")
+                .select("suspended")
+                .eq("id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            if res.data and res.data.get("suspended"):
+                raise HTTPException(status_code=403, detail="Account suspended")
+        except HTTPException:
+            raise
+        except Exception:
+            pass  # DB check failure must not block auth
+
+    return payload
 
 
 def _is_admin(user: dict) -> bool:

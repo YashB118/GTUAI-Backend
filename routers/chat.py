@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from database import get_supabase
 from middleware.auth import get_current_user
 from middleware.limiter import limiter
@@ -19,7 +19,7 @@ class NewSessionRequest(BaseModel):
 class MessageRequest(BaseModel):
     session_id: str
     subject_id: str
-    message: str
+    message: str = Field(..., min_length=1, max_length=2000)
 
 
 @router.post("/sessions")

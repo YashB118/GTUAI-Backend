@@ -5,8 +5,6 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-CURRENT_YEAR = datetime.now().year
-
 
 def calculate_score(
     years: List[int],
@@ -29,7 +27,7 @@ def calculate_score(
     frequency_score = min(len(years) / 8.0, 1.0) * w_freq
 
     # Factor 2: Recency/Gap (3+ year gap = peak likelihood of return)
-    years_since_last = CURRENT_YEAR - max(years)
+    years_since_last = datetime.now().year - max(years)
     if years_since_last == 0:
         rec_factor = 0.66
     elif years_since_last == 1:

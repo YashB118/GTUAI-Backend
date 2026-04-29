@@ -359,37 +359,22 @@ async def delete_paper(paper_id: str, admin=Depends(require_admin)):
 
 @router.get("/subjects/stats")
 async def subject_stats(admin=Depends(require_admin)):
-    """Per-subject counts: papers, materials (approved), questions extracted."""
+    """Per-subject counts via per-subject count queries — no full table scans."""
     supabase = get_supabase()
     subjects = supabase.table("subjects").select("id, name, code, branch, semester").order("name").execute().data or []
 
-    papers = supabase.table("question_papers").select("subject_id").execute().data or []
-    materials = (
-        supabase.table("study_materials")
-        .select("subject_id, approval_status")
-        .execute()
-        .data
-        or []
-    )
-    questions = supabase.table("questions").select("subject_id").execute().data or []
-
-    paper_count: dict = {}
-    for p in papers:
-        paper_count[p["subject_id"]] = paper_count.get(p["subject_id"], 0) + 1
-    mat_count: dict = {}
-    for m in materials:
-        if m.get("approval_status") == "approved":
-            mat_count[m["subject_id"]] = mat_count.get(m["subject_id"], 0) + 1
-    q_count: dict = {}
-    for q in questions:
-        q_count[q["subject_id"]] = q_count.get(q["subject_id"], 0) + 1
+    def _count_by_subject(table: str, subject_id: str, **filters) -> int:
+        q = supabase.table(table).select("id", count="exact", head=True).eq("subject_id", subject_id)
+        for k, v in filters.items():
+            q = q.eq(k, v)
+        return q.execute().count or 0
 
     return [
         {
             **s,
-            "paper_count": paper_count.get(s["id"], 0),
-            "material_count": mat_count.get(s["id"], 0),
-            "question_count": q_count.get(s["id"], 0),
+            "paper_count": _count_by_subject("question_papers", s["id"]),
+            "material_count": _count_by_subject("study_materials", s["id"], approval_status="approved"),
+            "question_count": _count_by_subject("questions", s["id"]),
         }
         for s in subjects
     ]
@@ -685,22 +670,21 @@ async def top_subjects(
 ):
     supabase = get_supabase()
     subjects = supabase.table("subjects").select("id, name, code").execute().data or []
-    papers = supabase.table("question_papers").select("subject_id").execute().data or []
 
-    counts: dict = {}
-    for p in papers:
-        counts[p["subject_id"]] = counts.get(p["subject_id"], 0) + 1
+    def _paper_count(subject_id: str) -> int:
+        return (
+            supabase.table("question_papers")
+            .select("id", count="exact", head=True)
+            .eq("subject_id", subject_id)
+            .execute()
+            .count or 0
+        )
 
-    enriched = [
-        {
-            "id": s["id"],
-            "name": s["name"],
-            "code": s.get("code"),
-            "paper_count": counts.get(s["id"], 0),
-        }
-        for s in subjects
-    ]
-    enriched.sort(key=lambda x: x["paper_count"], reverse=True)
+    enriched = sorted(
+        [{"id": s["id"], "name": s["name"], "code": s.get("code"), "paper_count": _paper_count(s["id"])} for s in subjects],
+        key=lambda x: x["paper_count"],
+        reverse=True,
+    )
     return enriched[:limit]
 
 

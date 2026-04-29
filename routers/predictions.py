@@ -120,12 +120,17 @@ async def get_predictions(
     )
     patterns = patterns_res.data or []
 
-    # ── Web paper fetching (background, non-blocking) ──────────────────────
+    # ── Web paper fetching — run in thread so sync requests doesn't block loop ──
+    import asyncio
+    from functools import partial
     web_questions = []
     sources_used = ["db_patterns"]
     try:
         from services.web_fetcher import fetch_web_questions
-        web_questions = fetch_web_questions(subject_name, subject_code, max_pdfs=3)
+        loop = asyncio.get_event_loop()
+        web_questions = await loop.run_in_executor(
+            None, partial(fetch_web_questions, subject_name, subject_code, max_pdfs=3)
+        )
         if web_questions:
             sources_used.append("web")
     except Exception as e:

@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_anon_key: str
     supabase_service_key: str
-    jwt_secret: str = "supabase-jwt-secret"
+    jwt_secret: str  # Required — get from Supabase: Settings → API → JWT Secret
     backend_url: str = "http://localhost:8000"
     allowed_origins: list[str] = ["http://localhost:3000"]
     admin_emails: list[str] = [

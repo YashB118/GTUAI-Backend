@@ -32,12 +32,16 @@ async def upload_material(
     safe_name = f"{uuid.uuid4()}.pdf"
     path = f"{subject_id}/{material_type}/{safe_name}"
 
-    upload_res = supabase.storage.from_("study-materials").upload(
-        path, content, {"content-type": "application/pdf"}
-    )
-
-    if hasattr(upload_res, "error") and upload_res.error:
-        raise HTTPException(status_code=500, detail="Storage upload failed")
+    try:
+        upload_res = supabase.storage.from_("study-materials").upload(
+            path, content, {"content-type": "application/pdf"}
+        )
+        if hasattr(upload_res, "status_code") and upload_res.status_code >= 400:
+            raise HTTPException(status_code=500, detail="Storage upload failed")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Storage upload failed: {e}")
 
     record = (
         supabase.table("study_materials")
