@@ -1,3 +1,4 @@
+import base64
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer
 from config import settings
@@ -5,12 +6,19 @@ import jwt
 
 security = HTTPBearer()
 
+def _jwt_secret() -> bytes:
+    secret = settings.jwt_secret
+    try:
+        return base64.b64decode(secret + "==")
+    except Exception:
+        return secret.encode()
+
 
 async def get_current_user(token=Depends(security)):
     try:
         payload = jwt.decode(
             token.credentials,
-            settings.jwt_secret,
+            _jwt_secret(),
             algorithms=["HS256"],
             options={"verify_exp": True},
             audience="authenticated",
