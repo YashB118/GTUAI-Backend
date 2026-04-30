@@ -1,25 +1,33 @@
-import base64
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer
 from config import settings
 import jwt
+from jwt import PyJWKClient
 
 security = HTTPBearer()
 
-def _jwt_secret() -> bytes:
-    secret = settings.jwt_secret
-    try:
-        return base64.b64decode(secret + "==")
-    except Exception:
-        return secret.encode()
+# Cached JWKS client — fetches Supabase public keys once, then caches
+_jwks_client: PyJWKClient | None = None
+
+
+def _get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = PyJWKClient(
+            f"{settings.supabase_url}/auth/v1/.well-known/jwks.json",
+            cache_keys=True,
+        )
+    return _jwks_client
 
 
 async def get_current_user(token=Depends(security)):
     try:
+        client = _get_jwks_client()
+        signing_key = client.get_signing_key_from_jwt(token.credentials)
         payload = jwt.decode(
             token.credentials,
-            _jwt_secret(),
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["ES256", "RS256", "HS256"],
             options={"verify_exp": True},
             audience="authenticated",
         )
