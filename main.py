@@ -67,6 +67,17 @@ app.include_router(admin.router)
 app.include_router(chat.router)
 
 
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, lambda: __import__("services.pdf_processor", fromlist=["get_embedder"]).get_embedder())
+        logger.info("Embedding model preloaded")
+    except Exception as e:
+        logger.warning(f"Could not preload embedding model: {e}")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "gtu-examai-api", "version": "5.0.0"}
