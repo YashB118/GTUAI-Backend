@@ -205,6 +205,7 @@ def style_block(marks: int) -> str:
 # Keyword buckets for question-type detection. Order matters: numerical and
 # derivation are checked before generic "explain" because they are more specific.
 _TYPE_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
+    ("code",      ("write a program", "write program", "write code", "program for", "algorithm with code", "pseudocode", "implementation", "code example")),
     ("numerical", ("calculate", "compute", "find the value", "evaluate", "determine the")),
     ("derivation", ("derive", "prove", "show that", "obtain the expression")),
     ("comparison", ("compare", "differentiate", "difference between", " vs ", "versus", "distinguish")),
@@ -216,6 +217,7 @@ _TYPE_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
 ]
 
 _TYPE_HINTS: dict[str, str] = {
+    "code":       "QUESTION TYPE: Code/programming. Give a short concept intro, then include a minimal correct code snippet in a fenced markdown block with language tag, then explain logic step-wise and include sample input/output or dry run.",
     "numerical":  "QUESTION TYPE: Numerical. Layout strictly as -> Given:, To find:, Formula: (with units), Solution: (step-by-step), Answer: (boxed value with unit). Do NOT skip steps.",
     "derivation": "QUESTION TYPE: Derivation. State assumptions first, then derive line-by-line with each algebraic step on its own line. Number every step. End with the boxed final expression and a one-line physical interpretation.",
     "comparison": "QUESTION TYPE: Comparison. Produce a markdown table with columns | Parameter | <Item A> | <Item B> | and at least 4-6 rows. Follow the table with a 1-2 line conclusion.",

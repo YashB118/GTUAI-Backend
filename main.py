@@ -3,12 +3,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, EmailStr
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from config import settings
 from middleware.limiter import limiter
 from routers import auth, papers, materials
-from routers import subjects, predictions, questions, answers, admin, chat
+from routers import subjects, predictions, questions, answers, admin, chat, testimonials, oracle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,6 +66,8 @@ app.include_router(questions.router)
 app.include_router(answers.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
+app.include_router(testimonials.router)
+app.include_router(oracle.router)
 
 
 @app.on_event("startup")
@@ -76,6 +79,25 @@ async def startup_event():
         logger.info("Embedding model preloaded")
     except Exception as e:
         logger.warning(f"Could not preload embedding model: {e}")
+
+
+class ContactRequest(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str
+    message: str
+
+
+@app.post("/contact")
+async def contact_us(data: ContactRequest):
+    from services.email_service import _send
+    body = f"Name: {data.name}\nEmail: {data.email}\nSubject: {data.subject}\n\n{data.message}"
+    _send(
+        subject=f"[GTU ExamAI Contact] {data.subject}",
+        to="yashbonde21@gmail.com",
+        text=body,
+    )
+    return {"success": True}
 
 
 @app.get("/health")

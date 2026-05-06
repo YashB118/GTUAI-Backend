@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ def _resolve_source_titles(supabase, material_ids: list[str]) -> list[str]:
 
 def _build_prompt(question: str, context: str, marks: int) -> str:
     from services.gtu_style_guide import style_block, question_type_hint
+    from services.question_intent import detect_question_intent
 
     word_limit = marks * 40
     context_block = (
@@ -94,6 +96,14 @@ def _build_prompt(question: str, context: str, marks: int) -> str:
     # Tier marker kept in legacy "{marks}-mark" form so downstream tooling /
     # tests that grep for "3-mark", "7+ mark" etc. continue to work.
     tier_label = f"{marks}-mark" + (" (treat as 7+ mark tier)" if marks >= 7 else "")
+    intent = detect_question_intent(question)
+    code_policy = (
+        "CODE EXAMPLE POLICY:\n"
+        "- This is a technical/code-oriented question. You MUST include a correct and concise code example.\n"
+        "- Use a fenced markdown code block with language tag (prefer c, cpp, java, or python based on question wording).\n"
+        "- Keep code exam-suitable (short, readable, no unnecessary boilerplate).\n"
+        "- After code, include a short dry-run/sample input-output.\n\n"
+    ) if intent.requires_code_example else ""
 
     return f"""You are a GTU (Gujarat Technological University) exam expert who writes
 answers exactly as a topper-grade BE/Diploma student would on a 70-mark theory paper.
@@ -102,6 +112,8 @@ You are answering a {tier_label} question.
 {style}
 
 {type_hint}
+
+{code_policy}
 
 {context_block}Question: {question}
 
@@ -112,8 +124,59 @@ FINAL INSTRUCTIONS:
 - No preamble like "Here is the answer" — start directly with the definition / first point.
 - If the topic is visual, you MUST include a `Diagram: [labelled diagram of ...]` placeholder.
 - End with a one-line `Conclusion:` (or `Answer:` for numericals).
+- Output in this exact order with markdown headings:
+  1) `### Expected Question Format`
+  2) `### How to Write`
+  3) `### Ready-to-Write Answer`
 
 Write the GTU topper-style answer now:"""
+
+
+def _extract_section(text: str, heading: str) -> str:
+    pattern = (
+        rf"(?is)###\s*{re.escape(heading)}\s*(.*?)"
+        rf"(?=(?:\n###\s*[^\n]+)|\Z)"
+    )
+    m = re.search(pattern, text)
+    return (m.group(1).strip() if m else "")
+
+
+def _extract_code_example(text: str) -> str:
+    m = re.search(r"(?is)```[a-zA-Z0-9_+-]*\n(.*?)```", text)
+    if not m:
+        return ""
+    return m.group(1).strip()
+
+
+def _build_fallback_answer(question_text: str, marks: int) -> str:
+    return (
+        "### Expected Question Format\n"
+        f"Q. {question_text}\n\n"
+        "### How to Write\n"
+        f"- Start with a concise definition (for {marks} marks).\n"
+        "- Write key points in numbered format.\n"
+        "- Add one practical example and close with a conclusion.\n\n"
+        "### Ready-to-Write Answer\n"
+        "Definition: [Write the core concept in one line].\n"
+        "1. Key point one.\n"
+        "2. Key point two.\n"
+        "3. Key point three.\n"
+        "Example: [Use a GTU-relevant technical example].\n"
+        "Conclusion: [One-line takeaway]."
+    )
+
+
+def _structured_payload(answer_text: str) -> dict:
+    expected_question_format = _extract_section(answer_text, "Expected Question Format")
+    how_to_write = _extract_section(answer_text, "How to Write")
+    ready_to_write_answer = _extract_section(answer_text, "Ready-to-Write Answer")
+    code_example = _extract_code_example(answer_text)
+    return {
+        "expected_question_format": expected_question_format or None,
+        "how_to_write": how_to_write or None,
+        "ready_to_write_answer": ready_to_write_answer or None,
+        "code_example": code_example or None,
+    }
 
 
 def generate_answer(
@@ -146,12 +209,17 @@ def generate_answer(
                 "answer": row["content"],
                 "sources": row.get("source_titles") or [],
                 "cached": True,
+                **_structured_payload(row["content"]),
             }
 
     context, source_ids = retrieve_context(question_text, subject_id)
     source_titles = _resolve_source_titles(supabase, source_ids)
     prompt = _build_prompt(question_text, context, marks)
-    answer_text = generate_text(prompt, temperature=0.4, max_tokens=2048)
+    try:
+        answer_text = generate_text(prompt, temperature=0.35, max_tokens=2048)
+    except Exception as e:
+        logger.warning(f"LLM generation failed, returning structured fallback: {e}")
+        answer_text = _build_fallback_answer(question_text, marks)
 
     if pattern_id:
         model_used = "groq-llama" if is_groq_available() else "gemini"
@@ -174,4 +242,5 @@ def generate_answer(
         "answer": answer_text,
         "sources": source_titles,
         "cached": False,
+        **_structured_payload(answer_text),
     }

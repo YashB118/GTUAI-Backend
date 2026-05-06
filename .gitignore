@@ -66,3 +66,9 @@ dmypy.json
 # Celery
 celerybeat-schedule
 celerybeat.pid
+
+# Duplicate legacy folder (venv inside, 11GB)
+backend/
+
+# Cursor AI context file
+CURSOR_CONTEXT.md

@@ -28,12 +28,17 @@ def generate_text(prompt: str, temperature: float = 0.4, max_tokens: int = 2048)
     Raises RuntimeError if neither is configured.
     """
     if is_groq_available():
-        return _groq_generate(prompt, temperature, max_tokens)
-    elif settings.gemini_api_key:
+        try:
+            return _groq_generate(prompt, temperature, max_tokens)
+        except Exception as e:
+            if settings.gemini_api_key:
+                logger.warning(f"Groq generation failed, falling back to Gemini: {e}")
+                return _gemini_generate(prompt)
+            raise
+    if settings.gemini_api_key:
         logger.warning("Groq not configured — falling back to Gemini for text generation")
         return _gemini_generate(prompt)
-    else:
-        raise RuntimeError("No LLM configured. Set GROQ_API_KEY in .env")
+    raise RuntimeError("No LLM configured. Set GROQ_API_KEY in .env")
 
 
 def generate_json(prompt: str) -> list | dict:

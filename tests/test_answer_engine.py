@@ -53,3 +53,13 @@ class TestBuildPrompt:
     def test_bold_instruction_present(self):
         prompt = _build_prompt("What is IP?", "", 2)
         assert "**term**" in prompt
+
+    def test_prompt_contains_structured_headings_instruction(self):
+        prompt = _build_prompt("Explain OSI model.", "", 7)
+        assert "### Expected Question Format" in prompt
+        assert "### How to Write" in prompt
+        assert "### Ready-to-Write Answer" in prompt
+
+    def test_prompt_enforces_code_policy_for_programming_questions(self):
+        prompt = _build_prompt("Write a program for deadlock avoidance.", "", 7)
+        assert "CODE EXAMPLE POLICY" in prompt

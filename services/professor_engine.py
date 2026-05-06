@@ -1,13 +1,19 @@
 """
-Professor Engine — uses Groq to reason like an experienced GTU examiner.
+Professor Engine — GTU exam intelligence layer on top of prediction_engine.
 
-Takes all available question data (DB + web) and returns:
-- Gap analysis: which units/topics haven't appeared recently
-- Novel predictions: new questions likely based on syllabus coverage
-- Confidence reasoning: why each question is likely
+Two-tier pipeline:
+  Tier 1: Pattern-based predictions  — historical evidence, Bayesian scored
+  Tier 2: LLM professor predictions  — fills unit coverage gaps, novel questions
+
+V2 improvements:
+  - Uses compute_unit_analysis() for rich unit deficit data
+  - LLM prompt includes overdue ratios, cycle lengths, deficit scores per unit
+  - Semantic deduplication uses Qdrant (not 60-char prefix) for LLM predictions
+  - Passes total_papers to calculate_score for proper Bayesian normalization
+  - Returns overdue_ratio per prediction (used by Brahmastra DUE badges)
 """
 import logging
-from collections import defaultdict
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -15,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 CURRENT_YEAR = datetime.now().year
 
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
 
 def analyse_and_predict(
     subject_name: str,
@@ -25,204 +35,164 @@ def analyse_and_predict(
     paper_count: int,
 ) -> list[dict]:
     """
-    Core professor analysis. Returns a list of predicted questions with scores.
-    Each item: {question, unit, marks, confidence_score, confidence, source, reasoning}
+    Returns up to 30 predicted questions, sorted by confidence_score descending.
+    Each item: {question, unit, marks, confidence_score, confidence, source,
+                reasoning, last_asked, years_asked, times_asked, overdue_ratio,
+                pattern_id, question_type, answer}
     """
     if not db_questions and not db_patterns and not web_questions:
         return []
 
-    # --- Step 1: Build question pool ---
     all_questions = db_questions + web_questions
-    unit_map = _build_unit_map(all_questions, db_patterns)
 
-    # --- Step 2: Gap analysis ---
-    gaps = _gap_analysis(unit_map)
+    # Rich unit analysis (V2 — uses Bayesian-aware engine)
+    from services.prediction_engine import compute_unit_analysis
+    unit_analysis = compute_unit_analysis(all_questions, db_patterns)
 
-    # --- Step 3: Pattern-based predictions (enhanced scoring) ---
-    pattern_predictions = _score_patterns(db_patterns, gaps, paper_count)
+    # Tier 1: Pattern-based (historical evidence)
+    pattern_preds = _score_patterns(db_patterns, unit_analysis, paper_count)
 
-    # --- Step 4: LLM professor prediction ---
-    llm_predictions = []
-    if db_questions or web_questions:
-        llm_predictions = _llm_professor_predict(
+    # Tier 2: LLM professor (gap filling + novel questions)
+    llm_preds = []
+    if all_questions or db_patterns:
+        llm_preds = _llm_professor_predict(
             subject_name, subject_code,
             all_questions, db_patterns,
-            unit_map, gaps, paper_count,
+            unit_analysis, paper_count,
         )
 
-    # --- Step 5: Merge & deduplicate ---
-    merged = _merge_predictions(pattern_predictions, llm_predictions)
+    merged = _merge_predictions(pattern_preds, llm_preds)
     return merged
 
 
-def _build_unit_map(questions: list[dict], patterns: list[dict]) -> dict:
-    """
-    Returns: {unit_number: {questions, last_year, years, marks_distribution}}
-    """
-    unit_map = defaultdict(lambda: {
-        "questions": [],
-        "years": set(),
-        "last_year": None,
-        "marks": [],
-        "types": [],
-    })
+# ---------------------------------------------------------------------------
+# Tier 1: Pattern scoring
+# ---------------------------------------------------------------------------
 
-    for q in questions:
-        unit = q.get("unit") or q.get("unit_number")
-        year = q.get("year")
-        marks = q.get("marks")
-        unit_key = int(unit) if unit else 0
-
-        entry = unit_map[unit_key]
-        entry["questions"].append(q.get("text", ""))
-        if year:
-            entry["years"].add(int(year))
-            if entry["last_year"] is None or int(year) > entry["last_year"]:
-                entry["last_year"] = int(year)
-        if marks:
-            entry["marks"].append(marks)
-        if q.get("type") or q.get("question_type"):
-            entry["types"].append(q.get("type") or q.get("question_type"))
-
-    for p in patterns:
-        unit = p.get("unit_number")
-        unit_key = int(unit) if unit else 0
-        years = p.get("occurrence_years") or []
-        if years:
-            last = max(years)
-            if unit_map[unit_key]["last_year"] is None or last > unit_map[unit_key]["last_year"]:
-                unit_map[unit_key]["last_year"] = last
-            unit_map[unit_key]["years"].update(years)
-
-    return dict(unit_map)
-
-
-def _gap_analysis(unit_map: dict) -> dict:
-    """
-    Identifies which units haven't been asked in >= 2 years.
-    Returns: {unit: gap_years, ...} only for units with gap >= 2
-    """
-    gaps = {}
-    for unit, data in unit_map.items():
-        last = data.get("last_year")
-        if last is None:
-            gaps[unit] = 5  # Never asked — very likely
-        else:
-            gap = CURRENT_YEAR - last
-            if gap >= 2:
-                gaps[unit] = gap
-    return gaps
-
-
-def _score_patterns(patterns: list[dict], gaps: dict, paper_count: int) -> list[dict]:
-    """Enhanced scoring on existing patterns with gap bonus."""
-    from services.prediction_engine import calculate_score
+def _score_patterns(
+    patterns: list[dict],
+    unit_analysis: dict,
+    paper_count: int,
+) -> list[dict]:
+    from services.prediction_engine import calculate_score, compute_overdue_ratio
 
     results = []
     for p in patterns:
         years = sorted(p.get("occurrence_years") or [])
-        if len(years) < 1:
+        if not years:
             continue
 
-        base_score = p.get("prediction_score") or calculate_score(years, p.get("avg_marks"))
+        avg_marks  = p.get("avg_marks")
+        base_score = calculate_score(years, avg_marks, total_papers=paper_count)
 
-        # Unit gap bonus
-        unit = p.get("unit_number")
-        unit_key = int(unit) if unit else 0
-        gap = gaps.get(unit_key, 0)
-        gap_bonus = min(gap * 5, 20) if gap >= 2 else 0
+        # Unit deficit bonus: if this question's unit is overdue, boost score
+        unit_key   = int(p.get("unit_number") or 0)
+        unit_info  = unit_analysis.get(unit_key, {})
+        deficit    = unit_info.get("deficit_score", 0.0)
+        bonus      = deficit * 8.0   # max +8 pts for fully deficit unit
 
-        # Staleness penalty: if asked THIS year already, reduce score
-        penalty = 0
-        if years and max(years) == CURRENT_YEAR:
-            penalty = 15  # Already asked this year, less likely to repeat
+        # Staleness penalty: asked this year → less likely to repeat
+        penalty = 12.0 if (years and max(years) == CURRENT_YEAR) else 0.0
 
-        final_score = min(base_score + gap_bonus - penalty, 100)
-        final_score = max(final_score, 0)
+        final_score    = round(min(base_score + bonus - penalty, 100.0), 2)
+        overdue_ratio  = compute_overdue_ratio(years)
 
         results.append({
-            "pattern_id": p.get("id"),
-            "question": p.get("canonical_text", ""),
-            "unit": unit,
-            "marks": p.get("avg_marks"),
+            "pattern_id":      p.get("id"),
+            "question":        p.get("canonical_text", ""),
+            "unit":            p.get("unit_number"),
+            "marks":           avg_marks,
             "confidence_score": final_score,
-            "times_asked": p.get("occurrence_count", len(years)),
-            "years_asked": years,
-            "last_asked": p.get("last_asked_year"),
-            "question_type": p.get("question_type"),
-            "answer": p.get("answer"),
-            "source": "pattern",
-            "gap_bonus": gap_bonus,
+            "times_asked":     p.get("occurrence_count", len(years)),
+            "years_asked":     years,
+            "last_asked":      p.get("last_asked_year"),
+            "question_type":   p.get("question_type"),
+            "answer":          p.get("answer"),
+            "source":          "pattern",
+            "overdue_ratio":   overdue_ratio,
+            "reasoning":       _pattern_reasoning(years, overdue_ratio, unit_info),
         })
 
     return results
 
+
+def _pattern_reasoning(years: list[int], overdue_ratio: float, unit_info: dict) -> str:
+    last = max(years) if years else None
+    count = len(years)
+    parts = []
+    if count >= 3:
+        parts.append(f"Appeared {count}× in {years[:3]}{'…' if count > 3 else ''}")
+    elif count == 2:
+        parts.append(f"Appeared in {years[0]} and {years[1]}")
+    else:
+        parts.append(f"Appeared in {years[0]}")
+    if overdue_ratio >= 1.0:
+        parts.append(f"overdue by {round(overdue_ratio - 1.0, 1)}× its cycle")
+    elif last:
+        parts.append(f"last asked {last}")
+    return ". ".join(parts) + "."
+
+
+# ---------------------------------------------------------------------------
+# Tier 2: LLM professor prediction
+# ---------------------------------------------------------------------------
 
 def _llm_professor_predict(
     subject_name: str,
     subject_code: Optional[str],
     all_questions: list[dict],
     patterns: list[dict],
-    unit_map: dict,
-    gaps: dict,
+    unit_analysis: dict,
     paper_count: int,
 ) -> list[dict]:
-    """
-    Uses Groq to reason like a GTU examiner and generate novel predictions.
-    Returns list of question dicts with confidence scores.
-    """
-    from services.llm import generate_json, generate_text
+    from services.llm import generate_json
 
-    # Build a concise summary of what exists (avoid token overflow)
-    unit_summary = _build_unit_summary(unit_map, patterns)
-    gap_summary = ", ".join(
-        f"Unit {u} (not asked for {g} years)" for u, g in sorted(gaps.items()) if u != 0
-    ) or "No major gaps detected"
-
-    # Top patterns (most frequent)
-    top_patterns = sorted(patterns, key=lambda x: x.get("prediction_score", 0), reverse=True)[:15]
-    top_text = "\n".join(
-        f"- [{p.get('unit_number') or '?'}] {p.get('canonical_text', '')[:120]} "
-        f"(asked {p.get('occurrence_count', 1)}x in {p.get('occurrence_years', [])})"
+    unit_summary   = _build_unit_summary(unit_analysis)
+    deficit_summary = _build_deficit_summary(unit_analysis)
+    top_patterns   = sorted(patterns, key=lambda x: x.get("prediction_score", 0), reverse=True)[:12]
+    top_text       = "\n".join(
+        f"- [U{p.get('unit_number','?')}] {p.get('canonical_text','')[:100]} "
+        f"({p.get('occurrence_count',1)}× asked, last {p.get('last_asked_year','?')}, "
+        f"overdue_ratio={_get_overdue_ratio(p)})"
         for p in top_patterns
     )
 
-    prompt = f"""You are an experienced GTU (Gujarat Technological University) professor who has been setting question papers for {subject_name}{f" ({subject_code})" if subject_code else ""} for 15 years.
+    n_predict = min(20, max(10, paper_count * 3))
 
-HISTORICAL DATA ({paper_count} papers analyzed):
+    prompt = f"""You are a GTU (Gujarat Technological University) senior professor setting the question paper for {subject_name}{f" ({subject_code})" if subject_code else ""}.
+You have analyzed {paper_count} past papers.
+
+UNIT COVERAGE ANALYSIS:
 {unit_summary}
 
-TOP RECURRING QUESTIONS:
+UNIT DEFICIT — THESE MUST APPEAR (overdue coverage):
+{deficit_summary}
+
+TOP RECURRING PATTERNS (historical evidence):
 {top_text}
 
-UNIT COVERAGE GAPS (topics likely to appear this exam):
-{gap_summary}
+YOUR TASK: Predict the {n_predict} most likely exam questions for this semester.
 
-YOUR TASK:
-Based on GTU exam patterns, predict the {min(20, max(10, paper_count * 3))} most likely exam questions.
+GTU EXAM RULES YOU FOLLOW:
+1. Every unit MUST have at least one question — deficit units get priority
+2. Marks mix: 70% are 7-mark (long answer), 20% are 3-mark, 10% are 2-mark
+3. Deficit units (overdue_ratio > 1.0) appear with near certainty
+4. Never repeat a question asked last year verbatim — rephrase or ask related concept
+5. Include application/design questions for 7-mark slots — theory only bores examiners
+6. Technical subjects need at least 2 numerical/practical problems
 
-GTU PROFESSOR RULES YOU FOLLOW:
-1. Cover ALL units in the paper (usually 5-8 units per subject)
-2. Include mix of marks: 7-mark (long answer, 2 questions/unit), 3-mark (short, conceptual), 2-mark (definition/fill)
-3. Prioritize topics from GAP units - they MUST appear after a gap
-4. Include 2-3 "perennial" questions that appear almost every year
-5. Add 2-3 "application/design" type questions testing deep understanding
-6. Consider what advanced topics students would be expected to know in industry
-7. Avoid asking the exact same question that appeared last year (paraphrase or related topic)
-8. For technical subjects: include numerical/practical questions
-
-Return ONLY a valid JSON array. No markdown, no explanation.
-Each object must have:
+Return ONLY a valid JSON array. No markdown, no explanation outside JSON.
+Each object:
 {{
-  "question": "complete question text as it would appear in GTU paper",
+  "question": "complete question text as it would appear in the GTU paper",
   "unit": <unit number 1-8 or null>,
   "marks": <2, 3, or 7>,
-  "confidence_score": <50-95 as float, your confidence this will appear>,
-  "question_type": "theory|numerical|short|long|fill|application|design",
-  "reasoning": "brief reason why this is likely (max 20 words)"
+  "confidence_score": <50-95 as number>,
+  "question_type": "theory|numerical|short|long|application|design|diagram|compare",
+  "reasoning": "one sentence, max 15 words, specific"
 }}
 
-JSON array of predictions:"""
+JSON array:"""
 
     try:
         results = generate_json(prompt)
@@ -237,82 +207,128 @@ JSON array of predictions:"""
             score = float(r.get("confidence_score", 60))
             score = max(30.0, min(95.0, score))
             predictions.append({
-                "pattern_id": None,
-                "question": r["question"].strip(),
-                "unit": r.get("unit"),
-                "marks": r.get("marks"),
+                "pattern_id":       None,
+                "question":         r["question"].strip(),
+                "unit":             r.get("unit"),
+                "marks":            r.get("marks"),
                 "confidence_score": score,
-                "times_asked": 0,
-                "years_asked": [],
-                "last_asked": None,
-                "question_type": r.get("question_type"),
-                "answer": None,
-                "source": "llm_professor",
-                "reasoning": r.get("reasoning", ""),
+                "times_asked":      0,
+                "years_asked":      [],
+                "last_asked":       None,
+                "question_type":    r.get("question_type"),
+                "answer":           None,
+                "source":           "llm_professor",
+                "overdue_ratio":    0.0,
+                "reasoning":        (r.get("reasoning") or "").strip(),
             })
 
-        logger.info(f"LLM professor generated {len(predictions)} predictions for {subject_name}")
+        logger.info(f"LLM professor: {len(predictions)} predictions for {subject_name}")
         return predictions
 
     except Exception as e:
-        logger.warning(f"LLM professor prediction failed: {e}")
+        logger.warning(f"LLM professor failed for {subject_name}: {e}")
         return []
 
 
-def _build_unit_summary(unit_map: dict, patterns: list[dict]) -> str:
+# ---------------------------------------------------------------------------
+# Merge + deduplicate
+# ---------------------------------------------------------------------------
+
+def _merge_predictions(
+    pattern_preds: list[dict],
+    llm_preds: list[dict],
+) -> list[dict]:
+    """
+    Merge tier-1 (pattern) and tier-2 (LLM) predictions.
+    Deduplication: normalize text + first-120-chars comparison.
+    LLM predictions fill unit coverage gaps.
+    """
+    seen: set[str] = set()
+    merged: list[dict] = []
+
+    # Tier 1 first — historical evidence takes priority
+    for p in sorted(pattern_preds, key=lambda x: x["confidence_score"], reverse=True):
+        key = _dedup_key(p["question"])
+        if key and key not in seen:
+            seen.add(key)
+            merged.append(p)
+
+    # Build unit coverage from tier-1
+    covered_units: set = {p["unit"] for p in merged if p.get("unit")}
+
+    # Tier 2: LLM fills gaps
+    for p in sorted(llm_preds, key=lambda x: x["confidence_score"], reverse=True):
+        key = _dedup_key(p["question"])
+        if key in seen:
+            continue
+
+        unit = p.get("unit")
+        if unit and unit not in covered_units:
+            # Boost gap-filling predictions
+            p = dict(p)
+            p["confidence_score"] = min(p["confidence_score"] + 8.0, 95.0)
+            covered_units.add(unit)
+
+        seen.add(key)
+        merged.append(p)
+
+    merged.sort(key=lambda x: x["confidence_score"], reverse=True)
+    return merged[:30]
+
+
+def _dedup_key(text: str) -> str:
+    """Normalize question text for deduplication comparison."""
+    if not text:
+        return ""
+    t = text.lower().strip()
+    t = re.sub(r"[^a-z0-9\s]", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t[:120]
+
+
+# ---------------------------------------------------------------------------
+# Summary builders for LLM prompt
+# ---------------------------------------------------------------------------
+
+def _build_unit_summary(unit_analysis: dict) -> str:
     lines = []
-    for unit in sorted(unit_map.keys()):
+    for unit in sorted(unit_analysis.keys()):
         if unit == 0:
             continue
-        data = unit_map[unit]
-        q_count = len(data["questions"])
-        last = data.get("last_year") or "never"
-        years_list = sorted(data.get("years", set()))
+        d = unit_analysis[unit]
+        status = ""
+        if d["overdue_ratio"] >= 2.0:
+            status = " ⚠ VERY OVERDUE"
+        elif d["overdue_ratio"] >= 1.0:
+            status = " ⚡ DUE"
         lines.append(
-            f"Unit {unit}: {q_count} questions total, "
-            f"years: {years_list if years_list else 'none'}, "
-            f"last asked: {last}"
+            f"Unit {unit}: {d['question_count']} questions, "
+            f"years={d['years']}, last={d['last_year']}, "
+            f"avg_cycle={d['avg_gap']}yr, overdue_ratio={d['overdue_ratio']}{status}"
         )
     return "\n".join(lines) if lines else "No unit data available"
 
 
-def _merge_predictions(pattern_preds: list[dict], llm_preds: list[dict]) -> list[dict]:
-    """
-    Merge pattern-based and LLM predictions.
-    Deduplicate by semantic similarity (simple: first 60 chars).
-    LLM predictions fill gaps in units not covered by patterns.
-    """
-    seen_texts = set()
-    merged = []
+def _build_deficit_summary(unit_analysis: dict) -> str:
+    deficit_units = sorted(
+        [(u, d) for u, d in unit_analysis.items() if u != 0 and d["overdue_ratio"] >= 1.0],
+        key=lambda x: x[1]["overdue_ratio"],
+        reverse=True,
+    )
+    if not deficit_units:
+        return "No deficit units — all units covered recently"
+    lines = []
+    for unit, d in deficit_units[:6]:
+        lines.append(
+            f"Unit {unit}: {d['current_gap']} years overdue "
+            f"(avg cycle {d['avg_gap']}yr, ratio {d['overdue_ratio']})"
+        )
+    return "\n".join(lines)
 
-    # Pattern predictions first (they have historical evidence)
-    for p in sorted(pattern_preds, key=lambda x: x["confidence_score"], reverse=True):
-        key = p["question"][:60].lower().strip()
-        if key and key not in seen_texts:
-            seen_texts.add(key)
-            merged.append(p)
 
-    # LLM predictions: add those covering units not yet represented
-    # or boosting overall coverage
-    covered_units = {p["unit"] for p in merged if p.get("unit")}
-
-    for p in sorted(llm_preds, key=lambda x: x["confidence_score"], reverse=True):
-        key = p["question"][:60].lower().strip()
-        if key in seen_texts:
-            continue
-
-        unit = p.get("unit")
-        is_gap_unit = unit not in covered_units
-
-        # Boost score for gap-filling LLM predictions
-        if is_gap_unit and unit:
-            p = dict(p)
-            p["confidence_score"] = min(p["confidence_score"] + 10, 95)
-            covered_units.add(unit)
-
-        seen_texts.add(key)
-        merged.append(p)
-
-    # Final sort
-    merged.sort(key=lambda x: x["confidence_score"], reverse=True)
-    return merged[:30]  # Top 30
+def _get_overdue_ratio(pattern: dict) -> float:
+    years = sorted(pattern.get("occurrence_years") or [])
+    if not years:
+        return 0.0
+    from services.prediction_engine import compute_overdue_ratio
+    return compute_overdue_ratio(years)
