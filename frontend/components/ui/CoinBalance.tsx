@@ -24,17 +24,15 @@ export function CoinBalance({ onUpdate }: CoinBalanceProps) {
     api.get("/coins/me")
       .then((data: CoinData) => {
         setCoins(data);
-        onUpdate?.(data.balance);
       })
       .catch(() => {});
 
-    // Live updates — any page that earns coins dispatches this
     const handler = (e: CustomEvent<{ balance: number }>) => {
       setCoins(prev => prev ? { ...prev, balance: e.detail.balance } : prev);
     };
     window.addEventListener("coins:updated", handler as EventListener);
     return () => window.removeEventListener("coins:updated", handler as EventListener);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Animate on balance change
   useEffect(() => {
@@ -44,7 +42,7 @@ export function CoinBalance({ onUpdate }: CoinBalanceProps) {
       setTimeout(() => setPop(false), 600);
     }
     setPrev(coins.balance);
-  }, [coins?.balance]);
+  }, [coins?.balance]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!coins) return null;
 
