@@ -19,6 +19,12 @@ export function StreakBadge() {
     api.get("/streaks/me")
       .then(setStreak)
       .catch(() => {});
+
+    const handler = (e: CustomEvent<{ streak: number }>) => {
+      setStreak(prev => prev ? { ...prev, current_streak: e.detail.streak } : prev);
+    };
+    window.addEventListener("streak:updated", handler as EventListener);
+    return () => window.removeEventListener("streak:updated", handler as EventListener);
   }, []);
 
   if (!streak) return null;

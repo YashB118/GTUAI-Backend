@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { notifyCoinsEarned } from "@/lib/coinEvents";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -318,6 +319,15 @@ export default function BrahmastraPage() {
       const data = await api.getBrahmastraBrief(subjectId, forceRefresh);
       setBrief(data);
       setError(null);
+      // Award coins for using Brahmastra (max 3/day, fire-and-forget)
+      if (!data.from_cache || forceRefresh) {
+        api.post("/coins/brahmastra-reward", {}).then((res) => {
+          if (res.awarded > 0) {
+            toast.success(`+${res.awarded} coins for using Brahmastra 🪙`);
+            notifyCoinsEarned(res.balance);
+          }
+        }).catch(() => {});
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Brief load nahi hua");
     }

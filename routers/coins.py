@@ -184,25 +184,34 @@ async def claim_login_reward(user=Depends(get_current_user)):
 
 @router.post("/brahmastra-reward")
 async def claim_brahmastra_reward(user=Depends(get_current_user)):
-    """Award coins for generating a Brahmastra oracle brief. One per subject per day."""
+    """Award coins for using Brahmastra. Max 3/day."""
+    return await _claim_feature_reward(user["sub"], "brahmastra", "Brahmastra oracle used")
+
+
+@router.post("/predict-reward")
+async def claim_predict_reward(user=Depends(get_current_user)):
+    """Award coins for running Andaza Laga predictions. Max 3/day."""
+    return await _claim_feature_reward(user["sub"], "brahmastra", "Andaza Laga predictions viewed")
+
+
+async def _claim_feature_reward(user_id: str, tx_type: str, note: str):
     supabase = get_supabase()
-    user_id = user["sub"]
     today = date.today()
 
     already = (
         supabase.table("coin_transactions")
         .select("id")
         .eq("user_id", user_id)
-        .eq("type", "brahmastra")
+        .eq("type", tx_type)
         .gte("created_at", f"{today.isoformat()}T00:00:00+00:00")
-        .limit(3)
         .execute()
     )
-    if len(already.data or []) >= 3:
+    already_count = len((already.data or []) if already else [])
+    if already_count >= 3:
         row = _ensure_coin_row(supabase, user_id)
         return {"awarded": 0, "balance": row["balance"], "limit_reached": True}
 
-    new_balance = add_coins(user_id, BRAHMASTRA_REWARD, "brahmastra", "Brahmastra oracle used")
+    new_balance = add_coins(user_id, BRAHMASTRA_REWARD, tx_type, note)
     return {"awarded": BRAHMASTRA_REWARD, "balance": new_balance, "limit_reached": False}
 
 

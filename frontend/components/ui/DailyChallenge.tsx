@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, Zap } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { notifyCoinsEarned } from "@/lib/coinEvents";
 
 interface Challenge {
   id: string;
@@ -56,6 +57,7 @@ export function DailyChallenge({ onCoinsEarned }: { onCoinsEarned?: (n: number) 
         toast.error(`Galat! +${res.coins_earned} coins (attempt reward)`);
       }
       onCoinsEarned?.(res.coins_earned);
+      notifyCoinsEarned(res.balance);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Submit failed";
       toast.error(msg);

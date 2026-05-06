@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
 import { DailyChallenge } from "@/components/ui/DailyChallenge";
+import { notifyCoinsEarned, notifyStreakUpdated } from "@/lib/coinEvents";
 
 function fadeUp(delay = 0) {
   return {
@@ -139,6 +140,8 @@ export default function StudentDashboard() {
       if (loginRes.status === "fulfilled" && !loginRes.value.already_claimed && loginRes.value.awarded > 0) {
         const bonus = loginRes.value.streak_bonus > 0 ? ` + ${loginRes.value.streak_bonus} streak bonus!` : "";
         toast.success(`+${loginRes.value.awarded - loginRes.value.streak_bonus} coins for logging in${bonus} 🪙`);
+        notifyCoinsEarned(loginRes.value.balance);
+        notifyStreakUpdated(loginRes.value.streak);
       }
       if (streakRes.status === "fulfilled") setStreak(streakRes.value);
       if (coinRes.status === "fulfilled")   setCoins(coinRes.value);

@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import { notifyCoinsEarned } from "@/lib/coinEvents";
 import { ProcessingStatus } from "@/components/shared/ProcessingStatus";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { toast } from "sonner";
@@ -256,6 +257,12 @@ function PredictInner() {
       setPredictions(data.predictions || []);
       setPaperCount(data.paper_count || 0);
       setSources(data.sources || []);
+      // Award coins for using Andaza Laga (max 3/day, fire-and-forget)
+      api.post("/coins/predict-reward", {}).then((res) => {
+        if (res.awarded > 0) {
+          notifyCoinsEarned(res.balance);
+        }
+      }).catch(() => {});
     } catch { setPredictions([]); }
     finally { setLoadingPredictions(false); }
   }, []);
