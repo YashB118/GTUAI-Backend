@@ -47,7 +47,7 @@ export function Topbar({
 
       {/* Desktop: Andaze Se wordmark */}
       <div className="hidden lg:flex items-center gap-2 shrink-0">
-        <AndazeSeLogo size="md" />
+        <AndazeSeLogo size="lg" />
         {userRole === "admin" && (
           <span className="text-[10px] text-text-muted font-semibold px-1.5 py-0.5 rounded-md bg-bg-elevated border border-border">
             Admin

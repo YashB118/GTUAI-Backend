@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Sparkles, BookOpen, FileQuestion,
   Upload, MessageSquare, Swords, X, Trophy, Wallet,
 } from "lucide-react";
+import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -65,9 +66,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         className="fixed top-0 left-0 z-30 h-full w-[240px] flex flex-col glass border-r border-border lg:hidden"
       >
         <div className="flex items-center justify-between h-14 px-5">
-          <div className="w-7 h-7 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center">
-            <Swords size={14} className="text-blue-400" />
-          </div>
+          <AndazeSeLogo size="sm" />
           <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
             <X size={16} />
           </button>
@@ -116,11 +115,9 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        {/* Brand — icon only, no text (logo lives in topbar) */}
-        <div className="flex items-center h-14 border-b border-border/50 px-4 shrink-0">
-          <div className="w-7 h-7 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
-            <Swords size={14} className="text-blue-400" />
-          </div>
+        {/* Brand */}
+        <div className="flex items-center h-14 border-b border-border/50 px-3 shrink-0 overflow-hidden">
+          <AndazeSeLogo size="sm" />
         </div>
 
         {/* Nav */}

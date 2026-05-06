@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CheckCircle, FileText,
-  GraduationCap, Users, BarChart3, Settings, X, Swords,
+  GraduationCap, Users, BarChart3, Settings, X,
   Wallet, Ticket, Zap,
 } from "lucide-react";
+import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -79,9 +80,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
       >
         <div className="flex items-center justify-between h-14 px-5">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center">
-              <Swords size={14} className="text-accent" />
-            </div>
+            <AndazeSeLogo size="sm" />
             <span className="text-xs text-text-muted font-semibold">Admin</span>
           </div>
           <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
@@ -126,11 +125,9 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        {/* Brand — icon only */}
-        <div className="flex items-center h-14 border-b border-border/50 px-4 shrink-0">
-          <div className="w-7 h-7 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center shrink-0">
-            <Swords size={14} className="text-accent" />
-          </div>
+        {/* Brand */}
+        <div className="flex items-center h-14 border-b border-border/50 px-3 shrink-0 overflow-hidden">
+          <AndazeSeLogo size="sm" />
         </div>
 
         {/* Nav */}
