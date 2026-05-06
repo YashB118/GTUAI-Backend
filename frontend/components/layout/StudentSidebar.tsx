@@ -7,7 +7,6 @@ import {
   LayoutDashboard, Sparkles, BookOpen, FileQuestion,
   Upload, MessageSquare, Swords, X, Trophy, Wallet,
 } from "lucide-react";
-import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -65,8 +64,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         transition={sidebarSpring}
         className="fixed top-0 left-0 z-30 h-full w-[240px] flex flex-col glass border-r border-border lg:hidden"
       >
-        <div className="flex items-center justify-between h-14 px-5">
-          <AndazeSeLogo size="sm" />
+        <div className="flex items-center justify-end h-14 px-5">
           <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
             <X size={16} />
           </button>
@@ -115,10 +113,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        {/* Brand */}
-        <div className="flex items-center h-14 border-b border-border/50 px-3 shrink-0 overflow-hidden">
-          <AndazeSeLogo size="sm" />
-        </div>
+        <div className="h-14 border-b border-border/50 shrink-0" />
 
         {/* Nav */}
         <nav className="flex-1 flex flex-col py-3 gap-1 px-2 overflow-y-auto overflow-x-hidden">
