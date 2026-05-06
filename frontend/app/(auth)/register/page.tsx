@@ -84,8 +84,8 @@ export default function RegisterPage() {
 
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 mb-4">
-            <Swords size={18} className="text-orange-400" />
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
+            <Swords size={18} className="text-blue-400" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-text-primary">Andaza</h1>
           <p className="text-sm text-text-muted mt-1 italic">Sirf wahi jo aayega.</p>
@@ -127,7 +127,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-semibold text-base transition-colors flex items-center justify-center gap-2 mt-1"
+              className="w-full py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-semibold text-base transition-colors flex items-center justify-center gap-2 mt-1"
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -139,7 +139,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-[12px] text-text-muted">
             Account hai already?{" "}
-            <Link href="/login" className="text-orange-400 hover:text-orange-300 transition-colors font-medium">
+            <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
               Sign in karo
             </Link>
           </p>

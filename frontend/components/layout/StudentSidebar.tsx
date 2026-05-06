@@ -63,9 +63,8 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         className="fixed top-0 left-0 z-30 h-full w-[240px] flex flex-col glass border-r border-border lg:hidden"
       >
         <div className="flex items-center justify-between h-14 px-5">
-          <div className="flex items-center gap-2.5">
-            <Swords size={16} className="text-orange-400" />
-            <span className="text-base font-bold text-text-primary">Andaza</span>
+          <div className="w-7 h-7 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center">
+            <Swords size={14} className="text-blue-400" />
           </div>
           <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
             <X size={16} />
@@ -84,8 +83,8 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                   "flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
                   special
                     ? active
-                      ? "bg-orange-500/15 text-orange-300 border border-orange-500/30"
-                      : "text-orange-400/90 border border-orange-500/15 bg-orange-500/5"
+                      ? "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                      : "text-blue-400/90 border border-blue-500/15 bg-blue-500/5"
                     : active
                       ? "bg-accent/10 text-accent"
                       : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
@@ -93,16 +92,16 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
               >
                 <Icon size={16} className={cn(
                   "shrink-0",
-                  special ? (active ? "text-orange-300" : "text-orange-400") : active ? "text-accent" : "text-text-muted"
+                  special ? (active ? "text-blue-300" : "text-blue-400") : active ? "text-accent" : "text-text-muted"
                 )} />
                 {label}
-                {special && <span className="ml-auto text-xs text-orange-500/60">⚔️</span>}
+                {special && <span className="ml-auto text-xs text-blue-500/60">⚔️</span>}
               </Link>
             );
           })}
         </nav>
         <div className="px-5 py-3.5 border-t border-border/50">
-          <p className="text-xs text-orange-400/50 italic">Sirf wahi jo aayega.</p>
+          <p className="text-xs text-blue-400/50 italic">Sirf wahi jo aayega.</p>
         </div>
       </motion.aside>
 
@@ -115,25 +114,11 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        {/* Brand */}
-        <div className="flex items-center h-14 border-b border-border/50 px-4 gap-3 shrink-0">
-          <div className="w-7 h-7 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center shrink-0">
-            <Swords size={14} className="text-orange-400" />
+        {/* Brand — icon only, no text (logo lives in topbar) */}
+        <div className="flex items-center h-14 border-b border-border/50 px-4 shrink-0">
+          <div className="w-7 h-7 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+            <Swords size={14} className="text-blue-400" />
           </div>
-          <AnimatePresence>
-            {hovered && (
-              <motion.span
-                key="brand"
-                variants={labelVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="text-[15px] font-bold text-text-primary whitespace-nowrap overflow-hidden"
-              >
-                Andaza
-              </motion.span>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Nav */}
@@ -148,8 +133,8 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                   "relative flex items-center h-11 rounded-xl px-2.5 shrink-0 transition-colors duration-100",
                   special
                     ? active
-                      ? "bg-orange-500/20 text-orange-300"
-                      : "text-orange-400/70 hover:bg-orange-500/10 hover:text-orange-400"
+                      ? "bg-blue-500/20 text-blue-300"
+                      : "text-blue-400/70 hover:bg-blue-500/10 hover:text-blue-400"
                     : active
                       ? "bg-accent/15 text-accent"
                       : "text-text-muted hover:text-text-primary hover:bg-bg-elevated"
@@ -182,7 +167,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="ml-auto text-xs shrink-0 whitespace-nowrap text-orange-500/50"
+                    className="ml-auto text-xs shrink-0 whitespace-nowrap text-blue-500/50"
                   >
                     ⚔️
                   </motion.span>
@@ -192,7 +177,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                 {active && (
                   <span className={cn(
                     "absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-sm",
-                    special ? "bg-orange-400" : "bg-accent"
+                    special ? "bg-blue-400" : "bg-accent"
                   )} />
                 )}
               </Link>
@@ -210,7 +195,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, transition: { delay: 0.1 } }}
                 exit={{ opacity: 0 }}
-                className="text-xs text-orange-400/40 italic whitespace-nowrap"
+                className="text-xs text-blue-400/40 italic whitespace-nowrap"
               >
                 Sirf wahi jo aayega.
               </motion.span>

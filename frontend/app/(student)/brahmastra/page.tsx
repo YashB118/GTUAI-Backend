@@ -75,8 +75,8 @@ export default function BrahmastraIndexPage() {
     <div className="max-w-3xl mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 mt-0.5">
-          <Swords size={20} className="text-orange-400" />
+        <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 mt-0.5">
+          <Swords size={20} className="text-blue-400" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-text-primary">Brahmastra</h1>
@@ -100,7 +100,7 @@ export default function BrahmastraIndexPage() {
           onChange={e => handleSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-bg-card border border-border
             text-sm text-text-primary placeholder:text-text-muted
-            focus:outline-none focus:border-orange-500/40 transition-colors"
+            focus:outline-none focus:border-blue-500/40 transition-colors"
         />
       </div>
 
@@ -129,11 +129,11 @@ export default function BrahmastraIndexPage() {
                 key={s.id}
                 onClick={() => router.push(`/brahmastra/${s.id}`)}
                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
-                  bg-bg-card border border-border hover:border-orange-500/30 hover:bg-orange-500/5
+                  bg-bg-card border border-border hover:border-blue-500/30 hover:bg-blue-500/5
                   transition-all group text-left"
               >
                 <div className="min-w-0">
-                  <p className="text-base font-medium text-text-primary group-hover:text-orange-300 transition-colors truncate">
+                  <p className="text-base font-medium text-text-primary group-hover:text-blue-300 transition-colors truncate">
                     {s.name}
                   </p>
                   <div className="flex gap-2 text-xs text-text-muted mt-0.5">
@@ -142,7 +142,7 @@ export default function BrahmastraIndexPage() {
                     {s.branch && s.branch !== "COMMON" && <span>{s.branch}</span>}
                   </div>
                 </div>
-                <ChevronRight size={14} className="text-text-muted group-hover:text-orange-400 transition-colors shrink-0 ml-2" />
+                <ChevronRight size={14} className="text-text-muted group-hover:text-blue-400 transition-colors shrink-0 ml-2" />
               </button>
             ))}
           </div>

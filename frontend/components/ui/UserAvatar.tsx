@@ -10,7 +10,7 @@ const COLORS = [
   { bg: "bg-amber-500/20 border-amber-500/30 text-amber-400" },
   { bg: "bg-rose-500/20 border-rose-500/30 text-rose-400" },
   { bg: "bg-cyan-500/20 border-cyan-500/30 text-cyan-400" },
-  { bg: "bg-orange-500/20 border-orange-500/30 text-orange-400" },
+  { bg: "bg-blue-500/20 border-blue-500/30 text-blue-400" },
 ];
 
 function getInitials(name: string): string {

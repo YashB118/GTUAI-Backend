@@ -201,27 +201,27 @@ export default function StudentDashboard() {
           <motion.div {...fadeUp(0.1)}>
           <Link href="/brahmastra" className="block">
             <div
-              className="rounded-2xl border border-orange-500/25 p-6 relative overflow-hidden
-                hover:border-orange-500/45 transition-all duration-200 group
-                shadow-[0_0_40px_rgba(255,92,26,0.05)] hover:shadow-[0_0_50px_rgba(255,92,26,0.10)]"
-              style={{ background: "linear-gradient(135deg, rgba(255,92,26,0.09) 0%, rgba(255,92,26,0.02) 100%)" }}
+              className="rounded-2xl border border-blue-500/25 p-6 relative overflow-hidden
+                hover:border-blue-500/45 transition-all duration-200 group
+                shadow-[0_0_40px_rgba(88,101,242,0.05)] hover:shadow-[0_0_50px_rgba(88,101,242,0.10)]"
+              style={{ background: "linear-gradient(135deg, rgba(88,101,242,0.09) 0%, rgba(88,101,242,0.02) 100%)" }}
             >
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "radial-gradient(ellipse at 10% 90%, rgba(255,92,26,0.12) 0%, transparent 55%)" }}
+                style={{ background: "radial-gradient(ellipse at 10% 90%, rgba(88,101,242,0.12) 0%, transparent 55%)" }}
               />
               <div className="relative">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-orange-500/15 border border-orange-500/25">
-                      <Swords size={22} className="text-orange-400" />
+                    <div className="p-3 rounded-xl bg-blue-500/15 border border-blue-500/25">
+                      <Swords size={22} className="text-blue-400" />
                     </div>
                     <div>
                       <p className="text-xl font-bold text-text-primary">Brahmastra</p>
-                      <p className="text-sm text-orange-400/80 italic">Sirf wahi jo aayega.</p>
+                      <p className="text-sm text-blue-400/80 italic">Sirf wahi jo aayega.</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 group-hover:bg-orange-400 transition-colors text-white text-sm font-semibold shadow-[0_0_20px_rgba(255,92,26,0.25)]">
+                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 group-hover:bg-blue-400 transition-colors text-white text-sm font-semibold shadow-[0_0_20px_rgba(88,101,242,0.25)]">
                     Activate <ArrowRight size={14} />
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function StudentDashboard() {
                 {/* Preview rows — horizontal on wide screens */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { fire: "🔥🔥🔥", label: "Almost Certain", pct: "90%+", color: "text-orange-400", bg: "bg-orange-500/8 border-orange-500/20" },
+                    { fire: "🔥🔥🔥", label: "Almost Certain", pct: "90%+", color: "text-blue-400", bg: "bg-blue-500/8 border-blue-500/20" },
                     { fire: "🔥🔥",   label: "Highly Likely",  pct: "70%+", color: "text-sky-400",    bg: "bg-sky-500/8 border-sky-500/20"       },
                     { fire: "🔥",    label: "Watch Out",       pct: "50%+", color: "text-violet-400", bg: "bg-violet-500/8 border-violet-500/20" },
                   ].map((row) => (

@@ -11,18 +11,18 @@
   color-scheme: dark;
 
   /* ── Dark palette — clean near-black, minimal purple tint ── */
-  --c-bg-primary:     9   9  11;
-  --c-bg-card:       14  14  17;
-  --c-bg-elevated:   20  20  24;
-  --c-border:        38  38  46;
-  --c-accent:       108  99 255;
-  --c-accent-hover: 125 117 255;
+  --c-bg-primary:     7   7  15;   /* #07070F — Discord-dark */
+  --c-bg-card:       13  13  20;   /* slightly purple-tinted */
+  --c-bg-elevated:   20  20  30;
+  --c-border:        40  40  55;
+  --c-accent:        88 101 242;   /* Discord blurple #5865F2 */
+  --c-accent-hover:  71  82 196;   /* #4752C4 */
   --c-text-primary: 242 242 247;
   --c-text-secondary:148 148 163;
   --c-text-muted:    82  82  96;
 
-  /* Andaza brand orange */
-  --c-andaza: 255 92 26;
+  /* Andaza brand — Discord blurple */
+  --c-andaza: 88 101 242;
 
   /* Hex aliases for custom utilities */
   --bg-card:    #0E0E11;
@@ -198,3 +198,68 @@ html.light [class*="shadow-menu"] {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* ─── Ambient orbs ──────────────────────────────────────────────────────────── */
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(70px, -90px) scale(1.12); }
+  66%       { transform: translate(-55px, 55px) scale(0.9); }
+}
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-80px, 60px) scale(0.88); }
+  66%       { transform: translate(45px, -65px) scale(1.1); }
+}
+@keyframes orb-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(35px, 45px) scale(1.07); }
+}
+
+.orb-1 { animation: orb-drift-1 12s ease-in-out infinite; }
+.orb-2 { animation: orb-drift-2 15s ease-in-out infinite; }
+.orb-3 { animation: orb-drift-3 10s ease-in-out infinite; }
+
+/* ─── Grain texture ─────────────────────────────────────────────────────────── */
+@keyframes grain-shift {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  20% { transform: translate(-4%, 2%); }
+  30% { transform: translate(2%, -6%); }
+  40% { transform: translate(-2%, 6%); }
+  50% { transform: translate(-4%, 3%); }
+  60% { transform: translate(4%, 0); }
+  70% { transform: translate(0, 4%); }
+  80% { transform: translate(1%, 8%); }
+  90% { transform: translate(-3%, 3%); }
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: -200%;
+  width: 400%;
+  height: 400%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.032;
+  animation: grain-shift 8s steps(10) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Reveal on scroll ──────────────────────────────────────────────────────── */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-hidden { opacity: 0; transform: translateY(28px); }
+.reveal-visible { animation: reveal-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ─── Glow pulse on CTA ─────────────────────────────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 30px rgba(88,101,242,0.4), 0 0 60px rgba(88,101,242,0.15); }
+  50%       { box-shadow: 0 0 55px rgba(88,101,242,0.6), 0 0 100px rgba(88,101,242,0.25); }
+}
+
+.cta-glow { animation: glow-pulse 2.5s ease-in-out infinite; }

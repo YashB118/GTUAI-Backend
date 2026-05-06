@@ -35,7 +35,7 @@ export default function StudentError({
           </button>
           <button
             onClick={reset}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors"
           >
             <RefreshCw size={14} /> Try Again
           </button>

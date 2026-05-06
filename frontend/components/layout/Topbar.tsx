@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, LogOut, Search, Swords } from "lucide-react";
+import { Menu, LogOut, Search } from "lucide-react";
+import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 
@@ -42,12 +43,13 @@ export function Topbar({
         <Menu size={17} />
       </button>
 
-      {/* Desktop: Andaza wordmark (only on mobile the sidebar hides) */}
-      <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-        <Swords size={13} className="text-orange-400" />
-        <span className="text-[13px] font-bold text-text-primary tracking-tight">Andaza</span>
+      {/* Desktop: Andaze Se wordmark */}
+      <div className="hidden lg:flex items-center gap-2 shrink-0">
+        <AndazeSeLogo size="md" />
         {userRole === "admin" && (
-          <span className="text-[10px] text-text-muted ml-0.5 font-normal">Admin</span>
+          <span className="text-[10px] text-text-muted font-semibold px-1.5 py-0.5 rounded-md bg-bg-elevated border border-border">
+            Admin
+          </span>
         )}
       </div>
 

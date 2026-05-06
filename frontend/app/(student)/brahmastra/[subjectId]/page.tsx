@@ -217,8 +217,8 @@ function AnswerSheet({
               )}
 
               {/* Section: Full Answer */}
-              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/4 p-5">
-                <p className="text-xs font-bold uppercase tracking-widest text-orange-400/80 mb-4">
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/4 p-5">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400/80 mb-4">
                   ⚔️ Full Answer — Copy karo, yaad karo
                 </p>
                 <div className="prose prose-invert max-w-none text-text-primary leading-relaxed text-base
@@ -230,7 +230,7 @@ function AnswerSheet({
                   [&_p]:my-2 [&_p]:text-text-secondary
                   [&_code]:bg-bg-elevated [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
                   [&_pre]:bg-bg-elevated [&_pre]:p-4 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:text-sm
-                  [&_blockquote]:border-l-2 [&_blockquote]:border-orange-500/40 [&_blockquote]:pl-4 [&_blockquote]:text-text-muted
+                  [&_blockquote]:border-l-2 [&_blockquote]:border-blue-500/40 [&_blockquote]:pl-4 [&_blockquote]:text-text-muted
                   [&_table]:w-full [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:p-2 [&_th]:text-left">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {answer.readyToWriteAnswer || answer.text}
@@ -271,7 +271,7 @@ function AnswerSheet({
           {!loading && answer && (
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 transition-colors text-white text-sm font-semibold"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 transition-colors text-white text-sm font-semibold"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? "Copied!" : "Answer Copy Karo"}
@@ -383,7 +383,7 @@ export default function BrahmastraPage() {
           <div className="text-5xl">⚔️</div>
           <p className="text-lg font-semibold text-text-primary">Brahmastra activate nahi hua</p>
           <p className="text-sm text-text-muted">{error}</p>
-          <button onClick={() => router.push("/predict")} className="text-sm text-orange-400 hover:underline">
+          <button onClick={() => router.push("/predict")} className="text-sm text-blue-400 hover:underline">
             Pehle past papers upload karo →
           </button>
         </div>
@@ -408,8 +408,8 @@ export default function BrahmastraPage() {
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
-              <Swords size={20} className="text-orange-400" />
+            <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <Swords size={20} className="text-blue-400" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-text-primary">Brahmastra</h1>
@@ -457,7 +457,7 @@ export default function BrahmastraPage() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden">
               <div
-                className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                className="h-full bg-blue-500 rounded-full transition-all duration-500"
                 style={{ width: `${(doneCount / totalCount) * 100}%` }}
               />
             </div>
@@ -484,7 +484,7 @@ export default function BrahmastraPage() {
                     isDone
                       ? "border-border/40 bg-bg-elevated/50 opacity-55"
                       : i === 0
-                        ? "border-orange-500/30 bg-orange-500/5"
+                        ? "border-blue-500/30 bg-blue-500/5"
                         : "border-border bg-bg-card"
                   }`}
                 >
@@ -494,8 +494,8 @@ export default function BrahmastraPage() {
                       onClick={() => toggleDone(i)}
                       className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                         isDone
-                          ? "border-orange-500 bg-orange-500 text-white"
-                          : "border-border hover:border-orange-500/60"
+                          ? "border-blue-500 bg-blue-500 text-white"
+                          : "border-border hover:border-blue-500/60"
                       }`}
                     >
                       {isDone && <span className="text-[10px] font-bold">✓</span>}
@@ -535,7 +535,7 @@ export default function BrahmastraPage() {
                       {!isDone && (
                         <button
                           onClick={() => setStudyQ(q)}
-                          className="flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium hover:bg-orange-500/15 transition-colors"
+                          className="flex items-center gap-2 mt-3 px-4 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium hover:bg-blue-500/15 transition-colors"
                         >
                           <BookOpen size={14} />
                           Iska Answer Dekho →

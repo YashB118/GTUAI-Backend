@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Nunito, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const inter = Inter({
+// Nunito — rounded, friendly, closest to Discord's gg sans
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter", // keep same var name so all existing classes still work
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -33,7 +35,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
+      <body className={`${nunito.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
         {children}
         <Toaster
           position="bottom-right"

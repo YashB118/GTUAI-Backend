@@ -74,10 +74,11 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         className="fixed top-0 left-0 z-30 h-full w-[240px] flex flex-col glass border-r border-border lg:hidden"
       >
         <div className="flex items-center justify-between h-14 px-5">
-          <div className="flex items-center gap-2.5">
-            <Swords size={15} className="text-accent" />
-            <span className="text-base font-bold text-text-primary">Andaza</span>
-            <span className="text-xs text-text-muted">Admin</span>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center">
+              <Swords size={14} className="text-accent" />
+            </div>
+            <span className="text-xs text-text-muted font-semibold">Admin</span>
           </div>
           <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
             <X size={16} />
@@ -121,26 +122,11 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        {/* Brand */}
-        <div className="flex items-center h-14 border-b border-border/50 px-4 gap-3 shrink-0">
+        {/* Brand — icon only */}
+        <div className="flex items-center h-14 border-b border-border/50 px-4 shrink-0">
           <div className="w-7 h-7 rounded-xl bg-accent/15 border border-accent/25 flex items-center justify-center shrink-0">
             <Swords size={14} className="text-accent" />
           </div>
-          <AnimatePresence>
-            {hovered && (
-              <motion.div
-                key="brand"
-                variants={labelVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="flex items-center gap-1.5 whitespace-nowrap overflow-hidden"
-              >
-                <span className="text-[15px] font-bold text-text-primary">Andaza</span>
-                <span className="text-xs text-text-muted">Admin</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Nav */}

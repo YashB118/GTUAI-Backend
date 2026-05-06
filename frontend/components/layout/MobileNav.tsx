@@ -27,14 +27,14 @@ export function MobileNav() {
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium transition-colors",
               special
-                ? active ? "text-orange-300" : "text-orange-400/70 hover:text-orange-400"
+                ? active ? "text-blue-300" : "text-blue-400/70 hover:text-blue-400"
                 : active ? "text-accent" : "text-text-muted hover:text-text-secondary"
             )}
           >
             <span className={cn(
               "rounded-xl p-1.5 transition-colors",
               special
-                ? active ? "bg-orange-500/15" : ""
+                ? active ? "bg-blue-500/15" : ""
                 : active ? "bg-accent/10" : ""
             )}>
               <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />

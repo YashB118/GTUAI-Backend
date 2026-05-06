@@ -77,7 +77,7 @@ function TierBlock({ tier, questions }: { tier: "certain" | "likely" | "watch"; 
   if (!questions.length) return null;
 
   const cfg = {
-    certain: { icon: <Flame size={14} className="text-orange-400" />, label: "Almost Certain", border: "border-orange-500/20", bg: "bg-orange-500/5" },
+    certain: { icon: <Flame size={14} className="text-blue-400" />, label: "Almost Certain", border: "border-blue-500/20", bg: "bg-blue-500/5" },
     likely:  { icon: <Zap size={14}  className="text-sky-400"    />, label: "Highly Likely",  border: "border-sky-500/20",    bg: "bg-sky-500/5"    },
     watch:   { icon: <Eye size={14}  className="text-violet-400" />, label: "Watch Out",       border: "border-violet-500/20", bg: "bg-violet-500/5" },
   } as const;
@@ -149,15 +149,15 @@ export default function SharePage() {
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Signup CTA banner */}
-      <div className="sticky top-0 z-10 bg-orange-500/10 border-b border-orange-500/20 px-4 py-2.5">
+      <div className="sticky top-0 z-10 bg-blue-500/10 border-b border-blue-500/20 px-4 py-2.5">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-          <p className="text-xs text-orange-300/90 font-medium">
+          <p className="text-xs text-blue-300/90 font-medium">
             ⚔️ Get Brahmastra for your own subject
           </p>
           <Link
             href="/register"
-            className="flex items-center gap-1 text-xs font-semibold text-orange-400
-              hover:text-orange-300 transition-colors whitespace-nowrap"
+            className="flex items-center gap-1 text-xs font-semibold text-blue-400
+              hover:text-blue-300 transition-colors whitespace-nowrap"
           >
             Sign Up Free <ArrowRight size={11} />
           </Link>
@@ -167,8 +167,8 @@ export default function SharePage() {
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
-            <Swords size={18} className="text-orange-400" />
+          <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+            <Swords size={18} className="text-blue-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-text-primary">Brahmastra</h1>
@@ -203,7 +203,7 @@ export default function SharePage() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5 text-center space-y-3">
+        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 text-center space-y-3">
           <div className="text-2xl">⚔️</div>
           <p className="font-semibold text-text-primary">Get Brahmastra for your subject</p>
           <p className="text-sm text-text-muted">
@@ -211,7 +211,7 @@ export default function SharePage() {
           </p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400
               text-white text-sm font-semibold transition-colors"
           >
             Sign Up Free <ArrowRight size={14} />
