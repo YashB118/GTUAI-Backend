@@ -63,6 +63,8 @@ def _search_for_pdfs(subject_name: str, subject_code: Optional[str]) -> list[str
             f'GTU "{subject_name}" question paper filetype:pdf',
             f'"{subject_name}" GTU exam paper site:gtu.ac.in',
             f'"{subject_name}" GTU question paper -site:youtube.com',
+            f'"{subject_name}" GTU question paper -site:gtuapymaterials.com',
+            f'"{subject_name}" GTU question paper -site:gtupapersolution.com'
         ]
         queries = [q for q in queries if q]
 

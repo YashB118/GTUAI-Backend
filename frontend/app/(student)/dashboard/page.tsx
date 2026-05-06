@@ -1,0 +1,385 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import {
+  Swords, ArrowRight, Upload, MessageSquare,
+  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+import Link from "next/link";
+
+function fadeUp(delay = 0) {
+  return {
+    initial:    { opacity: 0, y: 14 },
+    animate:    { opacity: 1, y: 0 },
+    transition: { delay, duration: 0.35, ease: "easeOut" },
+  } as const;
+}
+
+interface UserProfile {
+  full_name: string;
+  branch: string;
+  semester: number;
+  enrollment_no: string;
+}
+
+const EXAM_QUOTES = [
+  { text: "Padhoge nahi toh rote rahoge. Padh lo ek baar.", author: "Every GTU topper ever" },
+  { text: "Syllabus bohot bada hai. Andaza chota. Trust the pattern.", author: "8 years of GTU data" },
+  { text: "Exam mein luck nahi — pattern kaam aata hai.", author: "Prediction engine" },
+  { text: "Jo aayega woh padh lo. Baaki ko maafi do.", author: "Smart student strategy" },
+  { text: "Ek raat mein sab padh lena — yeh plan nahi, yeh hope hai.", author: "Reality check" },
+  { text: "Result sheet se zyada mehnat sheet powerful hoti hai.", author: "Andaza wisdom" },
+  { text: "9 baje se 11 baje — yeh waqt sirf tumhara hai.", author: "Peak focus window" },
+  { text: "Paper mein woh aata hai jo professor baar baar poochta hai.", author: "GTU pattern, 2016–2024" },
+];
+
+function getDailyQuote() {
+  const day = new Date().getDay();
+  return EXAM_QUOTES[day % EXAM_QUOTES.length];
+}
+
+function getGreeting(name: string, hour: number): string {
+  if (hour >= 22 || hour < 4) return `Raat ko bhi padh rahe ho, ${name}? 🌙`;
+  if (hour < 9)  return `Subah subah ready ho, ${name}? ☀️`;
+  if (hour < 14) return `${name}, aaj kya padha? 📚`;
+  if (hour < 18) return `Exam ki taiyari kahan tak, ${name}? 🎯`;
+  return `Sham ho gayi, ${name}. Time kam hai. ⚔️`;
+}
+
+const FEATURE_CARDS = [
+  {
+    href: "/predict",
+    icon: Sparkles,
+    label: "Andaza Laga",
+    desc: "AI exam predictions from 8 years of GTU papers",
+    color: "text-violet-400",
+    border: "hover:border-violet-500/30",
+    bg: "group-hover:bg-violet-500/5",
+  },
+  {
+    href: "/chat",
+    icon: MessageSquare,
+    label: "Pooch Lo",
+    desc: "Ask anything about GTU syllabus — instant answers",
+    color: "text-sky-400",
+    border: "hover:border-sky-500/30",
+    bg: "group-hover:bg-sky-500/5",
+  },
+  {
+    href: "/materials",
+    icon: BookOpen,
+    label: "Notes & Books",
+    desc: "Student-uploaded notes, textbooks, slides",
+    color: "text-emerald-400",
+    border: "hover:border-emerald-500/30",
+    bg: "group-hover:bg-emerald-500/5",
+  },
+  {
+    href: "/question-bank",
+    icon: FileQuestion,
+    label: "PYQ Bank",
+    desc: "Previous year GTU questions, all branches",
+    color: "text-amber-400",
+    border: "hover:border-amber-500/30",
+    bg: "group-hover:bg-amber-500/5",
+  },
+  {
+    href: "/my-uploads",
+    icon: Upload,
+    label: "Meri Files",
+    desc: "Papers and materials you've uploaded",
+    color: "text-pink-400",
+    border: "hover:border-pink-500/30",
+    bg: "group-hover:bg-pink-500/5",
+  },
+];
+
+export default function StudentDashboard() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hour, setHour]       = useState(new Date().getHours());
+
+  // Review state
+  const [showReview,      setShowReview]      = useState(false);
+  const [reviewStars,     setReviewStars]     = useState(5);
+  const [reviewQuote,     setReviewQuote]     = useState("");
+  const [reviewCollege,   setReviewCollege]   = useState("");
+  const [reviewSubmitting,setReviewSubmitting]= useState(false);
+  const [reviewSent,      setReviewSent]      = useState(false);
+  const [reviewError,     setReviewError]     = useState("");
+
+  useEffect(() => {
+    setHour(new Date().getHours());
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("users")
+        .select("full_name, branch, semester, enrollment_no")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (data) setProfile(data);
+    })();
+  }, []);
+
+  const firstName = profile?.full_name?.split(" ")[0] || "Student";
+  const greeting  = useMemo(() => getGreeting(firstName, hour), [firstName, hour]);
+  const quote     = useMemo(() => getDailyQuote(), []);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (reviewQuote.trim().length < 20) {
+      setReviewError("20 se zyada characters likhna zaroori hai.");
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewError("");
+    try {
+      await api.post("/testimonials", {
+        quote:   reviewQuote.trim(),
+        stars:   reviewStars,
+        college: reviewCollege.trim(),
+      });
+      setReviewSent(true);
+      toast.success("Review submit ho gaya! 🎉");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Submit fail ho gaya";
+      setReviewError(msg);
+      toast.error(msg);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto">
+
+      {/* ── Daily quote banner ── */}
+      <motion.div {...fadeUp(0)} className="pt-4 mb-6">
+        <div className="rounded-2xl border border-border bg-bg-card px-5 py-4 flex items-start gap-4">
+          <span className="text-2xl shrink-0 mt-0.5">💡</span>
+          <div>
+            <p className="text-base font-medium text-text-primary leading-snug">
+              &ldquo;{quote.text}&rdquo;
+            </p>
+            <p className="text-xs text-text-muted mt-1.5">— {quote.author}</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── Greeting ── */}
+      <motion.div {...fadeUp(0.05)} className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-snug mb-3">
+          {greeting}
+        </h1>
+        {profile && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs px-3 py-1 rounded-full border border-border text-text-muted bg-bg-card">
+              {profile.branch}
+            </span>
+            <span className="text-xs px-3 py-1 rounded-full border border-border text-text-muted bg-bg-card">
+              Sem {profile.semester}
+            </span>
+            {profile.enrollment_no && (
+              <span className="text-xs text-text-muted font-mono">{profile.enrollment_no}</span>
+            )}
+          </div>
+        )}
+      </motion.div>
+
+      {/* ── Main grid: left content + right review panel ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+
+        {/* ── LEFT column ── */}
+        <div className="space-y-6">
+
+          {/* Brahmastra hero card */}
+          <motion.div {...fadeUp(0.1)}>
+          <Link href="/brahmastra" className="block">
+            <div
+              className="rounded-2xl border border-orange-500/25 p-6 relative overflow-hidden
+                hover:border-orange-500/45 transition-all duration-200 group
+                shadow-[0_0_40px_rgba(255,92,26,0.05)] hover:shadow-[0_0_50px_rgba(255,92,26,0.10)]"
+              style={{ background: "linear-gradient(135deg, rgba(255,92,26,0.09) 0%, rgba(255,92,26,0.02) 100%)" }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "radial-gradient(ellipse at 10% 90%, rgba(255,92,26,0.12) 0%, transparent 55%)" }}
+              />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-orange-500/15 border border-orange-500/25">
+                      <Swords size={22} className="text-orange-400" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-text-primary">Brahmastra</p>
+                      <p className="text-sm text-orange-400/80 italic">Sirf wahi jo aayega.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 group-hover:bg-orange-400 transition-colors text-white text-sm font-semibold shadow-[0_0_20px_rgba(255,92,26,0.25)]">
+                    Activate <ArrowRight size={14} />
+                  </div>
+                </div>
+
+                {/* Preview rows — horizontal on wide screens */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { fire: "🔥🔥🔥", label: "Almost Certain", pct: "90%+", color: "text-orange-400", bg: "bg-orange-500/8 border-orange-500/20" },
+                    { fire: "🔥🔥",   label: "Highly Likely",  pct: "70%+", color: "text-sky-400",    bg: "bg-sky-500/8 border-sky-500/20"       },
+                    { fire: "🔥",    label: "Watch Out",       pct: "50%+", color: "text-violet-400", bg: "bg-violet-500/8 border-violet-500/20" },
+                  ].map((row) => (
+                    <div key={row.label} className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${row.bg}`}>
+                      <span className="text-xl shrink-0">{row.fire}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs text-text-muted leading-tight">{row.label}</p>
+                        <p className={`text-sm font-bold ${row.color}`}>{row.pct}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Link>
+          </motion.div>
+
+          {/* Feature cards */}
+          <motion.div {...fadeUp(0.17)}>
+            <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
+              Baki features
+            </p>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              {FEATURE_CARDS.map(({ href, icon: Icon, label, desc, color, border, bg }) => (
+                <motion.div
+                  key={href}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  <Link
+                    href={href}
+                    className={`group flex flex-col gap-3 p-5 rounded-2xl bg-bg-card border border-border h-full
+                      ${border} transition-colors duration-150`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center shrink-0 ${bg} transition-colors`}>
+                      <Icon size={18} className={color} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">{label}</p>
+                      <p className="text-xs text-text-muted mt-1 leading-snug">{desc}</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* ── RIGHT column: review card ── */}
+        <motion.div {...fadeUp(0.24)} className="lg:sticky lg:top-4">
+      <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
+        {reviewSent ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <CheckCircle size={32} className="text-emerald-400" />
+            <div>
+              <p className="text-base font-semibold text-text-primary">Review submit ho gaya! 🎉</p>
+              <p className="text-sm text-text-muted mt-1">Landing page pe dikhega.</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setShowReview(v => !v)}
+              className="w-full flex items-center gap-3.5 px-5 py-4 hover:bg-bg-elevated transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/15 flex items-center justify-center shrink-0">
+                <PenLine size={16} className="text-accent" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-text-primary">Apna experience share karo</p>
+                <p className="text-xs text-text-muted mt-0.5">Review likhne se dusre students ko help hoti hai</p>
+              </div>
+              <ArrowRight size={14} className={`text-text-muted transition-transform duration-200 ${showReview ? "rotate-90" : ""}`} />
+            </button>
+
+            {showReview && (
+              <form onSubmit={handleReviewSubmit} className="px-5 pb-5 space-y-4 border-t border-border/60">
+                {/* Stars */}
+                <div className="pt-4">
+                  <p className="text-xs text-text-muted mb-2">Rating</p>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setReviewStars(n)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star
+                          size={24}
+                          className={n <= reviewStars ? "text-amber-400 fill-amber-400" : "text-text-muted"}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review text */}
+                <div>
+                  <p className="text-xs text-text-muted mb-1.5">Review *</p>
+                  <textarea
+                    rows={3}
+                    placeholder="Andaza ne kaise help kiya exam mein..."
+                    value={reviewQuote}
+                    onChange={e => setReviewQuote(e.target.value)}
+                    className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-3 text-sm text-text-primary
+                      placeholder:text-text-muted focus:outline-none focus:border-accent/50 resize-none transition-colors"
+                    required
+                  />
+                  <p className="text-xs text-text-muted mt-1">{reviewQuote.length} chars (min 20)</p>
+                </div>
+
+                {/* College */}
+                <div>
+                  <p className="text-xs text-text-muted mb-1.5">College (optional)</p>
+                  <input
+                    type="text"
+                    placeholder="LDRP Institute of Technology"
+                    value={reviewCollege}
+                    onChange={e => setReviewCollege(e.target.value)}
+                    className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary
+                      placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                </div>
+
+                {reviewError && (
+                  <p className="text-sm text-red-400 bg-red-500/8 border border-red-500/15 rounded-xl px-4 py-2.5">
+                    {reviewError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={reviewSubmitting}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                >
+                  {reviewSubmitting
+                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <PenLine size={14} />}
+                  {reviewSubmitting ? "Submitting..." : "Review Submit Karo"}
+                </button>
+              </form>
+            )}
+          </>
+        )}
+      </div>
+        </motion.div>
+
+      </div>{/* end main grid */}
+    </div>
+  );
+}

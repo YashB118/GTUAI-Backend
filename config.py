@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     admin_emails: list[str] = [
         "yash.b@empiricinfotech.com",
         "yashbonde21@gmail.com",
+        "empiricinfotech@gmail.com",
     ]
 
     # Phase 2 — AI Core
