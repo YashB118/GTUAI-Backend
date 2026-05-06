@@ -162,4 +162,3 @@ def _download_and_extract(url: str, subject_name: str) -> list[dict]:
     except Exception as e:
         logger.warning(f"Failed to download/extract {url}: {e}")
         return []
-

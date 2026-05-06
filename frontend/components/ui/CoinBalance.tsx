@@ -10,11 +10,7 @@ interface CoinData {
   lifetime_earned: number;
 }
 
-interface CoinBalanceProps {
-  onUpdate?: (balance: number) => void;
-}
-
-export function CoinBalance({ onUpdate }: CoinBalanceProps) {
+export function CoinBalance() {
   const [coins, setCoins] = useState<CoinData | null>(null);
   const [showTip, setShowTip] = useState(false);
   const [prev, setPrev] = useState<number | null>(null);
