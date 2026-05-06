@@ -3,13 +3,14 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   Swords, ArrowRight, Upload, MessageSquare,
-  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle,
+  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle, Flame, Trophy,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
+import { DailyChallenge } from "@/components/ui/DailyChallenge";
 
 function fadeUp(delay = 0) {
   return {
@@ -98,9 +99,14 @@ const FEATURE_CARDS = [
   },
 ];
 
+interface StreakData { current_streak: number; longest_streak: number; streak_freeze_count: number; }
+interface CoinData   { balance: number; lifetime_earned: number; }
+
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [hour, setHour]       = useState(new Date().getHours());
+  const [streak, setStreak]   = useState<StreakData | null>(null);
+  const [coins, setCoins]     = useState<CoinData | null>(null);
 
   // Review state
   const [showReview,      setShowReview]      = useState(false);
@@ -123,6 +129,19 @@ export default function StudentDashboard() {
         .eq("id", user.id)
         .maybeSingle();
       if (data) setProfile(data);
+
+      // Login reward + streak/coin data (parallel)
+      const [loginRes, streakRes, coinRes] = await Promise.allSettled([
+        api.post("/coins/login-reward", {}),
+        api.get("/streaks/me"),
+        api.get("/coins/me"),
+      ]);
+      if (loginRes.status === "fulfilled" && !loginRes.value.already_claimed && loginRes.value.awarded > 0) {
+        const bonus = loginRes.value.streak_bonus > 0 ? ` + ${loginRes.value.streak_bonus} streak bonus!` : "";
+        toast.success(`+${loginRes.value.awarded - loginRes.value.streak_bonus} coins for logging in${bonus} 🪙`);
+      }
+      if (streakRes.status === "fulfilled") setStreak(streakRes.value);
+      if (coinRes.status === "fulfilled")   setCoins(coinRes.value);
     })();
   }, []);
 
@@ -191,6 +210,39 @@ export default function StudentDashboard() {
         )}
       </motion.div>
 
+      {/* ── Streak + coins bar ── */}
+      {(streak || coins) && (
+        <motion.div {...fadeUp(0.07)} className="mb-6 flex flex-wrap gap-3">
+          {streak !== null && (
+            <Link href="/leaderboard" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:border-amber-500/35 transition-colors">
+              <Flame size={16} className={streak.current_streak >= 7 ? "text-orange-400" : "text-amber-400"} />
+              <div>
+                <p className="text-xs text-text-muted leading-none">Streak</p>
+                <p className="text-sm font-bold text-text-primary leading-tight">{streak.current_streak} days</p>
+              </div>
+            </Link>
+          )}
+          {coins !== null && (
+            <Link href="/coins" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:border-amber-500/35 transition-colors">
+              <span className="text-base">🪙</span>
+              <div>
+                <p className="text-xs text-text-muted leading-none">Coins</p>
+                <p className="text-sm font-bold text-amber-400 leading-tight">{coins.balance.toLocaleString()}</p>
+              </div>
+            </Link>
+          )}
+          {streak !== null && streak.current_streak > 0 && (
+            <Link href="/leaderboard" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border bg-bg-card hover:border-accent/30 transition-colors">
+              <Trophy size={16} className="text-violet-400" />
+              <div>
+                <p className="text-xs text-text-muted leading-none">Best streak</p>
+                <p className="text-sm font-bold text-text-primary leading-tight">{streak.longest_streak} days</p>
+              </div>
+            </Link>
+          )}
+        </motion.div>
+      )}
+
       {/* ── Main grid: left content + right review panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
@@ -246,6 +298,9 @@ export default function StudentDashboard() {
             </div>
           </Link>
           </motion.div>
+
+          {/* Daily challenge */}
+          <DailyChallenge onCoinsEarned={(n) => setCoins(prev => prev ? { ...prev, balance: prev.balance + n } : prev)} />
 
           {/* Feature cards */}
           <motion.div {...fadeUp(0.17)}>

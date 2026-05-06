@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CheckCircle, FileText,
   GraduationCap, Users, BarChart3, Settings, X, Swords,
+  Wallet, Ticket, Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -17,8 +18,11 @@ const navItems = [
   { href: "/admin/papers",     icon: FileText,        label: "Papers",      badge: false },
   { href: "/admin/subjects",   icon: GraduationCap,   label: "Subjects",    badge: false },
   { href: "/admin/users",      icon: Users,           label: "Users",       badge: false },
-  { href: "/admin/analytics",  icon: BarChart3,       label: "Analytics",   badge: false },
-  { href: "/admin/settings",   icon: Settings,        label: "Settings",    badge: false },
+  { href: "/admin/analytics",   icon: BarChart3,       label: "Analytics",   badge: false },
+  { href: "/admin/coins",       icon: Wallet,          label: "Coins",       badge: false },
+  { href: "/admin/coupons",     icon: Ticket,          label: "Coupons",     badge: false },
+  { href: "/admin/challenges",  icon: Zap,             label: "Challenges",  badge: false },
+  { href: "/admin/settings",    icon: Settings,        label: "Settings",    badge: false },
 ];
 
 const COLLAPSED = 60;

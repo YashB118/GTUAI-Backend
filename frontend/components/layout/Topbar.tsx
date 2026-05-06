@@ -5,6 +5,8 @@ import { Menu, LogOut, Search } from "lucide-react";
 import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { StreakBadge } from "@/components/ui/StreakBadge";
+import { CoinBalance } from "@/components/ui/CoinBalance";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -63,10 +65,14 @@ export function Topbar({
         <kbd className="hidden sm:inline text-[10px] border border-border/60 rounded px-1.5 py-0.5 font-mono shrink-0">⌘K</kbd>
       </button>
 
-      {/* Right — streak/points placeholder + avatar */}
+      {/* Right — streak + coins + avatar */}
       <div className="flex items-center gap-2 ml-auto">
-        {/* Streak placeholder — wired up later */}
-        {/* <StreakBadge /> */}
+        {userRole === "student" && (
+          <>
+            <StreakBadge />
+            <CoinBalance />
+          </>
+        )}
 
         {/* Avatar + dropdown */}
         <div className="relative">
