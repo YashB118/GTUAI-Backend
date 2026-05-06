@@ -253,16 +253,19 @@ function PredictInner() {
     setPredictions([]);
     answersCache.current = {};
     try {
+      // Gate check — deduct coins, enforce 10/day limit
+      const gate = await api.post("/coins/gate", { feature: "predict" });
+      if (!gate.allowed) {
+        toast.error(gate.reason || "Aaj ke 10 Andaza uses khatam ho gaye");
+        return;
+      }
+      notifyCoinsEarned(gate.balance);
+      toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
+
       const data = await api.get(`/predictions/${subjectId}${forceRefresh ? "?force_refresh=true" : ""}`);
       setPredictions(data.predictions || []);
       setPaperCount(data.paper_count || 0);
       setSources(data.sources || []);
-      // Award coins for using Andaza Laga (max 3/day, fire-and-forget)
-      api.post("/coins/predict-reward", {}).then((res) => {
-        if (res.awarded > 0) {
-          notifyCoinsEarned(res.balance);
-        }
-      }).catch(() => {});
     } catch { setPredictions([]); }
     finally { setLoadingPredictions(false); }
   }, []);

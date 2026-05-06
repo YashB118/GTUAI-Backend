@@ -28,6 +28,8 @@ const TX_LABELS: Record<string, { label: string; emoji: string }> = {
   challenge_correct: { label: "Challenge correct",   emoji: "✅" },
   challenge_attempt: { label: "Challenge attempt",   emoji: "🎯" },
   brahmastra:        { label: "Brahmastra used",     emoji: "⚔️" },
+  spend_brahmastra:  { label: "Brahmastra",          emoji: "⚔️" },
+  spend_predict:     { label: "Andaza Laga",         emoji: "✨" },
   admin_grant:       { label: "Admin reward",        emoji: "🎁" },
   coupon:            { label: "Coupon redeemed",     emoji: "🎟️" },
   spend_ai:          { label: "Extra AI query",      emoji: "🤖" },
@@ -38,21 +40,17 @@ const SHOP_ITEMS = [
   {
     id: "streak_freeze",
     name: "Streak Freeze",
-    desc: "Miss a day without losing your streak",
+    desc: "Miss a day without losing your streak. Max 3 at a time.",
     cost: 50,
     emoji: "🧊",
     color: "border-blue-500/25 hover:border-blue-500/40",
     badge: "bg-blue-500/10 text-blue-400",
   },
-  {
-    id: "ai_query",
-    name: "Extra AI Query",
-    desc: "One extra Brahmastra / chat query (beyond 5 free/day)",
-    cost: 10,
-    emoji: "🤖",
-    color: "border-violet-500/25 hover:border-violet-500/40",
-    badge: "bg-violet-500/10 text-violet-400",
-  },
+];
+
+const FEATURE_COSTS = [
+  { name: "Andaza Laga", emoji: "✨", cost: 2, limit: "10/day" },
+  { name: "Brahmastra",  emoji: "⚔️", cost: 5, limit: "3/day"  },
 ];
 
 export default function CoinsPage() {
@@ -186,6 +184,23 @@ export default function CoinsPage() {
             </div>
           ))}
         </div>
+      </motion.div>
+
+      {/* Feature costs info */}
+      <motion.div {...fadeUp(0.12)} className="rounded-2xl border border-border bg-bg-card p-5">
+        <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Feature Costs (per use)</p>
+        <div className="space-y-2">
+          {FEATURE_COSTS.map(f => (
+            <div key={f.name} className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">{f.emoji} {f.name}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-text-muted">{f.limit}</span>
+                <span className="font-semibold text-amber-400">-{f.cost} 🪙 / use</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-text-muted mt-3">Earn coins: daily login (+10), challenges (+5–20), streak bonuses</p>
       </motion.div>
 
       {/* Transaction history */}

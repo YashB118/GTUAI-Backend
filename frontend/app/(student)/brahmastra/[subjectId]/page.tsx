@@ -297,6 +297,8 @@ export default function BrahmastraPage() {
   const [error, setError]     = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [studyQ, setStudyQ]   = useState<BrahmastraQuestion | null>(null);
+  const [gateBlocked, setGateBlocked] = useState(false);
+  const [gateMsg, setGateMsg]         = useState("");
 
   // Done tracking via localStorage
   const [done, setDone] = useState<Set<number>>(new Set());
@@ -316,18 +318,19 @@ export default function BrahmastraPage() {
 
   const load = useCallback(async (forceRefresh = false) => {
     try {
+      // Gate check — deducts coins, enforces 3/day limit
+      const gate = await api.post("/coins/gate", { feature: "brahmastra" });
+      if (!gate.allowed) {
+        setGateBlocked(true);
+        setGateMsg(gate.reason || "Aaj ke 3 Brahmastra uses khatam ho gaye");
+        return;
+      }
+      notifyCoinsEarned(gate.balance);
+      toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
+
       const data = await api.getBrahmastraBrief(subjectId, forceRefresh);
       setBrief(data);
       setError(null);
-      // Award coins for using Brahmastra (max 3/day, fire-and-forget)
-      if (!data.from_cache || forceRefresh) {
-        api.post("/coins/brahmastra-reward", {}).then((res) => {
-          if (res.awarded > 0) {
-            toast.success(`+${res.awarded} coins for using Brahmastra 🪙`);
-            notifyCoinsEarned(res.balance);
-          }
-        }).catch(() => {});
-      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Brief load nahi hua");
     }
@@ -381,6 +384,23 @@ export default function BrahmastraPage() {
         <div className="h-5 bg-bg-elevated rounded w-3/5" />
         <div className="h-24 bg-bg-elevated rounded-2xl" />
         <div className="h-[420px] bg-bg-elevated rounded-2xl" />
+      </div>
+    );
+  }
+
+  // ── Gate blocked ──
+  if (gateBlocked) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-sm space-y-4">
+          <div className="text-5xl">🔒</div>
+          <p className="text-lg font-semibold text-text-primary">Daily limit reached</p>
+          <p className="text-sm text-text-muted">{gateMsg}</p>
+          <p className="text-xs text-text-muted">Kal subah reset ho jayega · Coins earn karo daily challenge se</p>
+          <button onClick={() => router.push("/dashboard")} className="text-sm text-blue-400 hover:underline">
+            Dashboard pe wapas jao →
+          </button>
+        </div>
       </div>
     );
   }

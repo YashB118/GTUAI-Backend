@@ -182,37 +182,90 @@ async def claim_login_reward(user=Depends(get_current_user)):
     }
 
 
-@router.post("/brahmastra-reward")
-async def claim_brahmastra_reward(user=Depends(get_current_user)):
-    """Award coins for using Brahmastra. Max 3/day."""
-    return await _claim_feature_reward(user["sub"], "brahmastra", "Brahmastra oracle used")
+# ── Feature gate — costs coins, enforces daily limit ─────────────────────────
+
+FEATURE_CONFIG = {
+    "brahmastra": {"cost": 5,  "daily_limit": 3,  "tx_type": "spend_brahmastra", "label": "Brahmastra"},
+    "predict":    {"cost": 2,  "daily_limit": 10, "tx_type": "spend_predict",    "label": "Andaza Laga"},
+}
 
 
-@router.post("/predict-reward")
-async def claim_predict_reward(user=Depends(get_current_user)):
-    """Award coins for running Andaza Laga predictions. Max 3/day."""
-    return await _claim_feature_reward(user["sub"], "brahmastra", "Andaza Laga predictions viewed")
+class GateRequest(BaseModel):
+    feature: str  # "brahmastra" | "predict"
 
 
-async def _claim_feature_reward(user_id: str, tx_type: str, note: str):
+@router.post("/gate")
+async def gate_feature(req: GateRequest, user=Depends(get_current_user)):
+    """
+    Call BEFORE loading a gated feature.
+    Returns {allowed, remaining, coins_spent, balance}.
+    Deducts coins and records daily usage atomically.
+    """
+    cfg = FEATURE_CONFIG.get(req.feature)
+    if not cfg:
+        raise HTTPException(status_code=400, detail=f"Unknown feature '{req.feature}'")
+
     supabase = get_supabase()
+    user_id = user["sub"]
     today = date.today()
 
-    already = (
+    used_today = (
         supabase.table("coin_transactions")
         .select("id")
         .eq("user_id", user_id)
-        .eq("type", tx_type)
+        .eq("type", cfg["tx_type"])
         .gte("created_at", f"{today.isoformat()}T00:00:00+00:00")
         .execute()
     )
-    already_count = len((already.data or []) if already else [])
-    if already_count >= 3:
-        row = _ensure_coin_row(supabase, user_id)
-        return {"awarded": 0, "balance": row["balance"], "limit_reached": True}
+    used_count = len((used_today.data or []) if used_today else [])
 
-    new_balance = add_coins(user_id, BRAHMASTRA_REWARD, tx_type, note)
-    return {"awarded": BRAHMASTRA_REWARD, "balance": new_balance, "limit_reached": False}
+    if used_count >= cfg["daily_limit"]:
+        row = _ensure_coin_row(supabase, user_id)
+        return {
+            "allowed": False,
+            "remaining": 0,
+            "coins_spent": 0,
+            "balance": row["balance"],
+            "reason": f"Aaj ke {cfg['daily_limit']} {cfg['label']} uses khatam ho gaye",
+        }
+
+    # Deduct coins (raises 400 if insufficient balance)
+    new_balance = add_coins(user_id, -cfg["cost"], cfg["tx_type"],
+                            f"{cfg['label']} use #{used_count + 1}")
+
+    return {
+        "allowed": True,
+        "remaining": cfg["daily_limit"] - used_count - 1,
+        "coins_spent": cfg["cost"],
+        "balance": new_balance,
+    }
+
+
+@router.get("/gate/status")
+async def gate_status(user=Depends(get_current_user)):
+    """Returns today's remaining uses for all gated features."""
+    supabase = get_supabase()
+    user_id = user["sub"]
+    today = date.today()
+
+    result = {}
+    for feature, cfg in FEATURE_CONFIG.items():
+        used = (
+            supabase.table("coin_transactions")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("type", cfg["tx_type"])
+            .gte("created_at", f"{today.isoformat()}T00:00:00+00:00")
+            .execute()
+        )
+        used_count = len((used.data or []) if used else [])
+        result[feature] = {
+            "used": used_count,
+            "limit": cfg["daily_limit"],
+            "remaining": max(cfg["daily_limit"] - used_count, 0),
+            "cost_per_use": cfg["cost"],
+        }
+    return result
 
 
 class SpendRequest(BaseModel):
