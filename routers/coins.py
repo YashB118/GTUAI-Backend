@@ -28,17 +28,19 @@ FREE_AI_QUERIES  = 5
 
 def _ensure_coin_row(supabase, user_id: str) -> dict:
     """Upsert user_coins row, return current row."""
-    res = supabase.table("user_coins").select("*").eq("user_id", user_id).maybe_single().execute()
-    if res.data:
-        return res.data
+    res = supabase.table("user_coins").select("*").eq("user_id", user_id).limit(1).execute()
+    rows = (res.data or []) if res else []
+    if rows:
+        return rows[0]
     supabase.table("user_coins").insert({"user_id": user_id, "balance": 0, "lifetime_earned": 0}).execute()
     return {"user_id": user_id, "balance": 0, "lifetime_earned": 0}
 
 
 def _ensure_streak_row(supabase, user_id: str) -> dict:
-    res = supabase.table("user_streaks").select("*").eq("user_id", user_id).maybe_single().execute()
-    if res.data:
-        return res.data
+    res = supabase.table("user_streaks").select("*").eq("user_id", user_id).limit(1).execute()
+    rows = (res.data or []) if res else []
+    if rows:
+        return rows[0]
     supabase.table("user_streaks").insert({"user_id": user_id}).execute()
     return {"user_id": user_id, "current_streak": 0, "longest_streak": 0,
             "last_active_date": None, "streak_freeze_count": 0}
@@ -125,10 +127,10 @@ async def claim_login_reward(user=Depends(get_current_user)):
         .eq("user_id", user_id)
         .eq("type", "login")
         .gte("created_at", f"{today.isoformat()}T00:00:00+00:00")
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    if already.data:
+    if already and (already.data or []):
         row = _ensure_coin_row(supabase, user_id)
         streak = _ensure_streak_row(supabase, user_id)
         return {

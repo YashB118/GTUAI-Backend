@@ -15,8 +15,16 @@ from routers.coins import add_coins
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 logger = logging.getLogger(__name__)
 
-ATTEMPT_REWARD = 5   # even for wrong answer
-CORRECT_REWARD = 15  # additional on correct
+ATTEMPT_REWARD = 5
+CORRECT_REWARD = 15
+
+
+def _one(res) -> dict | None:
+    """Safe single-row extractor — handles None response from supabase-py."""
+    if res is None:
+        return None
+    rows = res.data or []
+    return rows[0] if rows else None
 
 
 @router.get("/today")
@@ -24,49 +32,47 @@ async def get_today_challenge(user=Depends(get_current_user)):
     supabase = get_supabase()
     today = date.today().isoformat()
 
-    ch = (
+    ch = _one(
         supabase.table("daily_challenges")
         .select("id, question_text, options, coin_reward, subject_id, subjects:subject_id(name)")
         .eq("active_date", today)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    if not ch.data:
+    if not ch:
         return {"challenge": None}
 
-    # Check if user already attempted
-    attempt = (
+    attempt = _one(
         supabase.table("challenge_attempts")
         .select("selected_option, is_correct, coins_earned")
         .eq("user_id", user["sub"])
-        .eq("challenge_id", ch.data["id"])
-        .maybe_single()
+        .eq("challenge_id", ch["id"])
+        .limit(1)
         .execute()
     )
 
     result = {
         "challenge": {
-            "id": ch.data["id"],
-            "question_text": ch.data["question_text"],
-            "options": ch.data["options"],
-            "coin_reward": ch.data["coin_reward"],
-            "subject": (ch.data.get("subjects") or {}).get("name"),
+            "id": ch["id"],
+            "question_text": ch["question_text"],
+            "options": ch["options"],
+            "coin_reward": ch["coin_reward"],
+            "subject": (ch.get("subjects") or {}).get("name"),
         },
-        "attempted": bool(attempt.data),
+        "attempted": bool(attempt),
     }
-    if attempt.data:
-        result["attempt"] = attempt.data
-        # Reveal correct answer after attempt
-        full = (
+    if attempt:
+        result["attempt"] = attempt
+        full = _one(
             supabase.table("daily_challenges")
             .select("correct_option, explanation")
-            .eq("id", ch.data["id"])
-            .maybe_single()
+            .eq("id", ch["id"])
+            .limit(1)
             .execute()
         )
-        if full.data:
-            result["correct_option"] = full.data["correct_option"]
-            result["explanation"] = full.data.get("explanation")
+        if full:
+            result["correct_option"] = full["correct_option"]
+            result["explanation"] = full.get("explanation")
 
     return result
 
@@ -81,31 +87,30 @@ async def submit_attempt(req: AttemptRequest, user=Depends(get_current_user)):
     supabase = get_supabase()
     user_id = user["sub"]
 
-    ch = (
+    ch = _one(
         supabase.table("daily_challenges")
         .select("id, correct_option, explanation, coin_reward, active_date")
         .eq("id", req.challenge_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    if not ch.data:
+    if not ch:
         raise HTTPException(status_code=404, detail="Challenge not found")
-    if ch.data["active_date"] != date.today().isoformat():
+    if ch["active_date"] != date.today().isoformat():
         raise HTTPException(status_code=400, detail="This challenge is not for today")
 
-    # One attempt per challenge per user
-    existing = (
+    existing = _one(
         supabase.table("challenge_attempts")
         .select("id")
         .eq("user_id", user_id)
         .eq("challenge_id", req.challenge_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    if existing.data:
+    if existing:
         raise HTTPException(status_code=409, detail="Already attempted today's challenge")
 
-    is_correct = req.selected_option == ch.data["correct_option"]
+    is_correct = req.selected_option == ch["correct_option"]
     coins_earned = ATTEMPT_REWARD + (CORRECT_REWARD if is_correct else 0)
 
     supabase.table("challenge_attempts").insert({
@@ -122,8 +127,8 @@ async def submit_attempt(req: AttemptRequest, user=Depends(get_current_user)):
 
     return {
         "is_correct": is_correct,
-        "correct_option": ch.data["correct_option"],
-        "explanation": ch.data.get("explanation"),
+        "correct_option": ch["correct_option"],
+        "explanation": ch.get("explanation"),
         "coins_earned": coins_earned,
         "balance": new_balance,
     }

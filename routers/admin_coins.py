@@ -68,8 +68,8 @@ class GrantCoinsRequest(BaseModel):
 @router.post("/coins/grant")
 async def grant_coins(req: GrantCoinsRequest, admin=Depends(require_admin)):
     supabase = get_supabase()
-    user = supabase.table("users").select("id").eq("id", req.user_id).maybe_single().execute()
-    if not user.data:
+    user_res = supabase.table("users").select("id").eq("id", req.user_id).limit(1).execute()
+    if not (user_res and user_res.data):
         raise HTTPException(status_code=404, detail="User not found")
 
     new_balance = add_coins(req.user_id, req.amount, "admin_grant", req.note)
@@ -137,8 +137,8 @@ async def create_coupon(req: CreateCouponRequest, admin=Depends(require_admin)):
     code = (req.code or _gen_code()).strip().upper()
 
     # Ensure unique
-    existing = supabase.table("coupons").select("id").eq("code", code).maybe_single().execute()
-    if existing.data:
+    existing = supabase.table("coupons").select("id").eq("code", code).limit(1).execute()
+    if existing and existing.data:
         raise HTTPException(status_code=409, detail=f"Code '{code}' already exists")
 
     payload = {
