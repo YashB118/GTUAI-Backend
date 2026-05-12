@@ -39,6 +39,29 @@ interface Prediction {
 
 type PaperStatus = "idle" | "queued" | "processing" | "done" | "failed";
 
+interface PaperSlot {
+  slotId:     string;
+  file:       File | null;
+  year:       string;
+  examType:   string;
+  paperId:    string | null;
+  status:     PaperStatus;
+  questionCount: number;
+}
+
+let _slotCounter = 0;
+function makePaperSlot(): PaperSlot {
+  return {
+    slotId:        String(++_slotCounter),
+    file:          null,
+    year:          String(new Date().getFullYear()),
+    examType:      "winter",
+    paperId:       null,
+    status:        "idle",
+    questionCount: 0,
+  };
+}
+
 const EXAM_TYPES = [
   { value: "winter", label: "Winter" },
   { value: "summer", label: "Summer" },
@@ -91,6 +114,107 @@ function groupByUnit(predictions: Prediction[]): [string, Prediction[]][] {
   });
 }
 
+// ---------------------------------------------------------------------------
+// PaperSlotRow — one row in the multi-paper upload form
+// ---------------------------------------------------------------------------
+const STATUS_ICON: Record<PaperStatus, React.ReactNode> = {
+  idle:       null,
+  queued:     <span className="text-xs text-amber-400">Queued</span>,
+  processing: <span className="text-xs text-blue-400 animate-pulse">Analyzing…</span>,
+  done:       <span className="text-xs text-emerald-400">Done</span>,
+  failed:     <span className="text-xs text-red-400">Failed</span>,
+};
+
+function PaperSlotRow({
+  slot, index, total, onFileSelect, onYearChange, onExamTypeChange, onRemove,
+}: {
+  slot: PaperSlot;
+  index: number;
+  total: number;
+  onFileSelect: (slotId: string, files: FileList | null) => void;
+  onYearChange: (y: string) => void;
+  onExamTypeChange: (t: string) => void;
+  onRemove: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isActive = slot.status === "queued" || slot.status === "processing";
+
+  return (
+    <div className={`rounded-xl border transition-colors ${
+      slot.status === "done"    ? "border-emerald-500/30 bg-emerald-500/5" :
+      slot.status === "failed"  ? "border-red-500/30 bg-red-500/5" :
+      isActive                  ? "border-amber-500/30 bg-amber-500/5" :
+                                  "border-border bg-bg-elevated"
+    } p-3`}>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs text-text-muted font-medium">Paper {index + 1}</span>
+        {STATUS_ICON[slot.status]}
+        {slot.status === "done" && slot.questionCount > 0 && (
+          <span className="text-xs text-emerald-400">· {slot.questionCount} questions</span>
+        )}
+        {total > 1 && slot.status === "idle" && (
+          <button onClick={onRemove} className="ml-auto text-text-muted hover:text-red-400 transition-colors">
+            <X size={13} />
+          </button>
+        )}
+      </div>
+
+      {/* File selector */}
+      <div
+        onClick={() => !isActive && slot.status !== "done" && inputRef.current?.click()}
+        className={`border border-dashed rounded-lg px-3 py-2.5 text-center mb-2 transition-colors ${
+          slot.file ? "border-accent/40 bg-accent/5 cursor-default" :
+          isActive || slot.status === "done" ? "border-border opacity-60 cursor-not-allowed" :
+          "border-border hover:border-accent/40 hover:bg-bg-card cursor-pointer"
+        }`}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,application/pdf"
+          className="hidden"
+          onChange={e => onFileSelect(slot.slotId, e.target.files)}
+          disabled={isActive || slot.status === "done"}
+        />
+        {slot.file ? (
+          <div className="flex items-center justify-center gap-2">
+            <FileText size={13} className="text-accent shrink-0" />
+            <span className="text-xs text-text-primary truncate max-w-[180px]">{slot.file.name}</span>
+            <span className="text-xs text-text-muted shrink-0">({(slot.file.size / 1024 / 1024).toFixed(1)} MB)</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-1.5">
+            <Upload size={13} className="text-text-muted" />
+            <span className="text-xs text-text-secondary">Click to select PDF (max 10 MB)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Year + Exam Type */}
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          value={slot.year}
+          onChange={e => onYearChange(e.target.value)}
+          disabled={isActive || slot.status === "done"}
+          style={{ colorScheme: "inherit" }}
+          className="bg-bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent/60 appearance-none disabled:opacity-50"
+        >
+          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select
+          value={slot.examType}
+          onChange={e => onExamTypeChange(e.target.value)}
+          disabled={isActive || slot.status === "done"}
+          style={{ colorScheme: "inherit" }}
+          className="bg-bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent/60 appearance-none disabled:opacity-50"
+        >
+          {EXAM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function PredictInner() {
   const searchParams = useSearchParams();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -101,19 +225,11 @@ function PredictInner() {
   const [paperCount, setPaperCount] = useState(0);
   const [sources, setSources] = useState<string[]>([]);
 
-  // Upload panel
+  // Upload panel — multi-paper batch
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [year, setYear] = useState(String(new Date().getFullYear()));
-  const [examType, setExamType] = useState("winter");
+  const [paperSlots, setPaperSlots] = useState<PaperSlot[]>([makePaperSlot()]);
   const [uploading, setUploading] = useState(false);
-  const [paperId, setPaperId] = useState<string | null>(null);
-  const [paperStatus, setPaperStatus] = useState<PaperStatus>("idle");
-  const [questionCount, setQuestionCount] = useState(0);
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
-  const paperStatusRef = useRef<PaperStatus>("idle");
   const selectedSubjectIdRef = useRef<string | null>(null);
 
   // Answer modal
@@ -147,6 +263,9 @@ function PredictInner() {
         marks: p.expected_marks ?? 7,
         pattern_id: p.pattern_id,
       });
+      if (data.is_fallback) {
+        toast.warning("AI is busy — answer template shown. Click 'Generate Answer' again in a moment.");
+      }
       const payload: AnswerPayload = {
         text: data.answer || "No answer available.",
         sources: data.sources || [],
@@ -155,7 +274,8 @@ function PredictInner() {
         readyToWriteAnswer: data.ready_to_write_answer || null,
         codeExample: data.code_example || null,
       };
-      if (p.pattern_id) answersCache.current[p.pattern_id] = payload;
+      // Don't cache fallback responses — force fresh generation next open
+      if (p.pattern_id && !data.is_fallback) answersCache.current[p.pattern_id] = payload;
       // Only update state if the modal is still showing this question
       setModalPrediction(cur => {
         if (!cur) return cur;
@@ -247,27 +367,46 @@ function PredictInner() {
     load();
   }, [searchParams]);
 
-  const loadPredictions = useCallback(async (subjectId: string, forceRefresh = false) => {
+  const loadPredictions = useCallback(async (
+    subjectId: string,
+    forceRefresh = false,
+    gated = false,   // true only when user explicitly clicks Refresh
+  ) => {
     if (!subjectId) return;
     setLoadingPredictions(true);
-    setPredictions([]);
-    answersCache.current = {};
+    if (forceRefresh) {
+      setPredictions([]);
+      answersCache.current = {};
+    }
     try {
-      // Gate check — deduct coins, enforce 10/day limit
-      const gate = await api.post("/coins/gate", { feature: "predict" });
-      if (!gate.allowed) {
-        toast.error(gate.reason || "Aaj ke 10 Andaza uses khatam ho gaye");
-        return;
+      // Gate (deduct coins) ONLY when user manually requests a fresh generation.
+      // Auto-loads (subject select, post-upload refresh) are free — they hit the
+      // 3-day cache and don't burn coins or the 10/day limit.
+      if (gated) {
+        const gate = await api.post("/coins/gate", { feature: "predict" });
+        if (!gate.allowed) {
+          toast.error(gate.reason || "Aaj ke 10 Andaza uses khatam ho gaye");
+          // Still try to serve whatever is cached — don't leave screen empty
+        } else {
+          notifyCoinsEarned(gate.balance);
+          toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
+        }
       }
-      notifyCoinsEarned(gate.balance);
-      toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
 
       const data = await api.get(`/predictions/${subjectId}${forceRefresh ? "?force_refresh=true" : ""}`);
       setPredictions(data.predictions || []);
       setPaperCount(data.paper_count || 0);
       setSources(data.sources || []);
-    } catch { setPredictions([]); }
-    finally { setLoadingPredictions(false); }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Only clear predictions on hard auth/network errors
+      if (msg.includes("401") || msg.includes("403")) {
+        setPredictions([]);
+        toast.error("Session expired — please log in again.");
+      } else {
+        toast.error(`Failed to load predictions: ${msg}`);
+      }
+    } finally { setLoadingPredictions(false); }
   }, []);
 
   useEffect(() => {
@@ -280,71 +419,95 @@ function PredictInner() {
     }
   }, [selectedSubjectId, subjects, loadPredictions]);
 
-  // Keep refs in sync so the interval can read latest values without re-creating
-  useEffect(() => { paperStatusRef.current = paperStatus; }, [paperStatus]);
   useEffect(() => { selectedSubjectIdRef.current = selectedSubjectId ?? null; }, [selectedSubjectId]);
 
+  // Poll active papers (batch)
   useEffect(() => {
-    if (!paperId) return;
     if (pollRef.current) clearInterval(pollRef.current);
 
-    pollRef.current = setInterval(async () => {
-      if (!["queued", "processing"].includes(paperStatusRef.current)) {
-        if (pollRef.current) clearInterval(pollRef.current);
-        return;
-      }
-      try {
-        const status = await api.get(`/papers/${paperId}/status`);
-        const mapped: PaperStatus = status.processing_status === "pending" ? "queued" : status.processing_status;
-        setPaperStatus(mapped);
-        paperStatusRef.current = mapped;
-        if (status.processing_status === "done") {
-          setQuestionCount(status.question_count || 0);
-          toast.success(`Paper processed — ${status.question_count || 0} questions extracted!`);
-          const sid = selectedSubjectIdRef.current;
-          if (sid) setTimeout(() => loadPredictions(sid, true), 2000);
-        }
-        if (status.processing_status === "failed") {
-          toast.error("Paper processing failed. Try uploading again.");
-        }
-        if (["done", "failed"].includes(status.processing_status)) {
-          if (pollRef.current) clearInterval(pollRef.current);
-        }
-      } catch {}
-    }, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [paperId, loadPredictions]);
+    const activePaperIds = paperSlots
+      .filter(s => s.paperId && (s.status === "queued" || s.status === "processing"))
+      .map(s => s.paperId as string);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
+    if (!activePaperIds.length) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const results: Array<{id: string; processing_status: string; question_count: number}> =
+          await api.get(`/papers/batch-status?paper_ids=${activePaperIds.join(",")}`);
+
+        let anyDone = false;
+        setPaperSlots(prev => prev.map(slot => {
+          if (!slot.paperId) return slot;
+          const r = results.find(x => x.id === slot.paperId);
+          if (!r) return slot;
+          const status: PaperStatus = r.processing_status === "pending" ? "queued" : r.processing_status as PaperStatus;
+          if (r.processing_status === "done" && slot.status !== "done") {
+            toast.success(`${slot.file?.name ?? "Paper"} processed — ${r.question_count} questions extracted!`);
+            anyDone = true;
+          }
+          if (r.processing_status === "failed" && slot.status !== "failed") {
+            toast.error(`${slot.file?.name ?? "Paper"} processing failed.`);
+          }
+          return { ...slot, status, questionCount: r.question_count || 0 };
+        }));
+
+        if (anyDone) {
+          const sid = selectedSubjectIdRef.current;
+          if (sid) setTimeout(() => loadPredictions(sid, true), 1500);
+        }
+
+        // Stop polling when all done/failed
+        const stillActive = activePaperIds.filter(id => {
+          const r = results.find(x => x.id === id);
+          return r && (r.processing_status === "queued" || r.processing_status === "processing" || r.processing_status === "pending");
+        });
+        if (!stillActive.length && pollRef.current) clearInterval(pollRef.current);
+
+      } catch { /* silent */ }
+    }, 3000);
+
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [paperSlots.map(s => s.paperId).join(","), loadPredictions]);
+
+  const updateSlot = (slotId: string, patch: Partial<PaperSlot>) =>
+    setPaperSlots(prev => prev.map(s => s.slotId === slotId ? { ...s, ...patch } : s));
+
+  const handleFileSelect = (slotId: string, files: FileList | null) => {
+    const f = files?.[0];
     if (!f) return;
-    if (f.type !== "application/pdf") { toast.error("Only PDF files are allowed."); return; }
+    if (f.type !== "application/pdf") { toast.error("Only PDF files allowed."); return; }
     if (f.size > 10 * 1024 * 1024) { toast.error("File must be under 10 MB."); return; }
-    setFile(f);
+    updateSlot(slotId, { file: f });
   };
 
-  const handleUpload = async () => {
-    if (!file || !selectedSubjectId) return;
+  const handleUploadAll = async () => {
+    if (!selectedSubjectId) return;
+    const toUpload = paperSlots.filter(s => s.file && s.status === "idle");
+    if (!toUpload.length) { toast.error("Add at least one PDF first."); return; }
+
     setUploading(true);
-    setUploadedFileName(file.name);
-    const form = new FormData();
-    form.append("file", file);
-    form.append("subject_id", selectedSubjectId);
-    form.append("year", year);
-    form.append("exam_type", examType);
-    try {
-      const res = await api.upload("/papers/upload", form);
-      setPaperId(res.paper_id);
-      setPaperStatus("queued");
-      setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setUploadOpen(false);
-      toast.success("Paper uploaded — analyzing questions...");
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setUploading(false);
+    let uploadedCount = 0;
+
+    for (const slot of toUpload) {
+      updateSlot(slot.slotId, { status: "queued" });
+      const form = new FormData();
+      form.append("file", slot.file as File);
+      form.append("subject_id", selectedSubjectId);
+      form.append("year", slot.year);
+      form.append("exam_type", slot.examType);
+      try {
+        const res = await api.upload("/papers/upload", form);
+        updateSlot(slot.slotId, { paperId: res.paper_id, status: "queued" });
+        uploadedCount++;
+      } catch (e: unknown) {
+        updateSlot(slot.slotId, { status: "failed" });
+        toast.error(`${slot.file?.name}: ${e instanceof Error ? e.message : "Upload failed"}`);
+      }
     }
+
+    setUploading(false);
+    if (uploadedCount > 0) toast.success(`${uploadedCount} paper${uploadedCount > 1 ? "s" : ""} uploaded — analyzing...`);
   };
 
   const high   = predictions.filter(p => p.confidence === "HIGH").length;
@@ -377,7 +540,7 @@ function PredictInner() {
         </div>
         {selectedSubjectId && (
           <button
-            onClick={() => loadPredictions(selectedSubjectId, true)}
+            onClick={() => loadPredictions(selectedSubjectId, true, true)}
             className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-2.5 rounded-xl card-depth hover:card-depth-hover"
           >
             <RefreshCw size={12} />
@@ -574,16 +737,9 @@ function PredictInner() {
             </div>
           )}
 
-          {/* Processing status */}
-          {paperStatus !== "idle" && (
-            <ProcessingStatus
-              status={paperStatus}
-              questionCount={questionCount}
-              fileName={uploadedFileName}
-            />
-          )}
+          {/* Processing status — per paper, inline in slot rows */}
 
-          {/* Upload panel */}
+          {/* Upload panel — multi-paper batch */}
           <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
             <button
               onClick={() => setUploadOpen(v => !v)}
@@ -591,72 +747,57 @@ function PredictInner() {
             >
               <div className="flex items-center gap-2">
                 <Upload size={14} className="text-text-muted" />
-                <span className="text-sm font-medium text-text-primary">Upload Paper to Improve Predictions</span>
+                <span className="text-sm font-medium text-text-primary">Upload Papers to Improve Predictions</span>
+                {paperSlots.some(s => s.status === "queued" || s.status === "processing") && (
+                  <span className="text-xs text-amber-400 font-medium">· Processing...</span>
+                )}
+                {paperSlots.some(s => s.status === "done") && (
+                  <span className="text-xs text-emerald-400 font-medium">
+                    · {paperSlots.filter(s => s.status === "done").reduce((a, s) => a + s.questionCount, 0)} questions extracted
+                  </span>
+                )}
               </div>
               {uploadOpen ? <ChevronUp size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
             </button>
 
             {uploadOpen && (
-              <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-text-muted block mb-1">Year</label>
-                    <select
-                      value={year}
-                      onChange={e => setYear(e.target.value)}
-                      style={{ colorScheme: "inherit" }}
-                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 appearance-none"
-                    >
-                      {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-text-muted block mb-1">Exam Type</label>
-                    <select
-                      value={examType}
-                      onChange={e => setExamType(e.target.value)}
-                      style={{ colorScheme: "inherit" }}
-                      className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 appearance-none"
-                    >
-                      {EXAM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-                </div>
+              <div className="px-5 pb-5 border-t border-border pt-4 space-y-3">
+                <p className="text-xs text-text-muted">Add all past papers at once — upload them together for best prediction accuracy.</p>
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors ${
-                    file ? "border-accent/50 bg-accent/5" : "border-border hover:border-accent/40 hover:bg-bg-elevated"
-                  }`}
+                {paperSlots.map((slot, idx) => (
+                  <PaperSlotRow
+                    key={slot.slotId}
+                    slot={slot}
+                    index={idx}
+                    total={paperSlots.length}
+                    onFileSelect={handleFileSelect}
+                    onYearChange={y => updateSlot(slot.slotId, { year: y })}
+                    onExamTypeChange={t => updateSlot(slot.slotId, { examType: t })}
+                    onRemove={() => setPaperSlots(prev => prev.filter(s => s.slotId !== slot.slotId))}
+                  />
+                ))}
+
+                <button
+                  onClick={() => setPaperSlots(prev => [...prev, makePaperSlot()])}
+                  className="flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors py-1"
                 >
-                  <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" onChange={handleFileSelect} className="hidden" />
-                  {file ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <FileText size={14} className="text-accent" />
-                      <span className="text-sm text-text-primary">{file.name}</span>
-                      <span className="text-xs text-text-muted">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload size={18} className="mx-auto text-text-muted mb-1.5" />
-                      <p className="text-sm text-text-secondary">Click to select PDF</p>
-                      <p className="text-xs text-text-muted mt-0.5">Max 10 MB</p>
-                    </div>
-                  )}
-                </div>
+                  <Plus size={13} /> Add another paper
+                </button>
 
-                {file && (
-                  <button
-                    onClick={handleUpload}
-                    disabled={uploading || loadingPredictions || paperStatus === "queued" || paperStatus === "processing"}
-                    className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {uploading ? "Uploading..."
-                      : paperStatus === "queued" || paperStatus === "processing" ? "Processing paper..."
-                      : loadingPredictions ? "Loading predictions..."
-                      : "Upload & Analyze"}
-                  </button>
-                )}
+                <button
+                  onClick={handleUploadAll}
+                  disabled={
+                    uploading ||
+                    !paperSlots.some(s => s.file && s.status === "idle")
+                  }
+                  className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                >
+                  {uploading
+                    ? `Uploading...`
+                    : `Upload & Analyze ${paperSlots.filter(s => s.file && s.status === "idle").length > 0
+                        ? `(${paperSlots.filter(s => s.file && s.status === "idle").length} paper${paperSlots.filter(s => s.file && s.status === "idle").length > 1 ? "s" : ""})`
+                        : ""}`}
+                </button>
               </div>
             )}
           </div>
@@ -734,58 +875,24 @@ function PredictInner() {
                   </div>
                 ) : modalAnswer ? (
                   <>
-                    {(modalAnswer.expectedQuestionFormat || modalAnswer.howToWrite || modalAnswer.readyToWriteAnswer) && (
-                      <div className="space-y-4 mb-4">
-                        {modalAnswer.expectedQuestionFormat && (
-                          <div>
-                            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Expected Question Format</p>
-                            <div className="prose prose-sm prose-invert max-w-none text-text-secondary leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {modalAnswer.expectedQuestionFormat}
-                              </ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
-                        {modalAnswer.howToWrite && (
-                          <div>
-                            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">How to Write</p>
-                            <div className="prose prose-sm prose-invert max-w-none text-text-secondary leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {modalAnswer.howToWrite}
-                              </ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
-                        {modalAnswer.readyToWriteAnswer && (
-                          <div>
-                            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Ready-to-Write Answer</p>
-                            <div className="prose prose-sm prose-invert max-w-none text-text-secondary leading-relaxed">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {modalAnswer.readyToWriteAnswer}
-                              </ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
-                        {modalAnswer.codeExample && (
-                          <div>
-                            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Code Example</p>
-                            <pre className="bg-bg-elevated p-3 rounded-lg overflow-x-auto text-xs text-text-secondary">
-                              <code>{modalAnswer.codeExample}</code>
-                            </pre>
-                          </div>
-                        )}
-                        <div className="border-t border-border/50" />
-                      </div>
-                    )}
                     <div className="prose prose-sm prose-invert max-w-none text-text-secondary leading-relaxed
                       [&_strong]:text-text-primary [&_h1]:text-text-primary [&_h2]:text-text-primary
                       [&_h3]:text-text-primary [&_ul]:pl-4 [&_ol]:pl-4 [&_li]:my-0.5
                       [&_p]:my-1.5 [&_code]:bg-bg-elevated [&_code]:px-1 [&_code]:rounded
                       [&_pre]:bg-bg-elevated [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto">
+                      {/* Render the ready-to-write answer if extracted, otherwise full text */}
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {modalAnswer.text}
+                        {modalAnswer.readyToWriteAnswer || modalAnswer.text}
                       </ReactMarkdown>
                     </div>
+                    {modalAnswer.codeExample && (
+                      <div className="mt-3">
+                        <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Code Example</p>
+                        <pre className="bg-bg-elevated p-3 rounded-lg overflow-x-auto text-xs text-text-secondary">
+                          <code>{modalAnswer.codeExample}</code>
+                        </pre>
+                      </div>
+                    )}
                     {modalAnswer.sources.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-border/50">
                         <p className="text-[10px] font-medium text-text-muted uppercase tracking-wider mb-1.5">Sources</p>

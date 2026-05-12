@@ -34,6 +34,17 @@ export default function RootLayout({
             __html: `(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
           }}
         />
+        {/* Mermaid.js — browser-side diagram rendering (free, unlimited) */}
+        <script
+          type="module"
+          dangerouslySetInnerHTML={{
+            __html: `
+              import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+              window.mermaid = mermaid;
+              mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+            `,
+          }}
+        />
       </head>
       <body className={`${nunito.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
         {children}

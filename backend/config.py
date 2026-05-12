@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     class Config:
-        env_file = ".env"
+        env_file = (".env", "../.env")  # works from both backend/ and repo root
         env_file_encoding = "utf-8"
 
 
