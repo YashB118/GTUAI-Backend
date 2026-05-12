@@ -129,25 +129,24 @@ function AnswerSheet({
       });
       setLoading(false);
 
-      // Generate diagram async if question needs one
-      if (
-        detectResult.status === "fulfilled" &&
-        detectResult.value.requires_diagram
-      ) {
-        setDiagramLoading(true);
-        try {
-          const diagramData = await api.post("/diagrams/generate", {
-            question_text: question.text,
-            subject_id:    subjectId,
-            diagram_type:  detectResult.value.diagram_type || "block",
-            render_server: false,
-          });
-          if (!cancelled) setDiagram(diagramData);
-        } catch {
-          // silent — diagram is supplementary, not critical
-        } finally {
-          if (!cancelled) setDiagramLoading(false);
-        }
+      // Always generate diagram — use detected type if available, else "block"
+      const diagramType =
+        detectResult.status === "fulfilled"
+          ? detectResult.value.diagram_type || "block"
+          : "block";
+      setDiagramLoading(true);
+      try {
+        const diagramData = await api.post("/diagrams/generate", {
+          question_text: question.text,
+          subject_id:    subjectId,
+          diagram_type:  diagramType,
+          render_server: false,
+        });
+        if (!cancelled) setDiagram(diagramData);
+      } catch {
+        // silent — diagram is supplementary, not critical
+      } finally {
+        if (!cancelled) setDiagramLoading(false);
       }
     })();
 
