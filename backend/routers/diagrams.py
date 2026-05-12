@@ -48,7 +48,7 @@ async def generate_diagram(
     # Check cache
     cached = (
         supabase.table("diagram_cache")
-        .select("engine, dsl_code, fallback_ascii, svg_data, diagram_type")
+        .select("render_engine, dsl_code, svg_data, diagram_type")
         .eq("question_hash", q_hash)
         .limit(1)
         .execute()
@@ -56,9 +56,9 @@ async def generate_diagram(
     if cached.data:
         row = cached.data[0]
         return DiagramResponse(
-            engine=row["engine"],
+            engine=row["render_engine"],
             dsl=row["dsl_code"],
-            fallback_ascii=row.get("fallback_ascii") or "",
+            fallback_ascii="",
             svg=row.get("svg_data"),
             cached=True,
             diagram_type=row["diagram_type"],
@@ -119,7 +119,6 @@ async def generate_diagram(
             "diagram_type":  req.diagram_type,
             "render_engine": engine,
             "dsl_code":      dsl,
-            "fallback_ascii": fallback_ascii,
             "svg_data":      svg,
         }).execute()
     except Exception as e:
