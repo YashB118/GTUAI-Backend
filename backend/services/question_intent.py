@@ -67,6 +67,9 @@ _DIAGRAM_EXPLICIT = ("draw", "sketch", "show", "illustrate", "represent")
 _DIAGRAM_IMPLIED  = (
     "with diagram", "with neat diagram", "with figure",
     "with block diagram", "with labelled diagram", "with labeled diagram",
+    "provide a diagram", "draw a diagram", "draw the diagram",
+    "give a diagram", "give diagram", "with a diagram",
+    "show a diagram", "show diagram", "design a diagram",
 )
 
 _DIAGRAM_TYPE_HINTS: dict[str, str] = {
@@ -155,7 +158,11 @@ def detect_question_intent(question: str) -> QuestionIntent:
 
     explicit = any(lowered.startswith(v) or f" {v} " in lowered for v in _DIAGRAM_EXPLICIT)
     implied  = any(t in lowered for t in _DIAGRAM_IMPLIED)
-    requires_diagram = explicit or implied
+
+    # Fallback: "diagram" word anywhere + a type hint → clearly asking for visual
+    has_diagram_word = "diagram" in lowered or "figure" in lowered
+    has_type_hint    = any(hint in lowered for hint in _DIAGRAM_TYPE_HINTS)
+    requires_diagram = explicit or implied or (has_diagram_word and has_type_hint)
 
     diagram_type = DIAGRAM_NONE
     if requires_diagram:
