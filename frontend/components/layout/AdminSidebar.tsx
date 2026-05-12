@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CheckCircle, FileText,
   GraduationCap, Users, BarChart3, Settings, X,
-  Wallet, Ticket, Zap,
+  // Wallet, Ticket, Zap,  // coins/coupons/challenges — disabled
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,9 @@ const navItems = [
   { href: "/admin/subjects",   icon: GraduationCap,   label: "Subjects",    badge: false },
   { href: "/admin/users",      icon: Users,           label: "Users",       badge: false },
   { href: "/admin/analytics",   icon: BarChart3,       label: "Analytics",   badge: false },
-  { href: "/admin/coins",       icon: Wallet,          label: "Coins",       badge: false },
-  { href: "/admin/coupons",     icon: Ticket,          label: "Coupons",     badge: false },
-  { href: "/admin/challenges",  icon: Zap,             label: "Challenges",  badge: false },
+  // { href: "/admin/coins",       icon: Wallet,          label: "Coins",       badge: false },  // coins disabled
+  // { href: "/admin/coupons",     icon: Ticket,          label: "Coupons",     badge: false },  // coupons disabled
+  // { href: "/admin/challenges",  icon: Zap,             label: "Challenges",  badge: false },  // challenges disabled
   { href: "/admin/settings",    icon: Settings,        label: "Settings",    badge: false },
 ];
 

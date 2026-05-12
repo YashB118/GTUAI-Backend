@@ -10,8 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
-import { DailyChallenge } from "@/components/ui/DailyChallenge";
-import { notifyCoinsEarned, notifyStreakUpdated } from "@/lib/coinEvents";
+// import { DailyChallenge } from "@/components/ui/DailyChallenge";          // coins disabled
+// import { notifyCoinsEarned, notifyStreakUpdated } from "@/lib/coinEvents"; // coins disabled
 
 function fadeUp(delay = 0) {
   return {
@@ -100,14 +100,16 @@ const FEATURE_CARDS = [
   },
 ];
 
+/* coins disabled
 interface StreakData { current_streak: number; longest_streak: number; streak_freeze_count: number; }
 interface CoinData   { balance: number; lifetime_earned: number; }
+*/
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [hour, setHour]       = useState(new Date().getHours());
-  const [streak, setStreak]   = useState<StreakData | null>(null);
-  const [coins, setCoins]     = useState<CoinData | null>(null);
+  // const [streak, setStreak]   = useState<StreakData | null>(null);  // coins disabled
+  // const [coins, setCoins]     = useState<CoinData | null>(null);    // coins disabled
 
   // Review state
   const [showReview,      setShowReview]      = useState(false);
@@ -131,7 +133,7 @@ export default function StudentDashboard() {
         .maybeSingle();
       if (data) setProfile(data);
 
-      // Login reward + streak/coin data (parallel)
+      /* coins disabled — login reward + streak/coin fetch removed
       const [loginRes, streakRes, coinRes] = await Promise.allSettled([
         api.post("/coins/login-reward", {}),
         api.get("/streaks/me"),
@@ -145,6 +147,7 @@ export default function StudentDashboard() {
       }
       if (streakRes.status === "fulfilled") setStreak(streakRes.value);
       if (coinRes.status === "fulfilled")   setCoins(coinRes.value);
+      */
     })();
   }, []);
 
@@ -213,7 +216,7 @@ export default function StudentDashboard() {
         )}
       </motion.div>
 
-      {/* ── Streak + coins bar ── */}
+      {/* coins disabled — streak + coins bar removed
       {(streak || coins) && (
         <motion.div {...fadeUp(0.07)} className="mb-6 flex flex-wrap gap-3">
           {streak !== null && (
@@ -245,6 +248,7 @@ export default function StudentDashboard() {
           )}
         </motion.div>
       )}
+      */}
 
       {/* ── Main grid: left content + right review panel ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
@@ -302,8 +306,9 @@ export default function StudentDashboard() {
           </Link>
           </motion.div>
 
-          {/* Daily challenge */}
+          {/* Daily challenge — coins disabled
           <DailyChallenge onCoinsEarned={(n) => setCoins(prev => prev ? { ...prev, balance: prev.balance + n } : prev)} />
+          */}
 
           {/* Feature cards */}
           <motion.div {...fadeUp(0.17)}>

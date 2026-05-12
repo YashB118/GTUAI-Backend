@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
-import { notifyCoinsEarned } from "@/lib/coinEvents";
+// import { notifyCoinsEarned } from "@/lib/coinEvents";  // coins disabled
 import { ProcessingStatus } from "@/components/shared/ProcessingStatus";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { toast } from "sonner";
@@ -379,19 +379,17 @@ function PredictInner() {
       answersCache.current = {};
     }
     try {
-      // Gate (deduct coins) ONLY when user manually requests a fresh generation.
-      // Auto-loads (subject select, post-upload refresh) are free — they hit the
-      // 3-day cache and don't burn coins or the 10/day limit.
+      /* coins disabled — gate check removed
       if (gated) {
         const gate = await api.post("/coins/gate", { feature: "predict" });
         if (!gate.allowed) {
           toast.error(gate.reason || "Aaj ke 10 Andaza uses khatam ho gaye");
-          // Still try to serve whatever is cached — don't leave screen empty
         } else {
           notifyCoinsEarned(gate.balance);
           toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
         }
       }
+      */
 
       const data = await api.get(`/predictions/${subjectId}${forceRefresh ? "?force_refresh=true" : ""}`);
       setPredictions(data.predictions || []);

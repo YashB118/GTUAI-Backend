@@ -10,7 +10,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { notifyCoinsEarned } from "@/lib/coinEvents";
+// import { notifyCoinsEarned } from "@/lib/coinEvents";  // coins disabled
 import DiagramBlock from "@/components/shared/DiagramBlock";
 
 // ---------------------------------------------------------------------------
@@ -370,8 +370,8 @@ export default function BrahmastraPage() {
   const [error, setError]     = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [studyQ, setStudyQ]   = useState<BrahmastraQuestion | null>(null);
-  const [gateBlocked, setGateBlocked] = useState(false);
-  const [gateMsg, setGateMsg]         = useState("");
+  // const [gateBlocked, setGateBlocked] = useState(false);  // coins disabled
+  // const [gateMsg, setGateMsg]         = useState("");      // coins disabled
 
   // Done tracking via localStorage
   const [done, setDone] = useState<Set<number>>(new Set());
@@ -391,7 +391,7 @@ export default function BrahmastraPage() {
 
   const load = useCallback(async (forceRefresh = false) => {
     try {
-      // Gate check — deducts coins, enforces 3/day limit
+      /* coins disabled — gate check removed
       const gate = await api.post("/coins/gate", { feature: "brahmastra" });
       if (!gate.allowed) {
         setGateBlocked(true);
@@ -400,6 +400,7 @@ export default function BrahmastraPage() {
       }
       notifyCoinsEarned(gate.balance);
       toast.info(`-${gate.coins_spent} coins · ${gate.remaining} uses remaining today`);
+      */
 
       const data = await api.getBrahmastraBrief(subjectId, forceRefresh);
       setBrief(data);
@@ -461,7 +462,7 @@ export default function BrahmastraPage() {
     );
   }
 
-  // ── Gate blocked ──
+  /* coins disabled — gate blocked UI removed
   if (gateBlocked) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-6">
@@ -477,6 +478,7 @@ export default function BrahmastraPage() {
       </div>
     );
   }
+  */
 
   // ── Error ──
   if (error) {
