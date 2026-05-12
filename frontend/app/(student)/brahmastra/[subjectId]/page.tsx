@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { notifyCoinsEarned } from "@/lib/coinEvents";
+import DiagramBlock from "@/components/shared/DiagramBlock";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,6 +54,14 @@ interface AnswerData {
   readyToWriteAnswer?: string | null;
 }
 
+interface DiagramData {
+  engine: "mermaid" | "graphviz" | "ascii";
+  dsl: string;
+  fallback_ascii: string;
+  svg?: string | null;
+  diagram_type: string;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -80,33 +89,69 @@ function AnswerSheet({
   subjectId: string;
   onClose: () => void;
 }) {
-  const [answer, setAnswer]   = useState<AnswerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [copied, setCopied]   = useState(false);
+  const [answer, setAnswer]             = useState<AnswerData | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [copied, setCopied]             = useState(false);
+  const [diagram, setDiagram]           = useState<DiagramData | null>(null);
+  const [diagramLoading, setDiagramLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
-      try {
-        const data = await api.post("/answers/generate", {
+      // Run answer generation + diagram type detection in parallel
+      const [answerResult, detectResult] = await Promise.allSettled([
+        api.post("/answers/generate", {
           question_text: question.text,
           subject_id:    subjectId,
           marks:         question.marks || 7,
           pattern_id:    question.pattern_id || null,
-        });
-        setAnswer({
-          text:                   data.content || data.text || "",
-          sources:                data.source_titles || data.sources || [],
-          expectedQuestionFormat: data.expected_question_format,
-          howToWrite:             data.how_to_write,
-          readyToWriteAnswer:     data.ready_to_write_answer,
-        });
-      } catch (e: unknown) {
+        }),
+        api.get(`/diagrams/detect-type?question=${encodeURIComponent(question.text)}`),
+      ]);
+
+      if (cancelled) return;
+
+      if (answerResult.status === "rejected") {
+        const e = answerResult.reason;
         toast.error(e instanceof Error ? e.message : "Answer generate nahi hua");
         onClose();
-      } finally {
-        setLoading(false);
+        return;
+      }
+
+      const data = answerResult.value;
+      setAnswer({
+        text:                   data.answer || data.text || "",
+        sources:                data.source_titles || data.sources || [],
+        expectedQuestionFormat: data.expected_question_format,
+        howToWrite:             data.how_to_write,
+        readyToWriteAnswer:     data.ready_to_write_answer,
+      });
+      setLoading(false);
+
+      // Generate diagram async if question needs one
+      if (
+        detectResult.status === "fulfilled" &&
+        detectResult.value.requires_diagram
+      ) {
+        setDiagramLoading(true);
+        try {
+          const diagramData = await api.post("/diagrams/generate", {
+            question_text: question.text,
+            subject_id:    subjectId,
+            diagram_type:  detectResult.value.diagram_type || "block",
+            render_server: false,
+          });
+          if (!cancelled) setDiagram(diagramData);
+        } catch {
+          // silent — diagram is supplementary, not critical
+        } finally {
+          if (!cancelled) setDiagramLoading(false);
+        }
       }
     })();
+
+    return () => { cancelled = true; };
   }, [question, subjectId, onClose]);
 
   const handleCopy = async () => {
@@ -238,6 +283,34 @@ function AnswerSheet({
                   </ReactMarkdown>
                 </div>
               </div>
+
+              {/* Section: Diagram */}
+              {diagramLoading && (
+                <div className="rounded-2xl border border-purple-500/20 bg-purple-500/4 p-5">
+                  <p className="text-xs font-bold uppercase tracking-widest text-purple-400/80 mb-4">
+                    📐 Diagram
+                  </p>
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-32 bg-bg-elevated rounded-lg" />
+                    <p className="text-xs text-text-muted text-center pt-1">Diagram generate ho raha hai...</p>
+                  </div>
+                </div>
+              )}
+              {diagram && !diagramLoading && (
+                <div className="rounded-2xl border border-purple-500/20 bg-purple-500/4 p-5">
+                  <p className="text-xs font-bold uppercase tracking-widest text-purple-400/80 mb-4">
+                    📐 Diagram Reference
+                  </p>
+                  <DiagramBlock
+                    engine={diagram.engine}
+                    dsl={diagram.dsl}
+                    fallbackAscii={diagram.fallback_ascii}
+                    svgData={diagram.svg}
+                    diagramType={diagram.diagram_type}
+                    title={question.text.length > 60 ? question.text.slice(0, 60) + "…" : question.text}
+                  />
+                </div>
+              )}
 
               {/* Sources */}
               {answer.sources.length > 0 && (

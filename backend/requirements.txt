@@ -20,3 +20,6 @@ qdrant-client==1.12.0
 # Phase 5 — Security & Monitoring
 slowapi==0.1.9
 sentry-sdk[fastapi]==2.8.0
+
+# Phase 3.2 — Hybrid BM25+Qdrant search
+rank-bm25==0.2.2

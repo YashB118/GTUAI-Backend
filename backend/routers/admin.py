@@ -23,7 +23,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from database import get_supabase
+from database import get_supabase, get_storage_client
 from middleware.auth import require_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -76,7 +76,7 @@ async def material_preview_url(material_id: str, admin=Depends(require_admin)):
     )
     if not res.data:
         raise HTTPException(status_code=404, detail="Material not found")
-    signed = supabase.storage.from_("study-materials").create_signed_url(
+    signed = get_storage_client().storage.from_("study-materials").create_signed_url(
         res.data["file_url"], 300
     )
     url = (
@@ -248,8 +248,8 @@ async def admin_upload_paper(
     path = f"{subject_id}/{year}/{exam_type}/{safe_name}"
 
     try:
-        supabase.storage.from_("question-papers").upload(
-            path, content, {"content-type": "application/pdf"}
+        get_storage_client().storage.from_("question-papers").upload(
+            path, content, file_options={"content-type": "application/pdf", "upsert": "false"}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {e}")
@@ -341,7 +341,7 @@ async def delete_paper(paper_id: str, admin=Depends(require_admin)):
 
     # Delete storage object (best-effort)
     try:
-        supabase.storage.from_("question-papers").remove([paper_res.data["file_url"]])
+        get_storage_client().storage.from_("question-papers").remove([paper_res.data["file_url"]])
     except Exception as e:
         logger.warning(f"Could not delete storage object: {e}")
 

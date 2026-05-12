@@ -1,5 +1,6 @@
 import io
 import json
+import threading
 import uuid
 import logging
 from typing import Optional
@@ -9,30 +10,40 @@ import fitz  # PyMuPDF
 logger = logging.getLogger(__name__)
 
 _embedder = None
-_qdrant = None
+_qdrant   = None
+_embedder_lock = threading.Lock()   # prevents concurrent model init (race → meta-tensor crash)
+_qdrant_lock   = threading.Lock()
+
+MODEL_NAME = "BAAI/bge-small-en-v1.5"  # 384-dim, better accuracy than all-MiniLM-L6-v2
 
 
 def get_embedder():
     global _embedder
-    if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-        logger.info("Loading SentenceTransformer model (first time, may take a moment)...")
-        _embedder = SentenceTransformer("all-MiniLM-L6-v2")
-        logger.info("Embedding model loaded.")
+    if _embedder is not None:
+        return _embedder
+    with _embedder_lock:
+        if _embedder is None:   # double-checked locking
+            from sentence_transformers import SentenceTransformer
+            logger.info(f"Loading SentenceTransformer model {MODEL_NAME}...")
+            _embedder = SentenceTransformer(MODEL_NAME)
+            logger.info("Embedding model loaded.")
     return _embedder
 
 
 def get_qdrant():
     global _qdrant
-    if _qdrant is None:
-        from qdrant_client import QdrantClient
-        from config import settings
-        if not settings.qdrant_url:
-            raise RuntimeError("QDRANT_URL not configured in .env")
-        _qdrant = QdrantClient(
-            url=settings.qdrant_url,
-            api_key=settings.qdrant_api_key or None,
-        )
+    if _qdrant is not None:
+        return _qdrant
+    with _qdrant_lock:
+        if _qdrant is None:
+            from qdrant_client import QdrantClient
+            from config import settings
+            if not settings.qdrant_url:
+                raise RuntimeError("QDRANT_URL not configured in .env")
+            _qdrant = QdrantClient(
+                url=settings.qdrant_url,
+                api_key=settings.qdrant_api_key or None,
+            )
     return _qdrant
 
 
@@ -191,6 +202,9 @@ JSON array:"""
 
 def embed_text(text: str) -> list:
     embedder = get_embedder()
+    # BGE models improve accuracy with an instruction prefix for short queries
+    if len(text) < 200:
+        text = f"Represent this GTU exam question for retrieval: {text}"
     return embedder.encode(text, show_progress_bar=False).tolist()
 
 

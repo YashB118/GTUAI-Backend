@@ -74,7 +74,7 @@ def _score_patterns(
     unit_analysis: dict,
     paper_count: int,
 ) -> list[dict]:
-    from services.prediction_engine import calculate_score, compute_overdue_ratio
+    from services.prediction_engine import calculate_score, compute_overdue_ratio, recency_score
 
     results = []
     for p in patterns:
@@ -85,35 +85,50 @@ def _score_patterns(
         avg_marks  = p.get("avg_marks")
         base_score = calculate_score(years, avg_marks, total_papers=paper_count)
 
-        # Unit deficit bonus: if this question's unit is overdue, boost score
-        unit_key   = int(p.get("unit_number") or 0)
-        unit_info  = unit_analysis.get(unit_key, {})
-        deficit    = unit_info.get("deficit_score", 0.0)
-        bonus      = deficit * 8.0   # max +8 pts for fully deficit unit
+        unit_key  = int(p.get("unit_number") or 0)
+        unit_info = unit_analysis.get(unit_key, {})
+        deficit   = unit_info.get("deficit_score", 0.0)
+        bonus     = deficit * 7.0   # max +7 pts for fully deficit unit (syllabus 7% signal)
 
-        # Staleness penalty: asked this year → less likely to repeat
         penalty = 12.0 if (years and max(years) == CURRENT_YEAR) else 0.0
 
-        final_score    = round(min(base_score + bonus - penalty, 100.0), 2)
-        overdue_ratio  = compute_overdue_ratio(years)
+        final_score   = round(min(base_score + bonus - penalty, 100.0), 2)
+        overdue_ratio = compute_overdue_ratio(years)
+        rec           = recency_score(years)
+
+        # Compute multi-signal confidence band
+        band = _confidence_band(final_score, rec, unit_info)
 
         results.append({
-            "pattern_id":      p.get("id"),
-            "question":        p.get("canonical_text", ""),
-            "unit":            p.get("unit_number"),
-            "marks":           avg_marks,
+            "pattern_id":       p.get("id"),
+            "question":         p.get("canonical_text", ""),
+            "unit":             p.get("unit_number"),
+            "marks":            avg_marks,
             "confidence_score": final_score,
-            "times_asked":     p.get("occurrence_count", len(years)),
-            "years_asked":     years,
-            "last_asked":      p.get("last_asked_year"),
-            "question_type":   p.get("question_type"),
-            "answer":          p.get("answer"),
-            "source":          "pattern",
-            "overdue_ratio":   overdue_ratio,
-            "reasoning":       _pattern_reasoning(years, overdue_ratio, unit_info),
+            "confidence_band":  band,
+            "times_asked":      p.get("occurrence_count", len(years)),
+            "years_asked":      years,
+            "last_asked":       p.get("last_asked_year"),
+            "question_type":    p.get("question_type"),
+            "answer":           p.get("answer"),
+            "source":           "pattern",
+            "overdue_ratio":    overdue_ratio,
+            "recency_score":    round(rec, 3),
+            "reasoning":        _pattern_reasoning(years, overdue_ratio, unit_info),
         })
 
     return results
+
+
+def _confidence_band(score: float, rec: float, unit_info: dict) -> str:
+    """Multi-signal confidence band — HIGH/MEDIUM/LOW."""
+    deficit = unit_info.get("deficit_score", 0.0)
+    adjusted = score * 0.60 + rec * 100 * 0.25 + deficit * 100 * 0.15
+    if adjusted >= 75:
+        return "HIGH"
+    if adjusted >= 50:
+        return "MEDIUM"
+    return "LOW"
 
 
 def _pattern_reasoning(years: list[int], overdue_ratio: float, unit_info: dict) -> str:

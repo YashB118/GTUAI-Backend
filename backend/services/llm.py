@@ -12,9 +12,12 @@ Usage:
 
 import json
 import logging
+import time
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+_GROQ_RETRY_DELAYS = [5, 15, 30]  # seconds — for 429 / server errors
 
 
 def is_groq_available() -> bool:
@@ -59,15 +62,30 @@ def generate_json(prompt: str) -> list | dict:
 
 
 def _groq_generate(prompt: str, temperature: float, max_tokens: int) -> str:
-    from groq import Groq
+    from groq import Groq, RateLimitError
     client = Groq(api_key=settings.groq_api_key)
-    response = client.chat.completions.create(
-        model=settings.groq_model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
-    return response.choices[0].message.content
+
+    last_exc: Exception | None = None
+    for attempt, delay in enumerate([0] + _GROQ_RETRY_DELAYS, start=1):
+        if delay:
+            logger.warning(f"Groq rate-limited — waiting {delay}s before retry {attempt}")
+            time.sleep(delay)
+        try:
+            response = client.chat.completions.create(
+                model=settings.groq_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            return response.choices[0].message.content
+        except RateLimitError as e:
+            last_exc = e
+            logger.warning(f"Groq RateLimitError attempt {attempt}: {e}")
+        except Exception as e:
+            # Non-rate-limit errors: don't retry
+            raise
+
+    raise RuntimeError(f"Groq rate-limit persisted after {len(_GROQ_RETRY_DELAYS)+1} attempts") from last_exc
 
 
 def _gemini_generate(prompt: str) -> str:

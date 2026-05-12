@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, B
 from typing import Optional
 from middleware.auth import get_current_user
 from middleware.limiter import limiter
-from database import get_supabase
+from database import get_supabase, get_storage_client
 from services.file_validator import validate_pdf
 from workers.paper_worker import process_paper
 import uuid
@@ -34,8 +34,9 @@ async def upload_paper(
     path = f"{subject_id}/{year}/{exam_type}/{safe_name}"
 
     try:
-        upload_res = supabase.storage.from_("question-papers").upload(
-            path, content, {"content-type": "application/pdf"}
+        storage = get_storage_client()
+        upload_res = storage.storage.from_("question-papers").upload(
+            path, content, file_options={"content-type": "application/pdf", "upsert": "false"}
         )
         if hasattr(upload_res, "status_code") and upload_res.status_code >= 400:
             raise HTTPException(status_code=500, detail=f"Storage upload failed: {upload_res.text}")
@@ -63,6 +64,25 @@ async def upload_paper(
         background_tasks.add_task(process_paper, paper_id)
 
     return {"paper_id": paper_id, "status": "queued"}
+
+
+@router.get("/batch-status")
+async def batch_paper_status(
+    paper_ids: str,   # comma-separated
+    user=Depends(get_current_user),
+):
+    """Return status for multiple paper IDs in one call."""
+    supabase = get_supabase()
+    ids = [pid.strip() for pid in paper_ids.split(",") if pid.strip()]
+    if not ids:
+        return []
+    res = (
+        supabase.table("question_papers")
+        .select("id, processing_status, question_count, file_name")
+        .in_("id", ids)
+        .execute()
+    )
+    return res.data or []
 
 
 @router.get("/{paper_id}/status")

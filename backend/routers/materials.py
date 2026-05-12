@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Form, Depends, HTTPException, Query, Request
 from middleware.auth import get_current_user, require_admin
 from middleware.limiter import limiter
-from database import get_supabase
+from database import get_supabase, get_storage_client
 from services.file_validator import validate_pdf
 import uuid
 
@@ -33,8 +33,9 @@ async def upload_material(
     path = f"{subject_id}/{material_type}/{safe_name}"
 
     try:
-        upload_res = supabase.storage.from_("study-materials").upload(
-            path, content, {"content-type": "application/pdf"}
+        storage = get_storage_client()
+        upload_res = storage.storage.from_("study-materials").upload(
+            path, content, file_options={"content-type": "application/pdf", "upsert": "false"}
         )
         if hasattr(upload_res, "status_code") and upload_res.status_code >= 400:
             raise HTTPException(status_code=500, detail="Storage upload failed")
@@ -147,7 +148,7 @@ async def get_download_url(material_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Material not found")
     if res.data["approval_status"] != "approved":
         raise HTTPException(status_code=403, detail="Material not approved")
-    signed = supabase.storage.from_("study-materials").create_signed_url(
+    signed = get_storage_client().storage.from_("study-materials").create_signed_url(
         res.data["file_url"], 120
     )
     url = signed.get("signedURL") or signed.get("signed_url") or (signed.get("data") or {}).get("signedUrl")

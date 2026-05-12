@@ -17,7 +17,32 @@ from __future__ import annotations
 # Core rubric injected into every prompt.
 # Kept tight; tier-specific guidance comes from EXEMPLARS + style_block().
 # ---------------------------------------------------------------------------
-GTU_SYSTEM_RULES = """\
+GTU_EXAMINER_SYSTEM = """\
+You are a GTU (Gujarat Technological University) exam answer writer.
+Your goal: write the answer a TOPPER student would write — scoring 90%+ marks.
+
+GTU EXAMINER BEHAVIOUR (from official guidelines):
+- Examiner spends 2-3 minutes per paper. They SCAN for keywords, not read fully.
+- Each mark = one "tick" on their mental checklist of expected points.
+- Diagrams earn separate marks even if surrounding text is weak.
+- Neat labeled diagrams are awarded MORE marks per effort than equivalent text.
+- Technical vocabulary signals mastery. Examiners reward domain-specific terms.
+- Bullet points and numbered lists get ticked faster than dense paragraphs.
+"""
+
+GTU_FORMAT_RULES = """\
+MANDATORY FORMATTING RULES:
+1. Bold ALL technical keywords — they are tick targets for the examiner.
+2. Put formulas on their own line, bold them.
+3. Use numbered lists for processes/steps; bullet lists for properties/advantages.
+4. Separate the answer into clearly labeled sections (Introduction, Explanation, Diagram, Conclusion).
+5. Every 7-mark answer MUST end with a "**Conclusion:**" line.
+6. Numerical answers MUST show: Given -> Formula -> Substitution -> Result (bold result).
+7. For comparisons, ALWAYS use a table — examiners love tables.
+8. Do not pad. Short sharp answers score better than long padded ones.
+"""
+
+_GTU_TOPPER_RULES = """\
 GTU TOPPER ANSWER-WRITING RULES (Gujarat Technological University, BE/Diploma):
 
 GENERAL FORMAT:
@@ -72,6 +97,8 @@ MISTAKES TO AVOID (DON'T):
 - Don't skip units in formulas or numerical answers.
 - Don't end mid-thought; always include the **Conclusion:** line.
 """
+
+GTU_SYSTEM_RULES = f"{GTU_EXAMINER_SYSTEM}\n{GTU_FORMAT_RULES}\n{_GTU_TOPPER_RULES}"
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +192,58 @@ EXEMPLARS: dict[int, list[dict]] = {
         },
     ],
 }
+
+
+# ---------------------------------------------------------------------------
+# Mark-tier structural templates (used in build_gtu_system_prompt)
+# ---------------------------------------------------------------------------
+_MARK_TEMPLATES = {
+    3: (
+        "**[Topic Name]**\n"
+        "**Definition:** [One precise sentence using exact technical vocabulary]\n"
+        "**Key Points:**\n"
+        "- [Point 1 — max 15 words]\n"
+        "- [Point 2 — max 15 words]\n"
+        "- [Point 3 — max 15 words]\n"
+        "Total: ~6-8 lines. No padding. No conclusion needed."
+    ),
+    4: (
+        "**[Topic Name]**\n"
+        "**Definition/Introduction:** [1-2 lines]\n"
+        "**Explanation:**\n"
+        "1. [Step/Point 1]\n2. [Step/Point 2]\n3. [Step/Point 3]\n4. [Step/Point 4]\n"
+        "**Diagram:** [Quarter-page labeled diagram if applicable]\n"
+        "**Conclusion:** [1 line]\n"
+        "Total: ~12-15 lines + diagram."
+    ),
+    7: (
+        "**[Topic Name]**\n"
+        "**Introduction:** [2-3 lines — definition + significance]\n"
+        "**Working/Explanation:**\n"
+        "1-5. [Each point with elaboration — 2-3 sentences each]\n"
+        "**Diagram:** [Half-page neat labeled diagram with all components named]\n"
+        "*Explanation of diagram:* [2-3 lines referencing labels]\n"
+        "**Applications / Advantages:**\n- [App/Adv 1]\n- [App/Adv 2]\n- [App/Adv 3]\n"
+        "**Conclusion:** [1-2 lines — 'Hence, [topic] is important because...']\n"
+        "Total: ~22-28 lines + diagram."
+    ),
+}
+
+
+def build_gtu_system_prompt(template: str, marks: int, keywords: list[str]) -> str:
+    """Modular system prompt builder combining examiner rules + template + keywords."""
+    kw_str = ", ".join(f"**{k}**" for k in keywords) if keywords else "(none)"
+    tier_template = _MARK_TEMPLATES.get(
+        min(_MARK_TEMPLATES.keys(), key=lambda t: abs(t - marks)), ""
+    )
+    return (
+        f"{GTU_EXAMINER_SYSTEM}\n{GTU_FORMAT_RULES}\n\n"
+        f"ANSWER TEMPLATE: {template.upper()}\n"
+        f"MARKS AVAILABLE: {marks} marks\n"
+        f"APPROXIMATE LENGTH: {marks * 40} words (±30%)\n"
+        f"REQUIRED KEYWORDS (bold these): {kw_str}\n\n"
+        f"STRUCTURAL GUIDE FOR {marks}-MARK:\n{tier_template}"
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -15,7 +15,7 @@ def _get_qdrant():
     return get_qdrant()
 
 
-def retrieve_context(question: str, subject_id: str, limit: int = 5) -> tuple[str, list[str]]:
+def retrieve_context(question: str, subject_id: str, limit: int = 8) -> tuple[str, list[str]]:
     """
     Semantic search in gtu_study_materials for chunks relevant to the question.
     Returns (context_string, list_of_material_ids).
@@ -42,7 +42,7 @@ def retrieve_context(question: str, subject_id: str, limit: int = 5) -> tuple[st
                 )]
             ),
             limit=limit,
-            score_threshold=0.3,
+            score_threshold=0.5,  # raised from 0.3 to cut irrelevant context
         )
     except Exception as e:
         logger.warning(f"Context retrieval failed: {e}")
@@ -80,42 +80,58 @@ def _resolve_source_titles(supabase, material_ids: list[str]) -> list[str]:
 
 
 def _build_prompt(question: str, context: str, marks: int) -> str:
-    from services.gtu_style_guide import style_block, question_type_hint
+    from services.gtu_style_guide import build_gtu_system_prompt, style_block, question_type_hint
     from services.question_intent import detect_question_intent
+    from services.answer_quality import extract_expected_keywords
 
     word_limit = marks * 40
+    intent     = detect_question_intent(question)
+    keywords   = extract_expected_keywords(question, context)
+    template   = intent.template
+
+    # Temperature hint string (not used in prompt itself but available to caller)
+    _TEMPERATURE_BY_TEMPLATE = {
+        "definition":  0.15,
+        "list":        0.15,
+        "derivation":  0.10,
+        "numerical":   0.05,
+        "code":        0.20,
+        "comparison":  0.25,
+        "explanation": 0.30,
+        "diagram_only": 0.15,
+    }
+
     context_block = (
-        f"Relevant Study Material (ground your answer in this — quote definitions and "
-        f"facts from here verbatim where possible):\n{context}\n\n"
+        "CONTEXT BLOCK (ground your answer in this — quote definitions verbatim where possible):\n"
+        f"{context}\n\n"
+        "ACCURACY RULE: Only state facts supported by the Context Block above.\n"
+        "If a formula or value is not in the context, write 'Refer textbook for exact formula.'\n"
+        "Do NOT invent numerical values, formulas, or circuit specifications.\n\n"
         if context else ""
     )
 
-    style = style_block(marks)
-    type_hint = question_type_hint(question)
+    system_prompt = build_gtu_system_prompt(template, marks, keywords)
+    type_hint     = question_type_hint(question)
 
-    # Tier marker kept in legacy "{marks}-mark" form so downstream tooling /
-    # tests that grep for "3-mark", "7+ mark" etc. continue to work.
     tier_label = f"{marks}-mark" + (" (treat as 7+ mark tier)" if marks >= 7 else "")
-    intent = detect_question_intent(question)
     code_policy = (
         "CODE EXAMPLE POLICY:\n"
-        "- This is a technical/code-oriented question. You MUST include a correct and concise code example.\n"
-        "- Use a fenced markdown code block with language tag (prefer c, cpp, java, or python based on question wording).\n"
+        "- Include a correct, concise code example in a fenced block with language tag.\n"
         "- Keep code exam-suitable (short, readable, no unnecessary boilerplate).\n"
         "- After code, include a short dry-run/sample input-output.\n\n"
     ) if intent.requires_code_example else ""
 
-    return f"""You are a GTU (Gujarat Technological University) exam expert who writes
-answers exactly as a topper-grade BE/Diploma student would on a 70-mark theory paper.
-You are answering a {tier_label} question.
+    kw_str = ", ".join(f"**{k}**" for k in keywords) if keywords else ""
+    kw_block = (
+        f"MANDATORY KEYWORDS — these terms MUST appear in your answer (bold them):\n{kw_str}\n\n"
+        if kw_str else ""
+    )
 
-{style}
+    return f"""{system_prompt}
 
 {type_hint}
 
-{code_policy}
-
-{context_block}Question: {question}
+{code_policy}{kw_block}{context_block}Question: {question}
 
 FINAL INSTRUCTIONS:
 - Soft target word count: ~{word_limit} words (GTU norm: ~40 words per mark).
@@ -197,7 +213,7 @@ def generate_answer(
     if pattern_id:
         cached_res = (
             supabase.table("answers")
-            .select("content, source_titles")
+            .select("content, source_titles, quality_score, keyword_coverage, template_used")
             .eq("pattern_id", pattern_id)
             .order("generated_at", desc=True)
             .limit(1)
@@ -206,41 +222,65 @@ def generate_answer(
         if cached_res.data:
             row = cached_res.data[0]
             return {
-                "answer": row["content"],
+                "answer":  row["content"],
                 "sources": row.get("source_titles") or [],
-                "cached": True,
+                "cached":  True,
+                "quality": {
+                    "quality_score":    row.get("quality_score"),
+                    "keyword_coverage": row.get("keyword_coverage"),
+                    "template_used":    row.get("template_used"),
+                },
                 **_structured_payload(row["content"]),
             }
 
     context, source_ids = retrieve_context(question_text, subject_id)
     source_titles = _resolve_source_titles(supabase, source_ids)
     prompt = _build_prompt(question_text, context, marks)
+    is_fallback = False
     try:
         answer_text = generate_text(prompt, temperature=0.35, max_tokens=2048)
     except Exception as e:
         logger.warning(f"LLM generation failed, returning structured fallback: {e}")
         answer_text = _build_fallback_answer(question_text, marks)
+        is_fallback = True
 
-    if pattern_id:
+    # Never cache fallback answers — they pollute the cache with placeholder text
+    if pattern_id and not is_fallback:
+        from services.answer_quality import verify_answer_quality, extract_expected_keywords
+        from services.question_intent import detect_question_intent
         model_used = "groq-llama" if is_groq_available() else "gemini"
+        intent   = detect_question_intent(question_text)
+        keywords = extract_expected_keywords(question_text, context)
+        quality  = verify_answer_quality(answer_text, marks, intent.template, keywords, context)
         try:
             supabase.table("answers").insert({
-                "pattern_id": pattern_id,
-                "question_text": question_text,
-                "subject_id": subject_id,
-                "marks": marks,
-                "content": answer_text,
-                "word_count": len(answer_text.split()),
+                "pattern_id":          pattern_id,
+                "question_text":       question_text,
+                "subject_id":          subject_id,
+                "marks":               marks,
+                "content":             answer_text,
+                "word_count":          len(answer_text.split()),
                 "source_material_ids": source_ids if source_ids else None,
-                "source_titles": source_titles if source_titles else None,
-                "model_used": model_used,
+                "source_titles":       source_titles if source_titles else None,
+                "model_used":          model_used,
+                "quality_score":       quality["quality_score"],
+                "template_used":       intent.template,
+                "keyword_coverage":    quality["keyword_coverage"],
             }).execute()
         except Exception as e:
             logger.warning(f"Failed to cache answer for pattern {pattern_id}: {e}")
 
+    from services.answer_quality import verify_answer_quality, extract_expected_keywords
+    from services.question_intent import detect_question_intent
+    intent   = detect_question_intent(question_text)
+    keywords = extract_expected_keywords(question_text, context)
+    quality  = verify_answer_quality(answer_text, marks, intent.template, keywords, context)
+
     return {
-        "answer": answer_text,
-        "sources": source_titles,
-        "cached": False,
+        "answer":           answer_text,
+        "sources":          source_titles,
+        "cached":           False,
+        "is_fallback":      is_fallback,
+        "quality":          quality,
         **_structured_payload(answer_text),
     }

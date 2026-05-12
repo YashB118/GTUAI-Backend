@@ -1,24 +1,19 @@
 """
 Prediction Engine — Multi-signal Bayesian scoring for GTU exam question patterns.
 
-V2 — Four signals, properly calibrated:
-  1. Bayesian Frequency  [40%]  Beta-Binomial posterior — handles small samples correctly
-  2. Cycle-Aware Gap     [30%]  Overdue ratio from historical inter-appearance gaps
-  3. Consecutive Streak  [20%]  Longest run of back-to-back years
-  4. Marks Weight        [10%]  Heavier questions appear more reliably
+V3 — Five signals:
+  1. Bayesian Frequency  [30%]  Beta-Binomial posterior
+  2. Cycle-Aware Gap     [25%]  Overdue ratio from historical gaps
+  3. Recency             [20%]  Exponential decay — recent years count more
+  4. Consecutive Streak  [15%]  Longest run of back-to-back years
+  5. Marks Weight        [ 3%]  Heavier questions appear more reliably
+  + Syllabus deficit     [ 7%]  Overdue per-unit coverage
 
-Why Bayesian over simple normalization:
-  Simple: appeared 3/8 times → 3/8 = 37.5%
-  Bayesian: Beta(1.5, 6.5) posterior mean = 1.5/8 = 18.8% with uncertainty
-  The Bayesian model is conservative on sparse evidence — prevents false confidence.
-
-Why cycle-aware gap over simple recency:
-  Simple: "3+ years = peak". A question on a 2-year cycle is DUE at year 2.
-  A question on a 5-year cycle is not due at year 3.
-  Overdue ratio = current_gap / avg_historical_gap solves this precisely.
+Also adds text normalization for better semantic clustering (1.1),
+and recency_score() for the professor engine (1.2).
 """
 import logging
-import math
+import re
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -26,13 +21,44 @@ logger = logging.getLogger(__name__)
 
 CURRENT_YEAR = datetime.now().year
 
-# Jeffreys prior — optimal for binomial, unbiased for small samples
-# Beta(0.5, 0.5) — slightly conservative, avoids extreme posteriors with k=0 or k=n
 _BAYES_ALPHA = 0.5
 _BAYES_BETA  = 0.5
-
-# Default assumed cycle length when question has only 1 appearance
 _DEFAULT_CYCLE_YEARS = 3.0
+
+# ---------------------------------------------------------------------------
+# Phase 1.1 — Question text normalization for clustering
+# ---------------------------------------------------------------------------
+_NORMALIZATION_MAP = {
+    "what is":              "define",
+    "what are":             "list",
+    "explain briefly":      "explain",
+    "write short note on":  "explain",
+    "write a short note on": "explain",
+    "discuss":              "explain",
+    "state and explain":    "explain",
+    "describe":             "explain",
+}
+
+
+def normalize_question_text(text: str) -> str:
+    """Normalize question phrasing before embedding to improve cluster recall."""
+    t = (text or "").lower().strip()
+    for phrase, replacement in _NORMALIZATION_MAP.items():
+        t = t.replace(phrase, replacement)
+    t = re.sub(r'\?+', '', t).strip()
+    return t
+
+
+# ---------------------------------------------------------------------------
+# Phase 1.2 — Recency score (exponential decay)
+# ---------------------------------------------------------------------------
+
+def recency_score(occurrence_years: list[int]) -> float:
+    """Exponential decay: recent years count more. Returns 0–1."""
+    if not occurrence_years:
+        return 0.0
+    score = sum(0.9 ** (CURRENT_YEAR - yr) for yr in occurrence_years)
+    return min(score / len(occurrence_years), 1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -62,31 +88,42 @@ def calculate_score(
             from services.settings_service import get_prediction_weights
             weights = get_prediction_weights()
         except Exception:
-            weights = {"frequency": 40.0, "recency": 30.0, "consecutive": 20.0, "marks": 10.0}
+            weights = {
+                "frequency":   30.0,
+                "gap":         25.0,
+                "recency":     20.0,
+                "consecutive": 15.0,
+                "marks":        3.0,
+                "syllabus":     7.0,
+            }
 
-    w_freq = float(weights.get("frequency", 40.0))
-    w_gap  = float(weights.get("recency",   30.0))
-    w_cons = float(weights.get("consecutive", 20.0))
-    w_mark = float(weights.get("marks",      10.0))
+    w_freq = float(weights.get("frequency",   30.0))
+    w_gap  = float(weights.get("gap",         25.0))
+    w_rec  = float(weights.get("recency",     20.0))
+    w_cons = float(weights.get("consecutive", 15.0))
+    w_mark = float(weights.get("marks",        3.0))
 
     sorted_years = sorted(years)
     k = len(sorted_years)
     n = max(total_papers, k * 2, 8)   # conservative denominator when paper_count unavailable
 
     # --- Signal 1: Bayesian frequency ---
-    # Posterior mean of Beta-Binomial: E[θ|k,n] = (α+k)/(α+β+n)
-    bayes_prob   = (_BAYES_ALPHA + k) / (_BAYES_ALPHA + _BAYES_BETA + n)
-    freq_score   = bayes_prob * 100.0 * (w_freq / 100.0)
+    bayes_prob = (_BAYES_ALPHA + k) / (_BAYES_ALPHA + _BAYES_BETA + n)
+    freq_score = bayes_prob * 100.0 * (w_freq / 100.0)
 
     # --- Signal 2: Cycle-aware gap ---
-    gap_factor   = _cycle_gap_factor(sorted_years)
-    gap_score    = gap_factor * w_gap
+    gap_factor = _cycle_gap_factor(sorted_years)
+    gap_score  = gap_factor * w_gap
 
-    # --- Signal 3: Consecutive streak ---
-    streak       = _max_consecutive(sorted_years)
-    cons_score   = min(streak / 4.0, 1.0) * w_cons
+    # --- Signal 3: Recency (exponential decay) ---
+    rec  = recency_score(sorted_years)
+    rec_s = rec * w_rec
 
-    # --- Signal 4: Marks weight ---
+    # --- Signal 4: Consecutive streak ---
+    streak     = _max_consecutive(sorted_years)
+    cons_score = min(streak / 4.0, 1.0) * w_cons
+
+    # --- Signal 5: Marks weight ---
     if avg_marks and avg_marks >= 7:
         mark_factor = 1.0
     elif avg_marks and avg_marks >= 3:
@@ -95,7 +132,7 @@ def calculate_score(
         mark_factor = 0.3
     mark_score = mark_factor * w_mark
 
-    raw = freq_score + gap_score + cons_score + mark_score
+    raw = freq_score + gap_score + rec_s + cons_score + mark_score
     return round(min(raw, 100.0), 2)
 
 
@@ -230,8 +267,9 @@ def run_pattern_analysis(supabase, paper_id: str, subject_id: str):
         if not text:
             continue
 
-        embedding = embed_text(text)
-        similar   = find_similar_questions(embedding, subject_id, threshold=0.60)
+        norm_text = normalize_question_text(text)
+        embedding = embed_text(norm_text)
+        similar   = find_similar_questions(embedding, subject_id, threshold=0.55)
 
         if len(similar) < 2:
             continue
