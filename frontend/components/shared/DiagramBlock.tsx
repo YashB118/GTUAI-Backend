@@ -16,13 +16,9 @@ export default function DiagramBlock({
   dsl,
   fallbackAscii,
   svgData,
-  diagramType,
+  // diagramType unused in render — kept for API compat
   title,
 }: DiagramBlockProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [renderError, setRenderError] = useState(false);
-  const [rendered, setRendered] = useState(false);
-
   // Server-side SVG (Kroki) — highest priority
   if (svgData) {
     return (
@@ -78,6 +74,7 @@ function MermaidRenderer({ dsl, fallback }: { dsl: string; fallback?: string }) 
     const id = `mermaid-${Math.random().toString(36).slice(2)}`;
     ref.current.innerHTML = `<div class="mermaid" id="${id}">${dsl}</div>`;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mermaid = (window as any).mermaid;
     if (mermaid) {
       try {

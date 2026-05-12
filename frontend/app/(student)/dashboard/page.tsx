@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   Swords, ArrowRight, Upload, MessageSquare,
-  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle, Flame, Trophy,
+  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle,
+  // Flame, Trophy,  // coins/streak disabled
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";

@@ -11,7 +11,7 @@ import remarkGfm from "remark-gfm";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 // import { notifyCoinsEarned } from "@/lib/coinEvents";  // coins disabled
-import { ProcessingStatus } from "@/components/shared/ProcessingStatus";
+// import { ProcessingStatus } from "@/components/shared/ProcessingStatus";  // unused
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { toast } from "sonner";
 
@@ -370,7 +370,8 @@ function PredictInner() {
   const loadPredictions = useCallback(async (
     subjectId: string,
     forceRefresh = false,
-    gated = false,   // true only when user explicitly clicks Refresh
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _gated = false,  // coins disabled — kept for API compat
   ) => {
     if (!subjectId) return;
     setLoadingPredictions(true);
