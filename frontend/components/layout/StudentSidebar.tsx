@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Sparkles, BookOpen, FileQuestion,
-  Upload, MessageSquare, Swords, X,
+  Upload, MessageSquare, Swords, X, Users,
   // Trophy, Wallet,  // leaderboard/coins — disabled
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ const navItems = [
   { href: "/materials",     icon: BookOpen,        label: "Notes & Books", special: false },
   { href: "/question-bank", icon: FileQuestion,    label: "PYQ Bank",      special: false },
   { href: "/my-uploads",    icon: Upload,          label: "Meri Files",    special: false },
+  { href: "/community",    icon: Users,           label: "Community",     special: false },
   // { href: "/leaderboard",  icon: Trophy,          label: "Leaderboard",   special: false },  // leaderboard disabled
   // { href: "/coins",        icon: Wallet,          label: "My Coins",      special: false },  // coins disabled
 ];

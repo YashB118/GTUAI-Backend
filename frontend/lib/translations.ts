@@ -28,6 +28,7 @@ export const t = {
       { title: "GTU Chat Assistant",   desc: "AI that understands GTU syllabus. Explanations, exam tips — subject-aware." },
       { title: "Study Materials",      desc: "Student-uploaded notes, textbooks, slides — peer reviewed. Share and use." },
       { title: "Unit Analytics",       desc: "Which unit appears most. Which hasn't appeared in 3 years. Study using data." },
+      { title: "Anonymous Community",  desc: "Real-time study rooms. Anonymous pseudonyms, end-to-end encrypted. Discuss without judgment." },
     ],
     revBadge: "Student Reviews",
     revTitle: "GTU students' experience",
@@ -57,6 +58,11 @@ export const t = {
     buildYours: "Build your Brahmastra →",
     studentChat: '"Bhai, share this with everyone"',
     studentChatSub: "GTU students already use Andaze Se before every exam. Results speak for themselves.",
+    communityBadge: "New Feature",
+    communityTitle: "Study rooms. No names. No judgment.",
+    communitySub: "Join anonymous study rooms by subject. Ask that 'stupid' question you were afraid to ask. Everyone is equal — no names, no rolls, just learning.",
+    communityPills: ["End-to-end encrypted", "Anonymous pseudonyms", "Subject-based rooms", "Random matching"],
+    communityNew: "NEW",
   },
 
   hi: {
@@ -86,6 +92,7 @@ export const t = {
       { title: "GTU Chat Assistant",   desc: "AI जो GTU syllabus समझता है। Explanation, exam tips — subject-aware।" },
       { title: "Study Materials",      desc: "Student-uploaded notes, textbooks, slides — peer reviewed। Share करो, use करो।" },
       { title: "Unit Analytics",       desc: "कौन सा unit सबसे ज़्यादा आता है। कौन सा 3 साल से नहीं आया। Data से पढ़ो।" },
+      { title: "Anonymous Community",  desc: "Real-time study rooms। Anonymous pseudonyms, end-to-end encrypted। बिना judgment के बात करो।" },
     ],
     revBadge: "Student Reviews",
     revTitle: "GTU students का experience",
@@ -115,6 +122,11 @@ export const t = {
     buildYours: "अपना Brahmastra बनाओ →",
     studentChat: '"भाई, ये सबको share कर"',
     studentChatSub: "GTU students पहले से ही हर exam से पहले Andaze Se use करते हैं। Results खुद बोलते हैं।",
+    communityBadge: "नया Feature",
+    communityTitle: "Study rooms। कोई नाम नहीं। कोई judgment नहीं।",
+    communitySub: "Subject के हिसाब से anonymous study rooms join करो। वो 'बेवकूफ' सवाल पूछो जो डर से नहीं पूछते थे। सब बराबर हैं — कोई नाम नहीं, कोई roll नहीं।",
+    communityPills: ["End-to-end encrypted", "Anonymous pseudonyms", "Subject-based rooms", "Random matching"],
+    communityNew: "NEW",
   },
 
   gu: {
@@ -144,6 +156,7 @@ export const t = {
       { title: "GTU Chat Assistant",   desc: "AI જે GTU syllabus સમજે છે. Explanation, exam tips — subject-aware." },
       { title: "Study Materials",      desc: "Student-uploaded notes, textbooks, slides — peer reviewed. Share કરો, use કરો." },
       { title: "Unit Analytics",       desc: "કયો unit સૌથી વધુ આવે છે. કયો 3 વર્ષથી નથી આવ્યો. Data થી વાંચો." },
+      { title: "Anonymous Community",  desc: "Real-time study rooms. Anonymous pseudonyms, end-to-end encrypted. કોઈ judgment વગર વાત કરો." },
     ],
     revBadge: "Student Reviews",
     revTitle: "GTU students નો experience",
@@ -173,5 +186,10 @@ export const t = {
     buildYours: "તમારો Brahmastra બનાવો →",
     studentChat: '"ભાઈ, આ બધાને share કર"',
     studentChatSub: "GTU students પહેલેથી જ દરેક exam પહેલા Andaze Se use કરે છે. Results બોલે છે.",
+    communityBadge: "નવી Feature",
+    communityTitle: "Study rooms. કોઈ નામ નહીં. કોઈ judgment નહીં.",
+    communitySub: "Subject પ્રમાણે anonymous study rooms join કરો. એ 'મૂર્ખ' સવાલ પૂછો જે ડરથી ન પૂછતા. બધા બરાબર — કોઈ નામ નહીં, કોઈ roll નહીં.",
+    communityPills: ["End-to-end encrypted", "Anonymous pseudonyms", "Subject-based rooms", "Random matching"],
+    communityNew: "NEW",
   },
 } satisfies Record<Lang, object>;

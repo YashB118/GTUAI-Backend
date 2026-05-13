@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Sparkles, MessageSquare, Swords, BookOpen } from "lucide-react";
+import { LayoutDashboard, Sparkles, MessageSquare, Swords, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: "Andaza Laga", icon: Sparkles,        href: "/predict",    special: false },
   { label: "Brahmastra",  icon: Swords,          href: "/brahmastra", special: true  },
   { label: "Pooch Lo",    icon: MessageSquare,   href: "/chat",       special: false },
-  { label: "Notes",       icon: BookOpen,        href: "/materials",  special: false },
+  { label: "Community",   icon: Users,           href: "/community",  special: false },
 ];
 
 export function MobileNav() {

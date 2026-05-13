@@ -10,7 +10,7 @@ from config import settings
 from middleware.limiter import limiter
 from routers import auth, papers, materials
 from routers import subjects, predictions, questions, answers, admin, chat, testimonials, oracle
-from routers import coins, challenges, coupons, admin_coins, diagrams
+from routers import coins, challenges, coupons, admin_coins, diagrams, community
 from routers.coins import streaks_router
 
 logging.basicConfig(
@@ -76,6 +76,7 @@ app.include_router(challenges.router)
 app.include_router(coupons.router)
 app.include_router(admin_coins.router)
 app.include_router(diagrams.router)
+app.include_router(community.router)
 
 
 @app.on_event("startup")

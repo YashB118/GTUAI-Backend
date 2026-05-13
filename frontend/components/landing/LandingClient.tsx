@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, Star, Mail, MapPin, Clock,
-  Swords, Flame, Zap, BookOpen, MessageSquare, FileText, BarChart3,
+  Swords, Flame, Zap, BookOpen, MessageSquare, FileText, BarChart3, Users, Shield, Lock,
 } from "lucide-react";
 import ContactForm from "@/components/landing/ContactForm";
 import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
@@ -14,9 +14,9 @@ import { t, type Lang } from "@/lib/translations";
 
 const BLUE = "#5865F2";
 
-const FEATURE_ICONS = [Swords, Flame, FileText, Zap, MessageSquare, BookOpen, BarChart3];
-const FEATURE_COLORS = ["text-blue-400","text-pink-400","text-green-400","text-yellow-400","text-violet-400","text-sky-400","text-emerald-400"];
-const FEATURE_GLOWS  = ["rgba(88,101,242,0.18)","rgba(235,69,158,0.15)","rgba(87,242,135,0.13)","rgba(254,231,92,0.13)","rgba(139,92,246,0.15)","rgba(56,189,248,0.13)","rgba(52,211,153,0.13)"];
+const FEATURE_ICONS = [Swords, Flame, FileText, Zap, MessageSquare, BookOpen, BarChart3, Users];
+const FEATURE_COLORS = ["text-blue-400","text-pink-400","text-green-400","text-yellow-400","text-violet-400","text-sky-400","text-emerald-400","text-cyan-400"];
+const FEATURE_GLOWS  = ["rgba(88,101,242,0.18)","rgba(235,69,158,0.15)","rgba(87,242,135,0.13)","rgba(254,231,92,0.13)","rgba(139,92,246,0.15)","rgba(56,189,248,0.13)","rgba(52,211,153,0.13)","rgba(34,211,238,0.15)"];
 
 const AVATAR_COLORS = ["bg-blue-500/20 text-blue-400","bg-violet-500/20 text-violet-400","bg-emerald-500/20 text-emerald-400","bg-pink-500/20 text-pink-400","bg-amber-500/20 text-amber-400","bg-sky-500/20 text-sky-400"];
 const STATS_VALUES = ["8+", "78%", "9", "Free"];
@@ -31,6 +31,13 @@ const CHAT_BUBBLES = [
   { side: "right" as const, text: "4 aaye! OSI model, TCP/IP, subnetting ✨",       time: "10:43 PM" },
   { side: "left"  as const, text: "Link de bhai, sabko share karna hai",              time: "10:44 PM" },
   { side: "right" as const, text: "Ek sec, share karta hun 📲",                       time: "10:44 PM" },
+];
+
+const COMMUNITY_MSGS = [
+  { pseudo: "BraveFalcon", side: "left"  as const, text: "OSI ka 7-layer diagram kisi ke paas hai?", time: "11:21 PM" },
+  { pseudo: "SwiftOtter",  side: "right" as const, text: "Haan bhai, unit 4 mein hai. Aur TCP/IP bhi important lag raha hai 🔥", time: "11:22 PM" },
+  { pseudo: "CalmTiger",   side: "left"  as const, text: "DBMS normal forms mujhe samajh nahi aate 😭", time: "11:23 PM" },
+  { pseudo: "BraveFalcon", side: "left"  as const, text: "Yahan puchho, sab milke samjhate hain", time: "11:23 PM" },
 ];
 
 function getInitials(name: string) {
@@ -261,6 +268,117 @@ export default function LandingClient({ testimonials }: { testimonials: Testimon
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── Community Feature ── */}
+      <section className="py-24 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute w-[600px] h-[600px] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10"
+            style={{ background: "radial-gradient(circle, #22D3EE 0%, transparent 70%)", filter: "blur(100px)" }} />
+        </div>
+        <div className="max-w-5xl mx-auto relative grid lg:grid-cols-2 gap-16 items-center">
+          {/* Text side */}
+          <RevealOnScroll>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-xs font-black"
+              style={{ background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.25)" }}>
+              <span style={{ color: "#22D3EE" }}>✦</span>
+              <span style={{ color: "#22D3EE" }}>{tr.communityNew} — {tr.communityBadge}</span>
+            </div>
+            <h2 className="font-black tracking-tight text-white mb-5" style={{ fontSize: "clamp(26px, 4vw, 44px)" }}>
+              {tr.communityTitle}
+            </h2>
+            <p className="text-white/40 text-lg font-semibold leading-relaxed mb-8">{tr.communitySub}</p>
+            <div className="flex flex-wrap gap-2 mb-8">
+              {[
+                { icon: Lock,   label: tr.communityPills[0] },
+                { icon: Users,  label: tr.communityPills[1] },
+                { icon: MessageSquare, label: tr.communityPills[2] },
+                { icon: Swords, label: tr.communityPills[3] },
+              ].map(({ icon: Icon, label }) => (
+                <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white/60"
+                  style={{ background: "rgba(34,211,238,0.07)", border: "1px solid rgba(34,211,238,0.18)" }}>
+                  <Icon size={11} className="text-cyan-400" />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <Link href="/register"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-black transition-all hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)", boxShadow: "0 0 20px rgba(34,211,238,0.25)" }}>
+              Join a Study Room <ArrowRight size={14} />
+            </Link>
+          </RevealOnScroll>
+
+          {/* Mock chat UI */}
+          <RevealOnScroll delay={100}>
+            <div className="rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(34,211,238,0.12)]"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(34,211,238,0.18)", backdropFilter: "blur(20px)" }}>
+              {/* Room header */}
+              <div className="px-4 py-3.5 flex items-center justify-between"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(34,211,238,0.15)", border: "1px solid rgba(34,211,238,0.25)" }}>
+                    <Users size={14} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-white">Computer Networks</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <p className="text-[11px] text-white/30 font-semibold">4 anonymous · end-to-end encrypted</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black"
+                  style={{ background: "rgba(34,211,238,0.1)", color: "#22D3EE" }}>
+                  <Shield size={9} /> E2EE
+                </div>
+              </div>
+              {/* Messages */}
+              <div className="px-4 py-4 space-y-3">
+                {/* System join message */}
+                <div className="flex justify-center">
+                  <span className="text-[10px] italic text-white/25 bg-white/5 px-3 py-0.5 rounded-full">
+                    BraveFalcon joined the room
+                  </span>
+                </div>
+                {COMMUNITY_MSGS.map((m, i) => (
+                  <div key={i} className={`flex gap-2 ${m.side === "right" ? "flex-row-reverse" : "flex-row"}`}>
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5"
+                      style={{ background: "rgba(34,211,238,0.12)", color: "#22D3EE" }}>
+                      {m.pseudo.slice(0, 2).toUpperCase()}
+                    </span>
+                    <div className={`flex flex-col gap-0.5 max-w-[75%] ${m.side === "right" ? "items-end" : "items-start"}`}>
+                      <span className="text-[10px] text-white/25 px-1">{m.pseudo}</span>
+                      <div className="px-3 py-2 rounded-xl text-xs text-white/70 font-semibold leading-relaxed"
+                        style={{
+                          background: m.side === "right" ? "rgba(34,211,238,0.12)" : "rgba(255,255,255,0.05)",
+                          border: m.side === "right" ? "1px solid rgba(34,211,238,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                        }}>
+                        {m.text}
+                      </div>
+                      <span className="text-[9px] text-white/20 px-1">{m.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Input preview */}
+              <div className="px-4 pb-4 pt-1">
+                <div className="flex gap-2 items-center px-3.5 py-2.5 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <span className="flex-1 text-xs text-white/20 italic">Type a message… (encrypted before sending)</span>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                    style={{ background: "rgba(34,211,238,0.2)" }}>
+                    <ArrowRight size={10} className="text-cyan-400" />
+                  </div>
+                </div>
+                <p className="text-[10px] text-white/20 mt-1.5 px-1">
+                  You are <span className="text-cyan-400 font-medium">SwiftOtter</span> · anonymous
+                </p>
               </div>
             </div>
           </RevealOnScroll>
@@ -504,7 +622,7 @@ export default function LandingClient({ testimonials }: { testimonials: Testimon
             <div>
               <h5 className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">{tr.footerCol1}</h5>
               <ul className="space-y-3">
-                {["Brahmastra","Andaza Laga","Pooch Lo","Notes & Books","PYQ Bank"].map(l => (
+                {["Brahmastra","Andaza Laga","Pooch Lo","Notes & Books","PYQ Bank","Community Chat"].map(l => (
                   <li key={l}><Link href="/register" className="text-sm text-white/55 hover:text-white font-semibold transition-colors">{l}</Link></li>
                 ))}
               </ul>
