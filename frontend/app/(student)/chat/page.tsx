@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Plus, Brain, ChevronDown } from "lucide-react";
 import { api } from "@/lib/api";
 import { useChatStream } from "@/hooks/useChatStream";
+import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ChatSidebar, type ChatSession } from "@/components/chat/ChatSidebar";
 import { SuggestedQuestions } from "@/components/chat/SuggestedQuestions";
@@ -34,11 +35,24 @@ export default function ChatPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showSubjectMenu, setShowSubjectMenu] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [userName, setUserName] = useState("You");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { streaming, streamText, suggestions, error, sendMessage } = useChatStream();
+
+  // Load user identity for avatar
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserId(user.id);
+        const name = user.user_metadata?.full_name || user.email?.split("@")[0] || "You";
+        setUserName(name);
+      }
+    });
+  }, []);
 
   // Load subjects — restore last-used subject from localStorage
   useEffect(() => {
@@ -236,7 +250,14 @@ export default function ChatPage() {
           )}
 
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} role={msg.role} content={msg.content} sources={msg.sources} />
+            <MessageBubble
+              key={msg.id}
+              role={msg.role}
+              content={msg.content}
+              sources={msg.sources}
+              userId={userId}
+              userName={userName}
+            />
           ))}
 
           {/* Streaming response */}

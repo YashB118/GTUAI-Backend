@@ -14,6 +14,7 @@ interface TopbarProps {
   userRole?: string;
   userBranch?: string;
   userSemester?: number;
+  userId?: string;
 }
 
 export function Topbar({
@@ -23,6 +24,7 @@ export function Topbar({
   userRole = "student",
   userBranch,
   userSemester,
+  userId,
 }: TopbarProps) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -71,7 +73,7 @@ export function Topbar({
             className="flex items-center gap-2.5 hover:bg-bg-elevated rounded-full pl-1 pr-3 py-1 transition-colors"
             aria-label="User menu"
           >
-            <UserAvatar name={userName} size="sm" />
+            <UserAvatar name={userName} size="sm" userId={userId} />
             <div className="hidden sm:block text-left">
               <p className="text-[13px] font-semibold text-text-primary leading-tight">{userName.split(" ")[0]}</p>
               {userBranch && userSemester && (

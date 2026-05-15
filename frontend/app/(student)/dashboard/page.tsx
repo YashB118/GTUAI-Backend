@@ -24,6 +24,7 @@ interface UserProfile {
   branch: string;
   semester: number;
   enrollment_no: string;
+  id?: string;
 }
 
 interface NewsItem {
@@ -97,7 +98,7 @@ export default function StudentDashboard() {
         .select("full_name, branch, semester, enrollment_no")
         .eq("id", user.id)
         .maybeSingle();
-      if (data) setProfile(data);
+      if (data) setProfile({ ...data, id: user.id });
 
       const lsId   = localStorage.getItem("gtu_last_subject_id");
       const lsName = localStorage.getItem("gtu_last_subject_name");

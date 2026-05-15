@@ -10,6 +10,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DiagramBlock from "@/components/shared/DiagramBlock";
+import { AvatarOnly } from "@/components/ui/AvatarCard";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
@@ -243,6 +244,8 @@ function PaperSlotRow({
 function PredictInner() {
   const searchParams = useSearchParams();
 
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+
   const [subjects,           setSubjects]           = useState<Subject[]>([]);
   const [selectedSubjectId,  setSelectedSubjectId]  = useState("");
   const [selectedSubject,    setSelectedSubject]     = useState<Subject | null>(null);
@@ -297,6 +300,13 @@ function PredictInner() {
     if (modalIndex !== null) closeModal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStudied]);
+
+  // ── Load user ID for avatar ────────────────────────────────────────────────
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+  }, []);
 
   // ── Load subjects ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1075,8 +1085,11 @@ function PredictInner() {
                 </button>
               </div>
 
-              {/* Confidence info */}
+              {/* Confidence info + avatar */}
               <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
+                {currentUserId && (
+                  <AvatarOnly userId={currentUserId} name="You" size={28} className="hidden sm:flex" />
+                )}
                 <div className={`w-2 h-2 rounded-full ${CONF_DOT[modalPrediction.confidence]}`} />
                 <span className={`text-xs font-semibold ${CONF_TEXT[modalPrediction.confidence]}`}>
                   {CONF_FIRE[modalPrediction.confidence]} {CONF_LABEL[modalPrediction.confidence]} · {Math.round(modalPrediction.prediction_score)}%
@@ -1134,8 +1147,10 @@ function PredictInner() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Sparkles size={13} className="text-accent" />
-                    <p className="text-[11px] font-medium text-accent uppercase tracking-wider">Model Answer</p>
+                    <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                      <Sparkles size={10} className="text-white" />
+                    </div>
+                    <p className="text-[11px] font-semibold text-accent uppercase tracking-wider">AI Model Answer</p>
                   </div>
                   {modalAnswer && !answerLoading && (
                     <button

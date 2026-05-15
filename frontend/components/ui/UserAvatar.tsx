@@ -1,6 +1,9 @@
+import { getAvatarUrl, getAvatarTheme } from "@/lib/avatar";
+
 interface UserAvatarProps {
   name: string;
   size?: "sm" | "md" | "lg";
+  userId?: string;         // if provided, use DiceBear; else fallback to initials
 }
 
 const COLORS = [
@@ -34,10 +37,25 @@ const SIZE_CLASSES = {
   lg: "w-12 h-12 text-[15px]",
 };
 
-export function UserAvatar({ name, size = "md" }: UserAvatarProps) {
+export function UserAvatar({ name, size = "md", userId }: UserAvatarProps) {
+  // If userId provided, render DiceBear avatar
+  if (userId) {
+    const theme = getAvatarTheme(userId);
+    const url   = getAvatarUrl(userId);
+    return (
+      <div
+        className={`${SIZE_CLASSES[size]} ${theme.primary} rounded-full overflow-hidden flex items-center justify-center shrink-0 select-none`}
+        title={name}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt={name} className="w-full h-full object-cover" draggable={false} />
+      </div>
+    );
+  }
+
+  // Fallback: coloured initials
   const initials = getInitials(name || "?");
   const colorClass = getColorClass(name || "?");
-
   return (
     <div
       className={`${SIZE_CLASSES[size]} ${colorClass} rounded-full flex items-center justify-center font-semibold shrink-0 select-none`}

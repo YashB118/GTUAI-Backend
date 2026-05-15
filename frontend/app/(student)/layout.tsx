@@ -11,6 +11,7 @@ interface UserProfile {
   full_name?: string;
   branch?: string;
   semester?: number;
+  id?: string;
 }
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           .select("full_name, branch, semester")
           .eq("id", user.id)
           .maybeSingle();
-        if (data) setProfile(data);
+        if (data) setProfile({ ...data, id: user.id });
       }
     }
     loadProfile();
@@ -59,6 +60,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           userRole="student"
           userBranch={profile.branch}
           userSemester={profile.semester}
+          userId={profile.id}
         />
         <main className="flex-1 overflow-y-auto px-5 lg:px-8 py-6 lg:py-8 pb-28 md:pb-8 animate-fade-in">
           {children}
