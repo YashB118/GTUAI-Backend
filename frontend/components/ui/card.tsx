@@ -5,15 +5,24 @@ interface CardProps {
   className?: string;
   accent?: boolean;
   hover?: boolean;
+  padding?: "sm" | "md" | "lg" | "none";
 }
 
-export function Card({ children, className, accent, hover }: CardProps) {
+const PADDING_MAP = {
+  none: "",
+  sm:   "p-4",
+  md:   "p-6",
+  lg:   "p-7",
+};
+
+export function Card({ children, className, accent, hover, padding = "md" }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl p-5 transition-all duration-300 card-depth",
-        hover && "hover:card-depth-hover hover:-translate-y-px cursor-pointer",
-        accent && "ring-1 ring-accent/20 shadow-accent",
+        "card rounded-2xl",
+        PADDING_MAP[padding],
+        hover && "card-hover hover:-translate-y-0.5 cursor-pointer",
+        accent && "ring-1 ring-accent/20",
         className
       )}
     >
@@ -23,11 +32,15 @@ export function Card({ children, className, accent, hover }: CardProps) {
 }
 
 export function CardHeader({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("mb-4", className)}>{children}</div>;
+  return <div className={cn("mb-5", className)}>{children}</div>;
 }
 
 export function CardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={cn("text-[12px] font-medium text-text-secondary uppercase tracking-[0.06em]", className)}>{children}</h3>;
+  return <h3 className={cn("text-[15px] font-semibold text-text-primary tracking-tight", className)}>{children}</h3>;
+}
+
+export function CardLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={cn("section-title mb-2", className)}>{children}</p>;
 }
 
 export function CardContent({ children, className }: { children: React.ReactNode; className?: string }) {

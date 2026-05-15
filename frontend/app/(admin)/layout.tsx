@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-bg-primary overflow-hidden">
+    <div className="flex h-screen bg-bg-page overflow-hidden">
       <AdminSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           userName="Admin"
           userRole="admin"
         />
-        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 animate-fade-in">
+        <main className="flex-1 overflow-y-auto px-5 lg:px-8 py-6 lg:py-8 animate-fade-in">
           {children}
         </main>
       </div>

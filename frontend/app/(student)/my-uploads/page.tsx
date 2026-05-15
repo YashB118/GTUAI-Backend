@@ -132,10 +132,11 @@ export default function MyUploadsPage() {
   const allDone = files.length > 0 && files.every(e => e.status === "done" || e.status === "error");
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <Upload size={20} className="text-accent" />
-        <h1 className="text-2xl font-semibold tracking-tight text-text-primary">My Uploads</h1>
+    <div className="max-w-5xl mx-auto space-y-7">
+      <div>
+        <p className="section-title">Your files</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">My Uploads</h1>
+        <p className="text-[13.5px] text-text-secondary mt-1">Upload past papers — AI extracts questions and feeds predictions.</p>
       </div>
 
       {/* Upload form */}
@@ -223,19 +224,16 @@ export default function MyUploadsPage() {
             <button
               onClick={handleUploadAll}
               disabled={uploading || !subjectId || pendingCount === 0}
-              className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full h-11"
             >
               {uploading
                 ? `Uploading ${files.filter(e => e.status === "uploading").length} file(s)...`
-                : `Upload ${pendingCount} PDF${pendingCount !== 1 ? "s" : ""} in Parallel`}
+                : `Upload ${pendingCount} PDF${pendingCount !== 1 ? "s" : ""}`}
             </button>
           )}
 
           {allDone && (
-            <button
-              onClick={() => setFiles([])}
-              className="w-full border border-border hover:border-accent/40 text-text-secondary hover:text-text-primary rounded-xl px-4 py-2.5 text-sm font-medium transition-all"
-            >
+            <button onClick={() => setFiles([])} className="btn-secondary w-full h-11">
               Upload more files
             </button>
           )}
@@ -244,33 +242,29 @@ export default function MyUploadsPage() {
 
       {/* Papers list */}
       <div>
-        <h2 className="text-xs font-medium uppercase tracking-wide text-text-muted mb-3">
-          Uploaded Papers
-        </h2>
+        <p className="section-title mb-3">Uploaded Papers</p>
         {papers.length === 0 ? (
-          <div className="bg-bg-card border border-border rounded-lg p-8 text-center">
-            <FileText size={32} className="mx-auto text-text-muted mb-3" />
-            <p className="text-sm text-text-secondary">No papers uploaded yet</p>
+          <div className="card p-10 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-bg-muted mb-3">
+              <FileText size={20} className="text-text-muted" />
+            </div>
+            <p className="text-[14px] font-semibold text-text-primary">No papers uploaded yet</p>
+            <p className="text-[12.5px] text-text-muted mt-1">Add a PDF above to get started.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {papers.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between bg-bg-card border border-border rounded-lg px-4 py-3"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText size={16} className="text-accent shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{p.file_name}</p>
-                    <p className="text-xs text-text-muted">
-                      {p.subjects?.name} · {p.year} · {p.exam_type}
-                    </p>
-                  </div>
+              <div key={p.id} className="card p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                  <FileText size={16} />
                 </div>
-                <Badge variant={statusVariant(p.processing_status)}>
-                  {p.processing_status}
-                </Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-semibold text-text-primary truncate">{p.file_name}</p>
+                  <p className="text-[12px] text-text-muted truncate">
+                    {p.subjects?.name} · {p.year} · {p.exam_type}
+                  </p>
+                </div>
+                <Badge variant={statusVariant(p.processing_status)}>{p.processing_status}</Badge>
               </div>
             ))}
           </div>

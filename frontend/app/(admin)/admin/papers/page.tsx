@@ -109,24 +109,18 @@ export default function PapersPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileText size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Question Papers</h1>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="section-title">Papers</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Question Papers</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setUploadOpen(true)}
-            className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
-          >
-            <Upload size={12} />
+          <button onClick={() => setUploadOpen(true)} className="btn-primary">
+            <Upload size={13} />
             Upload official
           </button>
-          <button
-            onClick={load}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-          >
+          <button onClick={load} className="btn-ghost">
             <RefreshCw size={13} />
             Refresh
           </button>
@@ -134,10 +128,10 @@ export default function PapersPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Stat label="Total" value={papers.length} />
-        <Stat label="Processed" value={statusCounts.done} color="text-emerald-400" />
-        <Stat label="Failed / Pending" value={statusCounts.failed + statusCounts.pending} color="text-amber-400" />
-        <Stat label="Verified" value={statusCounts.verified} color="text-accent" />
+        <Stat label="Total"           value={papers.length} />
+        <Stat label="Processed"       value={statusCounts.done} color="text-emerald-600" />
+        <Stat label="Failed/Pending"  value={statusCounts.failed + statusCounts.pending} color="text-amber-600" />
+        <Stat label="Verified"        value={statusCounts.verified} color="text-accent" />
       </div>
 
       {/* Filters */}
@@ -145,7 +139,7 @@ export default function PapersPage() {
         <select
           value={filterSubject}
           onChange={e => setFilterSubject(e.target.value)}
-          className="bg-bg-card border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary appearance-none focus:outline-none focus:border-accent"
+          className="input h-10 w-auto pr-8"
         >
           <option value="">All subjects</option>
           {subjects.map(s => (
@@ -155,7 +149,7 @@ export default function PapersPage() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="bg-bg-card border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary appearance-none focus:outline-none focus:border-accent"
+          className="input h-10 w-auto pr-8"
         >
           <option value="">All statuses</option>
           {["pending", "processing", "done", "failed"].map(s => (
@@ -166,15 +160,15 @@ export default function PapersPage() {
 
       {loading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map(i => <LoadingSkeleton key={i} className="h-16 rounded-xl" />)}
+          {[1, 2, 3].map(i => <LoadingSkeleton key={i} className="h-16 rounded-2xl" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
+        <div className="card p-12 text-center">
           <FileText size={28} className="mx-auto text-text-muted mb-3" />
-          <p className="text-sm text-text-secondary">No papers found</p>
+          <p className="text-[14px] text-text-secondary">No papers found</p>
         </div>
       ) : (
-        <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
+        <div className="card overflow-hidden p-0">
           <div className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-border bg-bg-elevated">
             <div className="col-span-3 text-xs font-medium text-text-muted uppercase tracking-wide">File</div>
             <div className="col-span-3 text-xs font-medium text-text-muted uppercase tracking-wide">Subject</div>
@@ -265,9 +259,9 @@ export default function PapersPage() {
 
 function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
   return (
-    <div className="bg-bg-card border border-border rounded-xl px-4 py-3">
-      <p className="text-xs text-text-muted mb-1">{label}</p>
-      <p className={`text-xl font-semibold ${color || "text-text-primary"}`}>{value}</p>
+    <div className="card p-5">
+      <p className="text-[11.5px] text-text-muted font-medium">{label}</p>
+      <p className={`text-3xl font-bold tracking-tight mt-1 ${color || "text-text-primary"}`}>{value}</p>
     </div>
   );
 }
@@ -398,7 +392,7 @@ function UploadModal({
           <button
             type="submit"
             disabled={uploading}
-            className="w-full bg-accent hover:bg-accent-hover text-white rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
+            className="btn-primary w-full h-11"
           >
             {uploading ? "Uploading…" : "Upload paper"}
           </button>

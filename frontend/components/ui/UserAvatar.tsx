@@ -4,13 +4,13 @@ interface UserAvatarProps {
 }
 
 const COLORS = [
-  { bg: "bg-violet-500/20 border-violet-500/30 text-violet-400" },
-  { bg: "bg-blue-500/20 border-blue-500/30 text-blue-400" },
-  { bg: "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" },
-  { bg: "bg-amber-500/20 border-amber-500/30 text-amber-400" },
-  { bg: "bg-rose-500/20 border-rose-500/30 text-rose-400" },
-  { bg: "bg-cyan-500/20 border-cyan-500/30 text-cyan-400" },
-  { bg: "bg-blue-500/20 border-blue-500/30 text-blue-400" },
+  "bg-violet-100 text-violet-700",
+  "bg-blue-100 text-blue-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-cyan-100 text-cyan-700",
+  "bg-pink-100 text-pink-700",
 ];
 
 function getInitials(name: string): string {
@@ -25,13 +25,13 @@ function getColorClass(name: string): string {
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) & 0xffff;
   }
-  return COLORS[hash % COLORS.length].bg;
+  return COLORS[hash % COLORS.length];
 }
 
 const SIZE_CLASSES = {
-  sm: "w-7 h-7 text-xs",
-  md: "w-9 h-9 text-sm",
-  lg: "w-12 h-12 text-base",
+  sm: "w-8 h-8 text-[11.5px]",
+  md: "w-9 h-9 text-[13px]",
+  lg: "w-12 h-12 text-[15px]",
 };
 
 export function UserAvatar({ name, size = "md" }: UserAvatarProps) {
@@ -40,7 +40,7 @@ export function UserAvatar({ name, size = "md" }: UserAvatarProps) {
 
   return (
     <div
-      className={`${SIZE_CLASSES[size]} ${colorClass} rounded-full border flex items-center justify-center font-semibold shrink-0 select-none`}
+      className={`${SIZE_CLASSES[size]} ${colorClass} rounded-full flex items-center justify-center font-semibold shrink-0 select-none`}
       title={name}
     >
       {initials}

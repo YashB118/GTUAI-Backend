@@ -3,16 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Swords } from "lucide-react";
+import { ArrowRight, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 
 const BRANCHES = [
   { value: "CE",    label: "Computer Engineering (CE)" },
   { value: "IT",    label: "Information Technology (IT)" },
   { value: "EC",    label: "Electronics & Communication (EC)" },
   { value: "ME",    label: "Mechanical Engineering (ME)" },
-  { value: "Civil", label: "Civil Engineering (Civil)" },
+  { value: "Civil", label: "Civil Engineering" },
   { value: "EE",    label: "Electrical Engineering (EE)" },
   { value: "CHEM",  label: "Chemical Engineering" },
   { value: "AUTO",  label: "Automobile Engineering" },
@@ -52,7 +53,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.branch || !form.semester) { setError("Branch aur semester select karo"); return; }
+    if (!form.branch || !form.semester) { setError("Please select branch and semester"); return; }
     setLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/auth/register`, {
@@ -79,33 +80,31 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center px-4 py-10">
-      <div className="w-full max-w-[360px] animate-blur-in">
+    <div className="min-h-screen bg-bg-page grid lg:grid-cols-2">
 
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
-            <Swords size={18} className="text-blue-400" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Andaza</h1>
-          <p className="text-sm text-text-muted mt-1 italic">Sirf wahi jo aayega.</p>
-        </div>
+      {/* Left — form */}
+      <div className="flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[440px] animate-fade-in">
 
-        {/* Card */}
-        <div className="rounded-2xl p-6 space-y-5 bg-bg-card border border-border">
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">Account banao ⚔️</h2>
-            <p className="text-sm text-text-muted mt-0.5">GTU student ho? Toh yahan ho sahi jagah.</p>
+          <Link href="/" className="inline-block mb-10">
+            <AndazeSeLogo size="lg" />
+          </Link>
+
+          <div className="mb-7">
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Create account</h1>
+            <p className="text-[14.5px] text-text-secondary mt-2">Join thousands of GTU students.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <Input id="fullName" label="Full Name" placeholder="Yash Patel"
               value={form.fullName} onChange={set("fullName")} required />
-            <Input id="enrollmentNo" label="Enrollment No" placeholder="21XXXXXXXX"
-              value={form.enrollmentNo} onChange={set("enrollmentNo")} required />
-            <Input id="email" label="Email" type="email" placeholder="your@email.com"
-              value={form.email} onChange={set("email")} required autoComplete="email" />
-            <Input id="password" label="Password" type="password" placeholder="Min 6 characters"
+            <div className="grid grid-cols-2 gap-3">
+              <Input id="enrollmentNo" label="Enrollment No" placeholder="21XXXXXXXX"
+                value={form.enrollmentNo} onChange={set("enrollmentNo")} required />
+              <Input id="email" label="Email" type="email" placeholder="your@email.com"
+                value={form.email} onChange={set("email")} required autoComplete="email" />
+            </div>
+            <Input id="password" label="Password" type="password" placeholder="Minimum 6 characters"
               value={form.password} onChange={set("password")} required minLength={6} autoComplete="new-password" />
 
             <div className="grid grid-cols-2 gap-3">
@@ -119,7 +118,7 @@ export default function RegisterPage() {
               value={form.college} onChange={set("college")} />
 
             {error && (
-              <p className="text-[12px] text-red-400 bg-red-500/8 border border-red-500/15 rounded-lg px-3 py-2">
+              <p className="text-[12.5px] text-status-error bg-status-error/10 rounded-xl px-4 py-2.5">
                 {error}
               </p>
             )}
@@ -127,24 +126,41 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-semibold text-base transition-colors flex items-center justify-center gap-2 mt-1"
+              className="btn-primary w-full h-12 text-[14.5px] mt-3"
             >
               {loading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Andaza Join Karo <Swords size={13} /></>
+                <>Create account <ArrowRight size={14} /></>
               )}
             </button>
           </form>
 
-          <p className="text-center text-[12px] text-text-muted">
-            Account hai already?{" "}
-            <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
-              Sign in karo
+          <p className="text-center text-[13.5px] text-text-muted mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-text-primary font-semibold hover:underline">
+              Sign in
             </Link>
           </p>
         </div>
+      </div>
 
+      {/* Right — decorative */}
+      <div className="hidden lg:flex relative bg-bg-card border-l border-border items-center justify-center p-12 overflow-hidden">
+        <div className="absolute top-1/4 -right-32 w-[500px] h-[500px] rounded-full opacity-30 orb-1"
+          style={{ background: "radial-gradient(circle, rgb(88,101,242) 0%, transparent 70%)" }} />
+
+        <div className="relative max-w-md text-center">
+          <div className="inline-flex items-center gap-2 chip mb-6">
+            <GraduationCap size={12} /> Free for GTU students
+          </div>
+          <h2 className="text-4xl font-bold tracking-tight text-text-primary text-balance">
+            Predict it.<br />Study it.<br />Pass it.
+          </h2>
+          <p className="text-[14.5px] text-text-secondary mt-5 text-pretty">
+            Get AI predictions, model answers, study materials, and a study community — all in one app.
+          </p>
+        </div>
       </div>
     </div>
   );

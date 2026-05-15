@@ -105,28 +105,25 @@ export default function SubjectsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <GraduationCap size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Subjects</h1>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="section-title">Catalog</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Subjects</h1>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
+        <button onClick={load} className="btn-ghost">
           <RefreshCw size={13} />
           Refresh
         </button>
       </div>
 
       {/* Add subject form */}
-      <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Plus size={14} className="text-text-muted" />
-            <span className="text-sm font-medium text-text-primary">Add Subject</span>
+      <div className="card overflow-hidden p-0">
+        <div className="px-6 py-4 border-b border-border flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+            <Plus size={14} className="text-accent" />
           </div>
+          <span className="text-[14px] font-semibold text-text-primary">Add Subject</span>
         </div>
         <form onSubmit={handleCreate} className="px-5 py-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -196,7 +193,7 @@ export default function SubjectsPage() {
           <button
             type="submit"
             disabled={creating || !name.trim()}
-            className="bg-accent hover:bg-accent-hover text-white rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            className="btn-primary h-10"
           >
             <Plus size={13} />
             {creating ? "Adding..." : "Add Subject"}
@@ -364,7 +361,7 @@ function EditModal({
               semester: semester ? Number(semester) : null,
               credits: credits ? Number(credits) : null,
             })}
-            className="bg-accent hover:bg-accent-hover text-white rounded-lg px-3 py-1.5 text-xs font-medium"
+            className="btn-primary h-9 px-3.5 text-[12.5px]"
           >
             Save changes
           </button>

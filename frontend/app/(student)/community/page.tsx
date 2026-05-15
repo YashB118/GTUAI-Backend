@@ -117,146 +117,128 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Hero */}
-      <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-b from-bg-elevated/30 to-transparent px-6 py-8">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--accent)/6%,_transparent_60%)]" />
-        <div className="relative max-w-2xl">
-          <div className="flex items-center gap-2 mb-2">
-            <Shield size={16} className="text-green-400" />
-            <span className="text-xs text-green-400 font-medium">Anonymous · Encrypted · Private</span>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-7">
+        <div className="inline-flex items-center gap-2 chip mb-3 bg-emerald-100 text-emerald-700">
+          <Shield size={11} /> Anonymous · End-to-end encrypted
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tight">Community</h1>
+        <p className="text-[14.5px] text-text-secondary mt-2 max-w-xl">
+          Connect with GTU students. Real-time chat. Encrypted. Your identity stays anonymous.
+        </p>
+      </div>
+
+      {/* Actions bar */}
+      <div className="flex flex-wrap gap-2.5 mb-5">
+        <Button variant="primary" onClick={() => setShowCreate(true)}>
+          <Plus size={14} /> Create Room
+        </Button>
+        <Button variant="secondary" onClick={() => setShowJoin(true)}>
+          <Hash size={14} /> Join by Code
+        </Button>
+        <Button variant="ghost" onClick={loadRooms} className="ml-auto">
+          <RefreshCw size={13} /> Refresh
+        </Button>
+      </div>
+
+      {/* Random match card */}
+      <div className="card p-6 mb-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h3 className="text-[15px] font-semibold text-text-primary flex items-center gap-2">
+              <Shuffle size={15} className="text-accent" /> Connect Randomly
+            </h3>
+            <p className="text-[13px] text-text-muted mt-1">
+              Get paired with a student studying the same subject.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">Community</h1>
-          <p className="text-sm text-text-muted">
-            Connect with students across semesters. All messages are end-to-end encrypted.
-            Your identity stays anonymous.
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {!queueId ? (
+              <>
+                <select
+                  value={matchSubject}
+                  onChange={(e) => setMatchSubject(e.target.value)}
+                  className="input h-10 min-w-[180px]"
+                >
+                  <option value="">Select subject…</option>
+                  {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <Button
+                  variant="primary"
+                  onClick={handleRandomMatch}
+                  disabled={matchLoading || !matchSubject}
+                >
+                  {matchLoading ? <Loader2 size={13} className="animate-spin" /> : <Shuffle size={13} />}
+                  Match Me
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-[13.5px] text-text-secondary">
+                  <Loader2 size={14} className="animate-spin text-accent" />
+                  Searching… {queueWaitSecs}s
+                </div>
+                <Button variant="secondary" onClick={handleCancelMatch}>Cancel</Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Actions bar */}
-        <div className="px-6 py-4 flex flex-wrap gap-3 border-b border-border/30">
-          <Button variant="primary" size="sm" onClick={() => setShowCreate(true)} className="flex items-center gap-2">
-            <Plus size={14} /> Create Room
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setShowJoin(true)} className="flex items-center gap-2">
-            <Hash size={14} /> Join by Code
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={loadRooms}
-            className="ml-auto flex items-center gap-1.5 text-text-muted"
-          >
-            <RefreshCw size={13} /> Refresh
-          </Button>
-        </div>
-
-        {/* Random match */}
-        <div className="mx-6 mt-5 p-4 glass border border-border/40 rounded-2xl">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h3 className="font-semibold text-sm text-text-primary flex items-center gap-2">
-                <Shuffle size={15} className="text-accent" /> Connect Randomly
-              </h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Get paired with a student studying the same subject.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {!queueId ? (
-                <>
-                  <select
-                    value={matchSubject}
-                    onChange={(e) => setMatchSubject(e.target.value)}
-                    className="bg-bg-elevated border border-border/60 rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent/50 min-w-[160px]"
-                  >
-                    <option value="">Select subject…</option>
-                    {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleRandomMatch}
-                    disabled={matchLoading || !matchSubject}
-                    className="flex items-center gap-1.5"
-                  >
-                    {matchLoading ? <Loader2 size={13} className="animate-spin" /> : <Shuffle size={13} />}
-                    Match Me
-                  </Button>
-                </>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-sm text-text-muted">
-                    <Loader2 size={14} className="animate-spin text-accent" />
-                    Searching… {queueWaitSecs}s
-                  </div>
-                  <Button variant="secondary" size="sm" onClick={handleCancelMatch}>Cancel</Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Subject filters */}
-        <div className="px-6 mt-5 flex gap-2 flex-wrap">
+      {/* Subject filter chips */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        <button
+          onClick={() => setSelectedSubject(ALL_SUBJECT)}
+          className={cn(
+            "px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors",
+            selectedSubject === ALL_SUBJECT
+              ? "bg-accent text-white"
+              : "bg-bg-card border border-border text-text-secondary hover:text-text-primary"
+          )}
+        >
+          All
+        </button>
+        {subjects.map((s) => (
           <button
-            onClick={() => setSelectedSubject(ALL_SUBJECT)}
+            key={s}
+            onClick={() => setSelectedSubject(s)}
             className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-              selectedSubject === ALL_SUBJECT
+              "px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-colors",
+              selectedSubject === s
                 ? "bg-accent text-white"
-                : "bg-bg-elevated text-text-muted hover:text-text-primary"
+                : "bg-bg-card border border-border text-text-secondary hover:text-text-primary"
             )}
           >
-            All
+            {s}
           </button>
-          {subjects.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSelectedSubject(s)}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                selectedSubject === s
-                  ? "bg-accent text-white"
-                  : "bg-bg-elevated text-text-muted hover:text-text-primary"
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        ))}
+      </div>
 
-        {/* Room grid */}
-        <div className="px-6 mt-5 pb-8">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-40 glass border border-border/30 rounded-2xl animate-pulse"
-                  style={{ animationDelay: `${i * 0.05}s` }}
-                />
-              ))}
-            </div>
-          ) : rooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Shield size={40} className="text-accent/30 mb-4" />
-              <p className="text-text-muted text-sm">No rooms yet.</p>
-              <p className="text-text-muted text-xs mt-1">Create one or use Random Match to connect.</p>
-              <Button variant="primary" size="sm" onClick={() => setShowCreate(true)} className="mt-4">
-                Create First Room
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rooms.map((room) => (
-                <RoomCard key={room.id} room={room} onJoin={handleJoinRoom} />
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Room grid */}
+      <div className="pb-8">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card h-40 skeleton" />
+            ))}
+          </div>
+        ) : rooms.length === 0 ? (
+          <div className="card p-16 text-center">
+            <Shield size={36} className="text-text-muted/30 mb-4 mx-auto" />
+            <p className="text-text-primary text-[14.5px] font-medium">No rooms yet.</p>
+            <p className="text-text-muted text-[13px] mt-1">Create one or use Random Match to connect.</p>
+            <Button variant="primary" onClick={() => setShowCreate(true)} className="mt-5">
+              Create First Room
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {rooms.map((room) => (
+              <RoomCard key={room.id} room={room} onJoin={handleJoinRoom} />
+            ))}
+          </div>
+        )}
       </div>
 
       {showCreate && (

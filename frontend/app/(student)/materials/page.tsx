@@ -164,21 +164,24 @@ export default function MaterialsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <BookOpen size={20} className="text-accent" />
-        <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Study Materials</h1>
+    <div className="max-w-5xl mx-auto space-y-7">
+      <div>
+        <p className="section-title">Library</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Study Materials</h1>
+        <p className="text-[13.5px] text-text-secondary mt-1">Notes, textbooks, slides — uploaded by students, approved by admin.</p>
       </div>
 
       {/* Upload panel */}
-      <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="card overflow-hidden p-0">
         <button
           onClick={() => setUploadOpen(v => !v)}
-          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-bg-elevated transition-colors"
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-bg-elevated transition-colors"
         >
-          <div className="flex items-center gap-2">
-            <Upload size={14} className="text-text-muted" />
-            <span className="text-sm font-medium text-text-primary">Upload Study Material</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Upload size={14} className="text-accent" />
+            </div>
+            <span className="text-[14px] font-semibold text-text-primary">Upload Study Material</span>
           </div>
           {uploadOpen ? <ChevronUp size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
         </button>
@@ -292,7 +295,7 @@ export default function MaterialsPage() {
             <button
               type="submit"
               disabled={uploading || !file || !uploadSubjectId || !title.trim()}
-              className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full h-11"
             >
               {uploading ? "Uploading..." : "Submit for Review"}
             </button>
@@ -303,26 +306,24 @@ export default function MaterialsPage() {
       {/* My Uploads */}
       {myUploads.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">My Uploads</h2>
-          <div className="space-y-2">
+          <p className="section-title mb-3">My Uploads</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {myUploads.map(m => (
-              <div key={m.id} className="flex items-center justify-between gap-3 bg-bg-card border border-border rounded-xl px-4 py-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText size={15} className="text-accent shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{m.title}</p>
-                    <p className="text-xs text-text-muted">
-                      {m.subjects?.name} · {m.material_type} · {m.file_size_kb} KB
-                    </p>
-                  </div>
+              <div key={m.id} className="card p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                  <FileText size={16} />
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-semibold text-text-primary truncate">{m.title}</p>
+                  <p className="text-[12px] text-text-muted truncate">
+                    {m.subjects?.name} · {m.material_type} · {m.file_size_kb} KB
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
                   {processingLabel(m) && (
-                    <span className="text-[11px] text-text-muted">{processingLabel(m)}</span>
+                    <span className="text-[10.5px] text-text-muted">{processingLabel(m)}</span>
                   )}
-                  <Badge variant={approvalVariant(m.approval_status)}>
-                    {m.approval_status}
-                  </Badge>
+                  <Badge variant={approvalVariant(m.approval_status)}>{m.approval_status}</Badge>
                 </div>
               </div>
             ))}
@@ -332,22 +333,22 @@ export default function MaterialsPage() {
 
       {/* Browse approved materials by subject */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Browse Materials</h2>
+        <p className="section-title mb-3">Browse Materials</p>
 
         <div className="relative mb-4">
           <select
             value={selectedSubjectId}
             onChange={e => setSelectedSubjectId(e.target.value)}
-            className="w-full bg-bg-card border border-border rounded-xl px-4 py-3 text-sm text-text-primary appearance-none pr-8 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+            className="input pr-10"
           >
-            <option value="">Select a subject to browse materials...</option>
+            <option value="">Select a subject to browse…</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>
                 {s.name}{s.code ? ` · ${s.code}` : ""}{s.semester ? ` · Sem ${s.semester}` : ""}
               </option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
         </div>
 
         {selectedSubjectId && (
@@ -357,56 +358,52 @@ export default function MaterialsPage() {
                 {[1, 2, 3].map(i => <LoadingSkeleton key={i} className="h-20 rounded-xl" />)}
               </div>
             ) : subjectMaterials.length === 0 ? (
-              <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
-                <BookOpen size={28} className="mx-auto text-text-muted mb-3" />
-                <p className="text-sm font-medium text-text-secondary">No approved materials yet</p>
-                <p className="text-xs text-text-muted mt-1 max-w-xs mx-auto">
+              <div className="card p-12 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-bg-muted mb-3">
+                  <BookOpen size={20} className="text-text-muted" />
+                </div>
+                <p className="text-[14.5px] font-semibold text-text-primary">No approved materials yet</p>
+                <p className="text-[12.5px] text-text-muted mt-1 max-w-xs mx-auto">
                   Upload materials above and wait for admin approval.
                 </p>
                 <button
                   onClick={() => setUploadOpen(true)}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+                  className="btn-secondary mt-5 mx-auto"
                 >
                   <Plus size={13} /> Upload material
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {subjectMaterials.map(m => (
-                  <div key={m.id} className="bg-bg-card border border-border rounded-xl p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <FileText size={14} className="text-accent shrink-0" />
-                          <p className="text-sm font-medium text-text-primary">{m.title}</p>
-                        </div>
-                        {m.description && (
-                          <p className="text-xs text-text-secondary ml-5 mb-1">{m.description}</p>
-                        )}
-                        <div className="flex items-center gap-2 ml-5">
-                          <span className="text-xs text-text-muted capitalize">{m.material_type}</span>
-                          <span className="text-text-muted/40 text-xs">·</span>
-                          <span className="text-xs text-text-muted">{m.file_size_kb} KB</span>
-                          {m.chunk_count != null && m.chunk_count > 0 && (
-                            <>
-                              <span className="text-text-muted/40 text-xs">·</span>
-                              <span className="text-xs text-emerald-400">{m.chunk_count} sections indexed</span>
-                            </>
-                          )}
-                        </div>
+                  <div key={m.id} className="card card-hover p-5">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="w-9 h-9 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                        <FileText size={15} />
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleDownload(m)}
-                          disabled={downloading === m.id}
-                          className="flex items-center gap-1.5 bg-accent/10 hover:bg-accent/20 border border-accent/20 text-accent rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all disabled:opacity-50"
-                        >
-                          <Download size={11} />
-                          {downloading === m.id ? "..." : "View"}
-                        </button>
-                        <Badge variant="approved">approved</Badge>
-                      </div>
+                      <Badge variant="approved">approved</Badge>
                     </div>
+                    <p className="text-[14.5px] font-semibold text-text-primary">{m.title}</p>
+                    {m.description && (
+                      <p className="text-[12.5px] text-text-secondary mt-1.5 line-clamp-2">{m.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-3 flex-wrap">
+                      <span className="chip text-[10.5px] capitalize">{m.material_type}</span>
+                      <span className="chip text-[10.5px]">{m.file_size_kb} KB</span>
+                      {m.chunk_count != null && m.chunk_count > 0 && (
+                        <span className="chip text-[10.5px] bg-emerald-100 text-emerald-700">
+                          {m.chunk_count} indexed
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDownload(m)}
+                      disabled={downloading === m.id}
+                      className="btn-primary w-full h-9 mt-4 text-[12.5px]"
+                    >
+                      <Download size={12} />
+                      {downloading === m.id ? "Loading…" : "View / Download"}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -415,14 +412,14 @@ export default function MaterialsPage() {
         )}
 
         {!selectedSubjectId && myUploads.length === 0 && (
-          <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 mb-4">
-              <BookOpen size={24} className="text-accent" />
+          <div className="card p-12 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent/10 text-accent mb-4">
+              <BookOpen size={22} />
             </div>
-            <h2 className="text-base font-semibold text-text-primary mb-1">Browse & Upload Study Materials</h2>
-            <p className="text-sm text-text-secondary max-w-sm mx-auto leading-relaxed">
-              Select a subject to browse approved notes, textbooks, and summaries.
-              Upload your own materials to help the AI generate better answers.
+            <h2 className="text-[15.5px] font-semibold text-text-primary">Browse & upload materials</h2>
+            <p className="text-[13px] text-text-secondary max-w-sm mx-auto mt-1.5">
+              Select a subject to browse notes, textbooks, and summaries.
+              Upload your own to improve AI answers.
             </p>
           </div>
         )}

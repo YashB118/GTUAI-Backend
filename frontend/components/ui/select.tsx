@@ -11,11 +11,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, id, options, placeholder, style, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {label && (
           <label
             htmlFor={id}
-            className="text-[11px] font-medium uppercase tracking-[0.07em] text-text-muted"
+            className="text-[13px] font-medium text-text-primary"
           >
             {label}
           </label>
@@ -25,12 +25,12 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={id}
           style={{ colorScheme: "inherit", ...style }}
           className={cn(
-            "w-full rounded-lg bg-bg-elevated border border-border",
-            "px-3.5 py-2.5 text-[13px] text-text-primary",
-            "focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15",
-            "transition-all duration-200 cursor-pointer appearance-none",
+            "h-11 w-full rounded-xl bg-bg-card border border-border",
+            "px-4 pr-8 text-[14px] text-text-primary",
+            "focus:outline-none focus:border-accent/60 focus:ring-4 focus:ring-accent/10",
+            "transition-all duration-150 cursor-pointer appearance-none",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            error && "border-red-500/50",
+            error && "border-status-error/60",
             className
           )}
           {...props}
@@ -46,7 +46,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-[11px] text-red-400 mt-0.5">{error}</p>}
+        {error && <p className="text-[12px] text-status-error">{error}</p>}
       </div>
     );
   }

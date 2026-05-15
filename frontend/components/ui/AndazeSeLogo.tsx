@@ -123,7 +123,7 @@ export function AndazeSeLogo({ size = "md" }: AndazeSeLogoProps) {
       {/* ── Wordmark ── */}
       <div className="flex items-baseline leading-none">
         <span
-          className={`font-black text-white ${cfg.textA}`}
+          className={`font-black text-text-primary ${cfg.textA}`}
           style={{ letterSpacing: "-0.03em" }}
         >
           andaze

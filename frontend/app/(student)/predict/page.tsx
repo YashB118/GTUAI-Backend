@@ -70,11 +70,11 @@ const EXAM_TYPES = [
 ];
 const YEARS = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
 
-// Confidence tier styling
+// Confidence tier styling — subtle accent strip via box-shadow inset
 const CONF_BORDER = {
-  HIGH:   "border-l-[3px] border-l-emerald-500",
-  MEDIUM: "border-l-[3px] border-l-amber-500",
-  LOW:    "border-l-[3px] border-l-red-500/70",
+  HIGH:   "",
+  MEDIUM: "",
+  LOW:    "",
 };
 const CONF_DOT = {
   HIGH:   "bg-emerald-500",
@@ -697,46 +697,53 @@ function PredictInner() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto space-y-5">
+    <div className="max-w-5xl mx-auto space-y-5">
 
-      {/* Subject selector */}
+      {/* Page header */}
+      <div className="mb-2">
+        <p className="section-title">AI Exam Predictions</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tight mt-2">Andaza Laga</h1>
+        <p className="text-[13.5px] text-text-secondary mt-1">Pick a subject — see what&apos;s likely to come on your exam.</p>
+      </div>
+
+      {/* Subject selector + refresh */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <select
             value={selectedSubjectId}
             onChange={e => setSelectedSubjectId(e.target.value)}
             style={{ colorScheme: "inherit" }}
-            className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-3 text-sm text-text-primary appearance-none pr-8 focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 focus:bg-bg-card font-medium transition-all duration-200"
+            className="input pr-10 font-medium"
           >
-            <option value="">Select a subject to view predictions...</option>
+            <option value="">Select a subject…</option>
             {subjects.map(s => (
               <option key={s.id} value={s.id}>
                 {s.name}{s.code ? ` · ${s.code}` : ""}{s.semester ? ` · Sem ${s.semester}` : ""}
               </option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
         </div>
         {selectedSubjectId && (
           <button
             onClick={() => loadPredictions(selectedSubjectId, true)}
-            className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors px-3 py-2.5 rounded-xl card-depth hover:card-depth-hover"
+            className="btn-secondary h-11 w-11 px-0"
             title="Refresh predictions"
           >
-            <RefreshCw size={12} />
+            <RefreshCw size={14} />
           </button>
         )}
       </div>
 
       {/* Empty subject state */}
       {!selectedSubjectId && (
-        <div className="rounded-2xl p-16 text-center card-depth">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 mb-5">
-            <BookOpen size={28} className="text-accent" />
+        <div className="card p-14 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent/10 text-accent mb-5">
+            <BookOpen size={24} />
           </div>
-          <h2 className="text-lg font-semibold text-text-primary mb-2">AI Exam Prediction</h2>
-          <p className="text-sm text-text-secondary max-w-sm mx-auto leading-relaxed">
-            Select a subject to see questions likely to appear in your next exam, ranked by AI confidence score.
+          <h2 className="text-[17px] font-semibold text-text-primary mb-1">Start with a subject</h2>
+          <p className="text-[13.5px] text-text-secondary max-w-sm mx-auto">
+            Pick a subject above to see ranked predictions and generate AI answers.
           </p>
         </div>
       )}
@@ -745,19 +752,19 @@ function PredictInner() {
         <>
           {/* Loading skeleton */}
           {loadingPredictions && (
-            <div className="rounded-2xl overflow-hidden card-depth">
-              <div className="px-6 py-4 border-b border-border">
-                <LoadingSkeleton className="h-5 w-48 rounded" />
-                <LoadingSkeleton className="h-3 w-32 rounded mt-2" />
+            <div className="card overflow-hidden p-0">
+              <div className="px-6 py-5 border-b border-border">
+                <div className="skeleton h-5 w-48" />
+                <div className="skeleton h-3 w-32 mt-2" />
               </div>
               {[1,2,3,4,5].map(i => (
-                <div key={i} className="border-t border-border/50 flex gap-0 px-0">
-                  <div className="w-12 pt-4 flex justify-center">
-                    <LoadingSkeleton className="h-3 w-6 rounded" />
+                <div key={i} className="border-t border-border flex gap-0 px-0">
+                  <div className="w-14 pt-5 flex justify-center">
+                    <div className="skeleton h-3 w-6" />
                   </div>
-                  <div className="flex-1 py-4 pr-5 space-y-2">
-                    <LoadingSkeleton className="h-4 w-full rounded" />
-                    <LoadingSkeleton className="h-3 w-48 rounded" />
+                  <div className="flex-1 py-5 pr-5 space-y-2">
+                    <div className="skeleton h-4 w-full" />
+                    <div className="skeleton h-3 w-48" />
                   </div>
                 </div>
               ))}
@@ -766,38 +773,37 @@ function PredictInner() {
 
           {/* Predictions list */}
           {!loadingPredictions && predictions.length > 0 && (
-            <div className="rounded-2xl overflow-hidden card-depth">
+            <div className="card overflow-hidden p-0">
               {/* Paper header */}
-              <div className="px-6 py-4 border-b border-border"
-                style={{ background: "linear-gradient(145deg, rgba(108,99,255,0.06), transparent)" }}>
+              <div className="px-6 py-5 border-b border-border bg-bg-elevated/40">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Sparkles size={14} className="text-accent" />
-                      <span className="text-xs font-medium text-accent uppercase tracking-wider">AI Predicted Exam Paper</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Sparkles size={13} className="text-accent" />
+                      <span className="section-title text-accent">AI Predicted Paper</span>
                     </div>
-                    <h2 className="text-lg font-semibold text-text-primary">
+                    <h2 className="text-[20px] font-semibold text-text-primary tracking-tight">
                       {selectedSubject?.name || "Subject"}
                       {selectedSubject?.code && (
                         <span className="text-text-muted font-normal"> · {selectedSubject.code}</span>
                       )}
                     </h2>
                     {selectedSubject?.semester && (
-                      <p className="text-xs text-text-muted mt-0.5">Semester {selectedSubject.semester}</p>
+                      <p className="text-[12.5px] text-text-muted mt-0.5">Semester {selectedSubject.semester}</p>
                     )}
                   </div>
 
-                  <div className="shrink-0 text-right space-y-2">
+                  <div className="shrink-0 text-right space-y-2.5">
                     {/* Source badges */}
                     <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       {sources.includes("web") && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400">🌐 Web</span>
+                        <span className="chip text-[11px] bg-blue-100 text-blue-700">🌐 Web</span>
                       )}
                       {sources.includes("llm_professor") && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20 text-violet-400">🧠 AI Professor</span>
+                        <span className="chip text-[11px] bg-violet-100 text-violet-700">🧠 AI Professor</span>
                       )}
                       {sources.includes("db_patterns") && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 border border-accent/20 text-accent">📊 Patterns</span>
+                        <span className="chip text-[11px] bg-accent/10 text-accent">📊 Patterns</span>
                       )}
                     </div>
 
@@ -957,24 +963,28 @@ function PredictInner() {
 
           {/* No predictions yet */}
           {!loadingPredictions && predictions.length === 0 && (
-            <div className="rounded-2xl p-12 text-center card-depth">
-              <Sparkles size={28} className="mx-auto text-text-muted mb-3" />
-              <p className="text-sm font-medium text-text-secondary">No predictions yet for this subject</p>
-              <p className="text-xs text-text-muted mt-1 max-w-xs mx-auto">
-                Upload at least 2 past question papers — the AI will analyze patterns and generate predictions.
+            <div className="card p-12 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent/10 text-accent mb-3">
+                <Sparkles size={20} />
+              </div>
+              <p className="text-[15px] font-semibold text-text-primary">No predictions yet</p>
+              <p className="text-[13px] text-text-muted mt-1.5 max-w-xs mx-auto">
+                Upload at least 2 past papers — AI will analyze patterns and generate predictions.
               </p>
             </div>
           )}
 
           {/* Upload panel */}
-          <div className="bg-bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="card overflow-hidden p-0">
             <button
               onClick={() => setUploadOpen(v => !v)}
-              className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-bg-elevated transition-colors"
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-bg-elevated transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <Upload size={14} className="text-text-muted" />
-                <span className="text-sm font-medium text-text-primary">Upload Papers to Improve Predictions</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center">
+                  <Upload size={14} className="text-text-secondary" />
+                </div>
+                <span className="text-[14px] font-semibold text-text-primary">Upload papers to improve predictions</span>
                 {paperSlots.some(s => s.status === "queued" || s.status === "processing") && (
                   <span className="text-xs text-amber-400 font-medium">· Processing...</span>
                 )}
@@ -1016,7 +1026,7 @@ function PredictInner() {
                 <button
                   onClick={handleUploadAll}
                   disabled={uploading || !paperSlots.some(s => s.file && s.status === "idle")}
-                  className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                  className="btn-primary w-full h-11 mt-1"
                 >
                   {uploading
                     ? "Uploading..."
@@ -1033,8 +1043,7 @@ function PredictInner() {
       {/* ── Answer Modal ──────────────────────────────────────────────────────── */}
       {modalPrediction && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/30 backdrop-blur-sm"
           onClick={closeModal}
         >
           <div

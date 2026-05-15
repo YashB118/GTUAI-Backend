@@ -46,7 +46,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <div className="flex h-screen bg-bg-primary overflow-hidden">
+    <div className="flex h-screen bg-bg-page overflow-hidden">
       <StudentSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -60,7 +60,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           userBranch={profile.branch}
           userSemester={profile.semester}
         />
-        <main className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 pb-24 md:pb-6 animate-fade-in">
+        <main className="flex-1 overflow-y-auto px-5 lg:px-8 py-6 lg:py-8 pb-28 md:pb-8 animate-fade-in">
           {children}
         </main>
       </div>

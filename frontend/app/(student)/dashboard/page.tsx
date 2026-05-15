@@ -2,25 +2,20 @@
 
 import { useEffect, useState, useMemo } from "react";
 import {
-  // Swords,         // Brahmastra disabled — to be rebuilt
-  ArrowRight, Upload, MessageSquare,
-  BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle,
-  Newspaper, ExternalLink, RefreshCw,
-  // Flame, Trophy,  // coins/streak disabled
+  ArrowRight, Upload, MessageSquare, BookOpen, FileQuestion, Sparkles,
+  Star, PenLine, CheckCircle, Newspaper, ExternalLink, RefreshCw, Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
-// import { DailyChallenge } from "@/components/ui/DailyChallenge";          // coins disabled
-// import { notifyCoinsEarned, notifyStreakUpdated } from "@/lib/coinEvents"; // coins disabled
 
 function fadeUp(delay = 0) {
   return {
-    initial:    { opacity: 0, y: 14 },
+    initial:    { opacity: 0, y: 10 },
     animate:    { opacity: 1, y: 0 },
-    transition: { delay, duration: 0.35, ease: "easeOut" },
+    transition: { delay, duration: 0.32, ease: "easeOut" },
   } as const;
 }
 
@@ -29,6 +24,16 @@ interface UserProfile {
   branch: string;
   semester: number;
   enrollment_no: string;
+}
+
+interface NewsItem {
+  id: string;
+  title: string;
+  date: string;
+  source: string;
+  url: string | null;
+  preview: string | null;
+  tag: string;
 }
 
 const EXAM_QUOTES = [
@@ -48,97 +53,38 @@ function getDailyQuote() {
 }
 
 function getGreeting(name: string, hour: number): string {
-  if (hour >= 22 || hour < 4) return `Raat ko bhi padh rahe ho, ${name}? 🌙`;
-  if (hour < 9)  return `Subah subah ready ho, ${name}? ☀️`;
-  if (hour < 14) return `${name}, aaj kya padha? 📚`;
-  if (hour < 18) return `Exam ki taiyari kahan tak, ${name}? 🎯`;
-  return `Sham ho gayi, ${name}. Time kam hai. ⚔️`;
+  if (hour >= 22 || hour < 4) return `Up late, ${name}?`;
+  if (hour < 9)  return `Good morning, ${name}.`;
+  if (hour < 14) return `Hey ${name},`;
+  if (hour < 18) return `Afternoon, ${name}.`;
+  return `Evening, ${name}.`;
 }
 
 const FEATURE_CARDS = [
-  {
-    href: "/predict",
-    icon: Sparkles,
-    label: "Andaza Laga",
-    desc: "AI exam predictions from 8 years of GTU papers",
-    color: "text-violet-400",
-    border: "hover:border-violet-500/30",
-    bg: "group-hover:bg-violet-500/5",
-  },
-  {
-    href: "/chat",
-    icon: MessageSquare,
-    label: "Pooch Lo",
-    desc: "Ask anything about GTU syllabus — instant answers",
-    color: "text-sky-400",
-    border: "hover:border-sky-500/30",
-    bg: "group-hover:bg-sky-500/5",
-  },
-  {
-    href: "/materials",
-    icon: BookOpen,
-    label: "Notes & Books",
-    desc: "Student-uploaded notes, textbooks, slides",
-    color: "text-emerald-400",
-    border: "hover:border-emerald-500/30",
-    bg: "group-hover:bg-emerald-500/5",
-  },
-  {
-    href: "/question-bank",
-    icon: FileQuestion,
-    label: "PYQ Bank",
-    desc: "Previous year GTU questions, all branches",
-    color: "text-amber-400",
-    border: "hover:border-amber-500/30",
-    bg: "group-hover:bg-amber-500/5",
-  },
-  {
-    href: "/my-uploads",
-    icon: Upload,
-    label: "Meri Files",
-    desc: "Papers and materials you've uploaded",
-    color: "text-pink-400",
-    border: "hover:border-pink-500/30",
-    bg: "group-hover:bg-pink-500/5",
-  },
+  { href: "/predict",       icon: Sparkles,      label: "Andaza Laga",  desc: "AI exam predictions" },
+  { href: "/chat",          icon: MessageSquare, label: "Pooch Lo",     desc: "Ask GTU GPT" },
+  { href: "/materials",     icon: BookOpen,      label: "Notes",        desc: "Books & PDFs" },
+  { href: "/question-bank", icon: FileQuestion,  label: "PYQ Bank",     desc: "Past questions" },
+  { href: "/my-uploads",    icon: Upload,        label: "Uploads",      desc: "Your files" },
+  { href: "/community",     icon: Users,         label: "Community",    desc: "Study groups" },
 ];
-
-/* coins disabled
-interface StreakData { current_streak: number; longest_streak: number; streak_freeze_count: number; }
-interface CoinData   { balance: number; lifetime_earned: number; }
-*/
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [hour, setHour]       = useState(new Date().getHours());
-  // const [streak, setStreak]   = useState<StreakData | null>(null);  // coins disabled
-  // const [coins, setCoins]     = useState<CoinData | null>(null);    // coins disabled
-
-  // Last-visited subject (populated by predict page via localStorage)
+  const [hour, setHour] = useState(new Date().getHours());
   const [lastSubject, setLastSubject] = useState<{ id: string; name: string } | null>(null);
 
-  // GTU News
-  interface NewsItem {
-    id: string;
-    title: string;
-    date: string;
-    source: string;
-    url: string | null;
-    preview: string | null;
-    tag: string;
-  }
-  const [news,        setNews]        = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [newsError,   setNewsError]   = useState(false);
+  const [newsError, setNewsError] = useState(false);
 
-  // Review state
-  const [showReview,      setShowReview]      = useState(false);
-  const [reviewStars,     setReviewStars]     = useState(5);
-  const [reviewQuote,     setReviewQuote]     = useState("");
-  const [reviewCollege,   setReviewCollege]   = useState("");
-  const [reviewSubmitting,setReviewSubmitting]= useState(false);
-  const [reviewSent,      setReviewSent]      = useState(false);
-  const [reviewError,     setReviewError]     = useState("");
+  const [showReview, setShowReview] = useState(false);
+  const [reviewStars, setReviewStars] = useState(5);
+  const [reviewQuote, setReviewQuote] = useState("");
+  const [reviewCollege, setReviewCollege] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSent, setReviewSent] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     setHour(new Date().getHours());
@@ -153,43 +99,34 @@ export default function StudentDashboard() {
         .maybeSingle();
       if (data) setProfile(data);
 
-      // Restore last-used subject from predict page
       const lsId   = localStorage.getItem("gtu_last_subject_id");
       const lsName = localStorage.getItem("gtu_last_subject_name");
       if (lsId && lsName) setLastSubject({ id: lsId, name: lsName });
 
-      // Fetch GTU news
-      api.get("/news/gtu?limit=12")
+      api.get("/news/gtu?limit=8")
         .then((d: { items: NewsItem[] }) => setNews(d.items || []))
         .catch(() => setNewsError(true))
         .finally(() => setNewsLoading(false));
-
-      /* coins disabled — login reward + streak/coin fetch removed
-      const [loginRes, streakRes, coinRes] = await Promise.allSettled([
-        api.post("/coins/login-reward", {}),
-        api.get("/streaks/me"),
-        api.get("/coins/me"),
-      ]);
-      if (loginRes.status === "fulfilled" && !loginRes.value.already_claimed && loginRes.value.awarded > 0) {
-        const bonus = loginRes.value.streak_bonus > 0 ? ` + ${loginRes.value.streak_bonus} streak bonus!` : "";
-        toast.success(`+${loginRes.value.awarded - loginRes.value.streak_bonus} coins for logging in${bonus} 🪙`);
-        notifyCoinsEarned(loginRes.value.balance);
-        notifyStreakUpdated(loginRes.value.streak);
-      }
-      if (streakRes.status === "fulfilled") setStreak(streakRes.value);
-      if (coinRes.status === "fulfilled")   setCoins(coinRes.value);
-      */
     })();
   }, []);
 
   const firstName = profile?.full_name?.split(" ")[0] || "Student";
-  const greeting  = useMemo(() => getGreeting(firstName, hour), [firstName, hour]);
-  const quote     = useMemo(() => getDailyQuote(), []);
+  const greeting = useMemo(() => getGreeting(firstName, hour), [firstName, hour]);
+  const quote = useMemo(() => getDailyQuote(), []);
+
+  const refreshNews = () => {
+    setNewsLoading(true);
+    setNewsError(false);
+    api.get("/news/gtu?limit=8&force=true")
+      .then((d: { items: NewsItem[] }) => setNews(d.items || []))
+      .catch(() => setNewsError(true))
+      .finally(() => setNewsLoading(false));
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (reviewQuote.trim().length < 20) {
-      setReviewError("20 se zyada characters likhna zaroori hai.");
+      setReviewError("Need 20+ characters.");
       return;
     }
     setReviewSubmitting(true);
@@ -201,9 +138,9 @@ export default function StudentDashboard() {
         college: reviewCollege.trim(),
       });
       setReviewSent(true);
-      toast.success("Review submit ho gaya! 🎉");
+      toast.success("Review submitted");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Submit fail ho gaya";
+      const msg = err instanceof Error ? err.message : "Failed to submit";
       setReviewError(msg);
       toast.error(msg);
     } finally {
@@ -211,417 +148,295 @@ export default function StudentDashboard() {
     }
   };
 
-  const TAG_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    timetable: { label: "Timetable", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-    result:    { label: "Result",    color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20"    },
-    form:      { label: "Form",      color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20"  },
-    circular:  { label: "Circular",  color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20"},
-    notice:    { label: "Notice",    color: "text-text-muted",  bg: "bg-bg-elevated border-border"         },
-    holiday:   { label: "Holiday",   color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20"   },
-  };
-
-  const refreshNews = () => {
-    setNewsLoading(true);
-    setNewsError(false);
-    api.get("/news/gtu?limit=12&force=true")
-      .then((d: { items: typeof news }) => setNews(d.items || []))
-      .catch(() => setNewsError(true))
-      .finally(() => setNewsLoading(false));
+  const TAG_COLORS: Record<string, string> = {
+    timetable: "bg-emerald-100 text-emerald-700",
+    result:    "bg-blue-100 text-blue-700",
+    form:      "bg-amber-100 text-amber-700",
+    circular:  "bg-violet-100 text-violet-700",
+    notice:    "bg-bg-muted text-text-secondary",
+    holiday:   "bg-pink-100 text-pink-700",
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-7xl mx-auto">
 
-      {/* ── Daily quote banner ── */}
-      <motion.div {...fadeUp(0)} className="pt-4 mb-6">
-        <div className="rounded-2xl border border-border bg-bg-card px-5 py-4 flex items-start gap-4">
-          <span className="text-2xl shrink-0 mt-0.5">💡</span>
-          <div>
-            <p className="text-base font-medium text-text-primary leading-snug">
-              &ldquo;{quote.text}&rdquo;
-            </p>
-            <p className="text-xs text-text-muted mt-1.5">— {quote.author}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ── Greeting ── */}
-      <motion.div {...fadeUp(0.05)} className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-snug mb-3">
+      {/* Greeting row */}
+      <motion.div {...fadeUp(0)} className="mb-7">
+        <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
           {greeting}
         </h1>
         {profile && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs px-3 py-1 rounded-full border border-border text-text-muted bg-bg-card">
-              {profile.branch}
-            </span>
-            <span className="text-xs px-3 py-1 rounded-full border border-border text-text-muted bg-bg-card">
-              Sem {profile.semester}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap mt-4">
+            <span className="chip">{profile.branch}</span>
+            <span className="chip">Sem {profile.semester}</span>
             {profile.enrollment_no && (
-              <span className="text-xs text-text-muted font-mono">{profile.enrollment_no}</span>
+              <span className="text-[12.5px] text-text-muted font-mono">{profile.enrollment_no}</span>
             )}
           </div>
         )}
       </motion.div>
 
-      {/* coins disabled — streak + coins bar removed
-      {(streak || coins) && (
-        <motion.div {...fadeUp(0.07)} className="mb-6 flex flex-wrap gap-3">
-          {streak !== null && (
-            <Link href="/leaderboard" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:border-amber-500/35 transition-colors">
-              <Flame size={16} className={streak.current_streak >= 7 ? "text-orange-400" : "text-amber-400"} />
-              <div>
-                <p className="text-xs text-text-muted leading-none">Streak</p>
-                <p className="text-sm font-bold text-text-primary leading-tight">{streak.current_streak} days</p>
+      {/* ── Bento Grid ── */}
+      <div className="grid grid-cols-12 gap-5 auto-rows-min">
+
+        {/* HERO — Continue / first action — spans 8 cols */}
+        <motion.div {...fadeUp(0.06)} className="col-span-12 lg:col-span-8">
+          {lastSubject ? (
+            <Link href={`/predict?subject=${lastSubject.id}`} className="block group">
+              <div className="card card-hover p-7 lg:p-8 relative overflow-hidden">
+                <div className="flex items-start justify-between gap-6 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <p className="section-title">Continue studying</p>
+                    <h2 className="text-3xl lg:text-4xl font-bold text-text-primary mt-3 tracking-tight">
+                      {lastSubject.name}
+                    </h2>
+                    <p className="text-text-secondary mt-2 text-[14px]">
+                      Pick up where you left off — predictions and AI answers ready.
+                    </p>
+                  </div>
+                  <button className="btn-primary shrink-0 group-hover:opacity-100">
+                    Resume <ArrowRight size={15} />
+                  </button>
+                </div>
               </div>
             </Link>
-          )}
-          {coins !== null && (
-            <Link href="/coins" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:border-amber-500/35 transition-colors">
-              <span className="text-base">🪙</span>
-              <div>
-                <p className="text-xs text-text-muted leading-none">Coins</p>
-                <p className="text-sm font-bold text-amber-400 leading-tight">{coins.balance.toLocaleString()}</p>
-              </div>
-            </Link>
-          )}
-          {streak !== null && streak.current_streak > 0 && (
-            <Link href="/leaderboard" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-border bg-bg-card hover:border-accent/30 transition-colors">
-              <Trophy size={16} className="text-violet-400" />
-              <div>
-                <p className="text-xs text-text-muted leading-none">Best streak</p>
-                <p className="text-sm font-bold text-text-primary leading-tight">{streak.longest_streak} days</p>
+          ) : (
+            <Link href="/predict" className="block group">
+              <div className="card card-hover p-7 lg:p-8">
+                <p className="section-title">Get started</p>
+                <h2 className="text-3xl lg:text-4xl font-bold text-text-primary mt-3 tracking-tight">
+                  Predict your exam.
+                </h2>
+                <p className="text-text-secondary mt-2 text-[14px] max-w-md">
+                  Upload past papers, get AI predictions, study only what matters.
+                </p>
+                <button className="btn-primary mt-6">
+                  Start with Andaza Laga <ArrowRight size={15} />
+                </button>
               </div>
             </Link>
           )}
         </motion.div>
-      )}
-      */}
 
-      {/* ── Main content — single column ── */}
-      <div className="space-y-6">
-
-          {/* Brahmastra hero card — disabled until Brahmastra is rebuilt
-          <motion.div {...fadeUp(0.1)}>
-          <Link href="/brahmastra" className="block">
-            <div
-              className="rounded-2xl border border-blue-500/25 p-6 relative overflow-hidden
-                hover:border-blue-500/45 transition-all duration-200 group
-                shadow-[0_0_40px_rgba(88,101,242,0.05)] hover:shadow-[0_0_50px_rgba(88,101,242,0.10)]"
-              style={{ background: "linear-gradient(135deg, rgba(88,101,242,0.09) 0%, rgba(88,101,242,0.02) 100%)" }}
-            >
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: "radial-gradient(ellipse at 10% 90%, rgba(88,101,242,0.12) 0%, transparent 55%)" }}
-              />
-              <div className="relative">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-blue-500/15 border border-blue-500/25">
-                      <Swords size={22} className="text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-text-primary">Brahmastra</p>
-                      <p className="text-sm text-blue-400/80 italic">Sirf wahi jo aayega.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 group-hover:bg-blue-400 transition-colors text-white text-sm font-semibold shadow-[0_0_20px_rgba(88,101,242,0.25)]">
-                    Activate <ArrowRight size={14} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { fire: "🔥🔥🔥", label: "Almost Certain", pct: "90%+", color: "text-blue-400", bg: "bg-blue-500/8 border-blue-500/20" },
-                    { fire: "🔥🔥",   label: "Highly Likely",  pct: "70%+", color: "text-sky-400",    bg: "bg-sky-500/8 border-sky-500/20"       },
-                    { fire: "🔥",    label: "Watch Out",       pct: "50%+", color: "text-violet-400", bg: "bg-violet-500/8 border-violet-500/20" },
-                  ].map((row) => (
-                    <div key={row.label} className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${row.bg}`}>
-                      <span className="text-xl shrink-0">{row.fire}</span>
-                      <div className="min-w-0">
-                        <p className="text-xs text-text-muted leading-tight">{row.label}</p>
-                        <p className={`text-sm font-bold ${row.color}`}>{row.pct}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Link>
-          </motion.div>
-          */}
-
-          {/* Daily challenge — coins disabled
-          <DailyChallenge onCoinsEarned={(n) => setCoins(prev => prev ? { ...prev, balance: prev.balance + n } : prev)} />
-          */}
-
-          {/* Continue where you left off */}
-          {lastSubject && (
-            <motion.div {...fadeUp(0.12)}>
-              <Link
-                href={`/predict?subject=${lastSubject.id}`}
-                className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border border-accent/25 bg-accent/5 hover:border-accent/45 hover:bg-accent/8 transition-all duration-200 group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
-                    <Sparkles size={17} className="text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-muted font-medium">Continue where you left off</p>
-                    <p className="text-sm font-semibold text-text-primary mt-0.5">{lastSubject.name}</p>
-                  </div>
-                </div>
-                <ArrowRight size={15} className="text-text-muted group-hover:text-accent transition-colors shrink-0" />
-              </Link>
-            </motion.div>
-          )}
-
-          {/* Feature cards */}
-          <motion.div {...fadeUp(0.17)}>
-            <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
-              Features
+        {/* Quote card — 4 cols */}
+        <motion.div {...fadeUp(0.10)} className="col-span-12 lg:col-span-4">
+          <div className="card p-6 h-full bg-gradient-to-br from-bg-card to-bg-elevated">
+            <span className="text-2xl">💡</span>
+            <p className="text-[15px] font-medium text-text-primary leading-snug mt-3 text-balance">
+              &ldquo;{quote.text}&rdquo;
             </p>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {FEATURE_CARDS.map(({ href, icon: Icon, label, desc, color, border, bg }) => (
-                <motion.div
-                  key={href}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
-                  <Link
-                    href={href}
-                    className={`group flex flex-col gap-3 p-5 rounded-2xl bg-bg-card border border-border h-full
-                      ${border} transition-colors duration-150`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center shrink-0 ${bg} transition-colors`}>
-                      <Icon size={18} className={color} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-text-primary">{label}</p>
-                      <p className="text-xs text-text-muted mt-1 leading-snug">{desc}</p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+            <p className="text-[12px] text-text-muted mt-3">— {quote.author}</p>
+          </div>
+        </motion.div>
 
-          {/* ── GTU Latest News ── */}
-          <motion.div {...fadeUp(0.21)}>
-            <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center shrink-0">
-                    <Newspaper size={15} className="text-accent" />
+        {/* Feature cards — 3-col grid inside 8-col span */}
+        <motion.div {...fadeUp(0.14)} className="col-span-12 lg:col-span-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {FEATURE_CARDS.map(({ href, icon: Icon, label, desc }) => (
+              <Link key={href} href={href} className="block">
+                <div className="card card-hover p-5 h-full group">
+                  <div className="flex items-start justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
+                      <Icon size={18} strokeWidth={1.9} />
+                    </div>
+                    <ArrowRight size={15} className="text-text-muted/40 group-hover:text-text-primary transition-colors" />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-text-primary">GTU Latest Updates</p>
-                    <p className="text-xs text-text-muted">Circulars, timetables, results</p>
+                  <p className="text-[15px] font-semibold text-text-primary mt-4">{label}</p>
+                  <p className="text-[12.5px] text-text-muted mt-0.5">{desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* News card — tall, 4 cols */}
+        <motion.div {...fadeUp(0.18)} className="col-span-12 lg:col-span-4 lg:row-span-2">
+          <div className="card p-0 overflow-hidden h-full flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-bg-muted flex items-center justify-center">
+                  <Newspaper size={14} />
+                </div>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-text-primary">GTU Updates</p>
+                  <p className="text-[11px] text-text-muted">Circulars · Timetables</p>
+                </div>
+              </div>
+              <button
+                onClick={refreshNews}
+                disabled={newsLoading}
+                className="text-text-muted hover:text-text-primary transition-colors p-1.5 rounded-lg hover:bg-bg-elevated disabled:opacity-40"
+                title="Refresh"
+              >
+                <RefreshCw size={13} className={newsLoading ? "animate-spin" : ""} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y divide-border/60">
+              {newsLoading && Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="px-5 py-3.5 flex items-start gap-3">
+                  <div className="skeleton w-14 h-4 shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="skeleton h-3.5 w-4/5" />
+                    <div className="skeleton h-3 w-1/3" />
                   </div>
                 </div>
-                <button
-                  onClick={refreshNews}
-                  disabled={newsLoading}
-                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-40"
-                  title="Refresh news"
-                >
-                  <RefreshCw size={13} className={newsLoading ? "animate-spin" : ""} />
-                </button>
-              </div>
+              ))}
 
-              {/* News list */}
-              <div className="divide-y divide-border/40">
-                {newsLoading && (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="px-5 py-3.5 flex items-start gap-3">
-                      <div className="w-16 h-4 rounded bg-bg-elevated animate-pulse shrink-0 mt-0.5" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3.5 w-3/4 rounded bg-bg-elevated animate-pulse" />
-                        <div className="h-3 w-1/3 rounded bg-bg-elevated animate-pulse" />
-                      </div>
-                    </div>
-                  ))
-                )}
+              {newsError && !newsLoading && (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-[13px] text-text-muted">Could not load updates.</p>
+                  <button onClick={refreshNews} className="mt-2 text-[12px] text-accent hover:underline">Try again</button>
+                </div>
+              )}
 
-                {newsError && !newsLoading && (
-                  <div className="px-5 py-8 text-center">
-                    <p className="text-sm text-text-muted">Could not load news.</p>
-                    <button onClick={refreshNews} className="mt-2 text-xs text-accent hover:underline">
-                      Try again
-                    </button>
-                  </div>
-                )}
-
-                {!newsLoading && !newsError && news.map((item) => {
-                  const tag = TAG_CONFIG[item.tag] || TAG_CONFIG.notice;
-                  const dateStr = item.date
-                    ? new Date(item.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-                    : "";
-                  return (
-                    <div key={item.id} className="px-5 py-3.5 flex items-start gap-3 hover:bg-bg-elevated/50 transition-colors group">
-                      {/* Tag badge */}
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border whitespace-nowrap shrink-0 mt-0.5 ${tag.bg} ${tag.color}`}>
-                        {tag.label}
-                      </span>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-text-primary leading-snug line-clamp-2">
-                          {item.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {dateStr && (
-                            <span className="text-[11px] text-text-muted">{dateStr}</span>
-                          )}
-                          <span className="text-[11px] text-text-muted/50">·</span>
-                          <span className="text-[11px] text-text-muted/60">{item.source}</span>
-                        </div>
-                      </div>
-
-                      {/* Link */}
-                      {item.url && (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="shrink-0 p-1.5 rounded-lg text-text-muted/40 group-hover:text-accent transition-colors"
-                          title="Open"
-                        >
-                          <ExternalLink size={13} />
-                        </a>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {!newsLoading && !newsError && news.length === 0 && (
-                  <div className="px-5 py-8 text-center">
-                    <p className="text-sm text-text-muted">No news available right now.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              {!newsLoading && news.length > 0 && (
-                <div className="px-5 py-3 border-t border-border/40 flex items-center justify-between">
-                  <p className="text-xs text-text-muted/50">Updates from GTU official site + Telegram</p>
+              {!newsLoading && !newsError && news.map((item) => {
+                const tagClass = TAG_COLORS[item.tag] || TAG_COLORS.notice;
+                const dateStr = item.date
+                  ? new Date(item.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+                  : "";
+                return (
                   <a
-                    href="https://t.me/gtu_announcement"
+                    key={item.id}
+                    href={item.url || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-accent hover:underline flex items-center gap-1"
+                    onClick={e => !item.url && e.preventDefault()}
+                    className="px-5 py-3.5 flex items-start gap-3 hover:bg-bg-elevated/60 transition-colors group"
                   >
-                    Follow channel <ExternalLink size={10} />
+                    <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 mt-0.5 ${tagClass}`}>
+                      {item.tag}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-text-primary leading-snug line-clamp-2">{item.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] text-text-muted">{dateStr}</span>
+                        <span className="text-[11px] text-text-muted/50">·</span>
+                        <span className="text-[11px] text-text-muted">{item.source}</span>
+                      </div>
+                    </div>
+                    {item.url && (
+                      <ExternalLink size={12} className="text-text-muted/40 group-hover:text-text-primary transition-colors shrink-0 mt-1" />
+                    )}
                   </a>
+                );
+              })}
+
+              {!newsLoading && !newsError && news.length === 0 && (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-[13px] text-text-muted">No updates right now.</p>
                 </div>
               )}
             </div>
-          </motion.div>
 
-          {/* Review card — bottom of page */}
-          <motion.div {...fadeUp(0.24)}>
-          <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
-        {reviewSent ? (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <CheckCircle size={32} className="text-emerald-400" />
-            <div>
-              <p className="text-base font-semibold text-text-primary">Review submit ho gaya! 🎉</p>
-              <p className="text-sm text-text-muted mt-1">Landing page pe dikhega.</p>
+            <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+              <p className="text-[11px] text-text-muted">From gtu.ac.in + Telegram</p>
+              <a
+                href="https://t.me/gtu_announcement"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11.5px] text-text-primary font-medium hover:text-accent transition-colors flex items-center gap-1"
+              >
+                Follow <ExternalLink size={10} />
+              </a>
             </div>
           </div>
-        ) : (
-          <>
-            <button
-              onClick={() => setShowReview(v => !v)}
-              className="w-full flex items-center gap-3.5 px-5 py-4 hover:bg-bg-elevated transition-colors text-left"
-            >
-              <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/15 flex items-center justify-center shrink-0">
-                <PenLine size={16} className="text-accent" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-text-primary">Apna experience share karo</p>
-                <p className="text-xs text-text-muted mt-0.5">Review likhne se dusre students ko help hoti hai</p>
-              </div>
-              <ArrowRight size={14} className={`text-text-muted transition-transform duration-200 ${showReview ? "rotate-90" : ""}`} />
-            </button>
+        </motion.div>
 
-            {showReview && (
-              <form onSubmit={handleReviewSubmit} className="px-5 pb-5 space-y-4 border-t border-border/60">
-                {/* Stars */}
-                <div className="pt-4">
-                  <p className="text-xs text-text-muted mb-2">Rating</p>
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3, 4, 5].map(n => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setReviewStars(n)}
-                        className="transition-transform hover:scale-110"
-                      >
-                        <Star
-                          size={24}
-                          className={n <= reviewStars ? "text-amber-400 fill-amber-400" : "text-text-muted"}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Review text */}
+        {/* Review card — full width bottom */}
+        <motion.div {...fadeUp(0.22)} className="col-span-12 lg:col-span-8">
+          <div className="card overflow-hidden">
+            {reviewSent ? (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <CheckCircle size={32} className="text-emerald-500" />
                 <div>
-                  <p className="text-xs text-text-muted mb-1.5">Review *</p>
-                  <textarea
-                    rows={3}
-                    placeholder="Andaza ne kaise help kiya exam mein..."
-                    value={reviewQuote}
-                    onChange={e => setReviewQuote(e.target.value)}
-                    className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-3 text-sm text-text-primary
-                      placeholder:text-text-muted focus:outline-none focus:border-accent/50 resize-none transition-colors"
-                    required
-                  />
-                  <p className="text-xs text-text-muted mt-1">{reviewQuote.length} chars (min 20)</p>
+                  <p className="text-[16px] font-semibold text-text-primary">Review submitted!</p>
+                  <p className="text-[13px] text-text-muted mt-1">It will appear on the landing page.</p>
                 </div>
-
-                {/* College */}
-                <div>
-                  <p className="text-xs text-text-muted mb-1.5">College (optional)</p>
-                  <input
-                    type="text"
-                    placeholder="LDRP Institute of Technology"
-                    value={reviewCollege}
-                    onChange={e => setReviewCollege(e.target.value)}
-                    className="w-full bg-bg-elevated border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary
-                      placeholder:text-text-muted focus:outline-none focus:border-accent/50 transition-colors"
-                  />
-                </div>
-
-                {reviewError && (
-                  <p className="text-sm text-red-400 bg-red-500/8 border border-red-500/15 rounded-xl px-4 py-2.5">
-                    {reviewError}
-                  </p>
-                )}
-
+              </div>
+            ) : (
+              <>
                 <button
-                  type="submit"
-                  disabled={reviewSubmitting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                  onClick={() => setShowReview(v => !v)}
+                  className="w-full flex items-center gap-3 p-5 hover:bg-bg-elevated/50 transition-colors text-left"
                 >
-                  {reviewSubmitting
-                    ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : <PenLine size={14} />}
-                  {reviewSubmitting ? "Submitting..." : "Review Submit Karo"}
+                  <div className="w-9 h-9 rounded-xl bg-bg-muted flex items-center justify-center shrink-0">
+                    <PenLine size={15} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[14px] font-semibold text-text-primary">Share your experience</p>
+                    <p className="text-[12.5px] text-text-muted mt-0.5">Help other GTU students discover the app</p>
+                  </div>
+                  <ArrowRight size={15} className={`text-text-muted transition-transform ${showReview ? "rotate-90" : ""}`} />
                 </button>
-              </form>
-            )}
-          </>
-        )}
-      </div>
-          </motion.div>
 
-      </div>{/* end main content */}
+                {showReview && (
+                  <form onSubmit={handleReviewSubmit} className="p-5 pt-2 space-y-4 border-t border-border">
+                    <div>
+                      <p className="text-[13px] font-medium text-text-primary mb-2">Rating</p>
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3, 4, 5].map(n => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setReviewStars(n)}
+                            className="transition-transform hover:scale-110"
+                          >
+                            <Star
+                              size={22}
+                              className={n <= reviewStars ? "text-amber-400 fill-amber-400" : "text-text-muted/30"}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] font-medium text-text-primary mb-2">Review</p>
+                      <textarea
+                        rows={3}
+                        placeholder="How did Andaza help you in your exam..."
+                        value={reviewQuote}
+                        onChange={e => setReviewQuote(e.target.value)}
+                        className="input min-h-[90px] py-3 resize-none"
+                        required
+                      />
+                      <p className="text-[11px] text-text-muted mt-1">{reviewQuote.length} characters (min 20)</p>
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] font-medium text-text-primary mb-2">College <span className="text-text-muted font-normal">(optional)</span></p>
+                      <input
+                        type="text"
+                        placeholder="LDRP Institute of Technology"
+                        value={reviewCollege}
+                        onChange={e => setReviewCollege(e.target.value)}
+                        className="input"
+                      />
+                    </div>
+
+                    {reviewError && (
+                      <p className="text-[12.5px] text-status-error">{reviewError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting}
+                      className="btn-primary"
+                    >
+                      {reviewSubmitting
+                        ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : <PenLine size={14} />}
+                      {reviewSubmitting ? "Submitting..." : "Submit review"}
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
+        </motion.div>
+
+      </div>
     </div>
   );
 }

@@ -142,16 +142,15 @@ export default function QuestionBankPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <FileQuestion size={20} className="text-accent" />
-        <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Question Bank</h1>
+      <div>
+        <p className="section-title">Archive</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Question Bank</h1>
+        <p className="text-[13.5px] text-text-secondary mt-1">All past GTU questions, searchable by year and unit.</p>
       </div>
 
       {/* Subject selector */}
-      <div className="bg-bg-card border border-border rounded-xl p-5">
-        <label className="block text-xs font-medium uppercase tracking-wide text-text-muted mb-2">
-          Select Subject
-        </label>
+      <div className="card p-5">
+        <p className="section-title mb-2">Subject</p>
         <div className="relative">
           <select
             value={selectedSubjectId}
@@ -162,19 +161,19 @@ export default function QuestionBankPage() {
               setSearch("");
               answersCache.current = {};
             }}
-            className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm text-text-primary appearance-none pr-8 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+            className="input pr-10"
           >
-            <option value="">Choose a subject to browse questions...</option>
+            <option value="">Choose a subject…</option>
             {subjects.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}{s.code ? ` (${s.code})` : ""}{s.semester ? ` · Sem ${s.semester}` : ""}
               </option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
         </div>
         {subjects.length === 0 && (
-          <p className="text-xs text-text-muted mt-2">No subjects found for your branch.</p>
+          <p className="text-[12px] text-text-muted mt-2">No subjects found for your branch.</p>
         )}
       </div>
 
@@ -183,36 +182,36 @@ export default function QuestionBankPage() {
           {/* Filters */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="relative col-span-2">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search questions..."
+                placeholder="Search questions…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-bg-card border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
+                className="input pl-10"
               />
             </div>
             <div className="relative">
               <select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
-                className="w-full bg-bg-card border border-border rounded-lg px-3 py-2 text-sm text-text-primary appearance-none pr-6 focus:outline-none focus:border-accent"
+                className="input pr-8"
               >
                 <option value="">All Years</option>
                 {years.map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
-              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             </div>
             <div className="relative">
               <select
                 value={unitFilter}
                 onChange={(e) => setUnitFilter(e.target.value)}
-                className="w-full bg-bg-card border border-border rounded-lg px-3 py-2 text-sm text-text-primary appearance-none pr-6 focus:outline-none focus:border-accent"
+                className="input pr-8"
               >
                 <option value="">All Units</option>
                 {units.map((u) => <option key={u} value={u}>Unit {u}</option>)}
               </select>
-              <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+              <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             </div>
           </div>
 
@@ -241,48 +240,43 @@ export default function QuestionBankPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
-              <FileQuestion size={32} className="mx-auto text-text-muted mb-3" />
-              <p className="text-sm font-medium text-text-secondary">No questions found</p>
-              <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto">
+            <div className="card p-12 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-bg-muted mb-3">
+                <FileQuestion size={20} className="text-text-muted" />
+              </div>
+              <p className="text-[14.5px] font-semibold text-text-primary">No questions found</p>
+              <p className="text-[12.5px] text-text-muted mt-1 max-w-sm mx-auto">
                 Upload question papers for this subject to populate the bank.
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {filtered.map((q) => (
                 <button
                   key={q.id}
                   onClick={() => handleQuestionClick(q)}
-                  className="w-full text-left bg-bg-card border border-border rounded-xl p-4 hover:border-accent/40 hover:bg-bg-elevated transition-all duration-150 cursor-pointer group"
+                  className="card card-hover p-5 text-left group"
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {q.question_papers?.year && (
-                        <span className="inline-flex items-center px-2 py-0.5 bg-bg-elevated border border-border rounded text-xs text-text-secondary font-mono">
-                          {q.question_papers.year}
-                        </span>
+                        <span className="chip text-[10.5px] font-mono">{q.question_papers.year}</span>
                       )}
                       {q.question_papers?.exam_type && (
-                        <span className="text-xs text-text-muted capitalize">
-                          {q.question_papers.exam_type}
-                        </span>
+                        <span className="chip text-[10.5px] capitalize">{q.question_papers.exam_type}</span>
                       )}
                       {q.unit_number != null && (
                         <Badge variant="accent">Unit {q.unit_number}</Badge>
                       )}
-                      {q.question_type && (
-                        <span className="text-xs text-text-muted capitalize">{q.question_type}</span>
-                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {q.marks != null && (
-                        <span className="text-xs text-text-muted">{q.marks} marks</span>
+                        <span className="text-[11.5px] font-mono text-text-muted">{q.marks}m</span>
                       )}
-                      <Sparkles size={12} className="text-text-muted group-hover:text-accent transition-colors" />
+                      <Sparkles size={12} className="text-text-muted/40 group-hover:text-accent transition-colors" />
                     </div>
                   </div>
-                  <p className="text-sm text-text-primary leading-relaxed">{q.text}</p>
+                  <p className="text-[13.5px] text-text-primary leading-relaxed">{q.text}</p>
                 </button>
               ))}
             </div>
@@ -291,13 +285,13 @@ export default function QuestionBankPage() {
       )}
 
       {!selectedSubjectId && (
-        <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 mb-4">
-            <FileQuestion size={24} className="text-accent" />
+        <div className="card p-12 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent/10 text-accent mb-4">
+            <FileQuestion size={22} />
           </div>
-          <h2 className="text-base font-semibold text-text-primary mb-1">Browse Previous Year Questions</h2>
-          <p className="text-sm text-text-secondary max-w-sm mx-auto leading-relaxed">
-            Select a subject above to browse questions. Click any question to get an AI-generated model answer.
+          <h2 className="text-[15.5px] font-semibold text-text-primary">Browse PYQs</h2>
+          <p className="text-[13px] text-text-secondary max-w-sm mx-auto mt-1.5">
+            Select a subject above. Click any question to get an AI-generated model answer.
           </p>
         </div>
       )}
@@ -305,8 +299,7 @@ export default function QuestionBankPage() {
       {/* Answer Modal */}
       {modalQuestion && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/30 backdrop-blur-sm"
           onClick={closeModal}
         >
           <div

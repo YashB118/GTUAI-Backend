@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Swords } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,26 +36,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-[340px] animate-blur-in">
+    <div className="min-h-screen bg-bg-page grid lg:grid-cols-2">
 
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
-            <Swords size={18} className="text-blue-400" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Andaza</h1>
-          <p className="text-sm text-text-muted mt-1 italic">Sirf wahi jo aayega.</p>
-        </div>
+      {/* Left — form */}
+      <div className="flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[400px] animate-fade-in">
 
-        {/* Card */}
-        <div className="rounded-2xl p-6 space-y-5 bg-bg-card border border-border">
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary">Wapas aao 👋</h2>
-            <p className="text-sm text-text-muted mt-0.5">Apne account mein sign in karo</p>
+          <Link href="/" className="inline-block mb-10">
+            <AndazeSeLogo size="lg" />
+          </Link>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Welcome back</h1>
+            <p className="text-[14.5px] text-text-secondary mt-2">Sign in to continue your exam prep.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               id="email"
               label="Email"
@@ -77,7 +74,7 @@ export default function LoginPage() {
             />
 
             {error && (
-              <p className="text-[12px] text-red-400 bg-red-500/8 border border-red-500/15 rounded-lg px-3 py-2">
+              <p className="text-[12.5px] text-status-error bg-status-error/10 rounded-xl px-4 py-2.5">
                 {error}
               </p>
             )}
@@ -85,24 +82,43 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-semibold text-base transition-colors flex items-center justify-center gap-2"
+              className="btn-primary w-full h-12 text-[14.5px] mt-2"
             >
               {loading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Sign In <Swords size={13} /></>
+                <>Sign in <ArrowRight size={14} /></>
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-text-muted">
-            Pehli baar?{" "}
-            <Link href="/register" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
-              Account banao
+          <p className="text-center text-[13.5px] text-text-muted mt-7">
+            New here?{" "}
+            <Link href="/register" className="text-text-primary font-semibold hover:underline">
+              Create an account
             </Link>
           </p>
         </div>
+      </div>
 
+      {/* Right — decorative */}
+      <div className="hidden lg:flex relative bg-bg-card border-l border-border items-center justify-center p-12 overflow-hidden">
+        <div className="absolute top-1/4 -right-32 w-[500px] h-[500px] rounded-full opacity-30 orb-1"
+          style={{ background: "radial-gradient(circle, rgb(88,101,242) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-1/4 -left-32 w-[400px] h-[400px] rounded-full opacity-20 orb-2"
+          style={{ background: "radial-gradient(circle, rgb(236,72,153) 0%, transparent 70%)" }} />
+
+        <div className="relative max-w-md text-center">
+          <div className="inline-flex items-center gap-2 chip mb-6">
+            <Sparkles size={12} /> AI-powered exam prep
+          </div>
+          <h2 className="text-4xl font-bold tracking-tight text-text-primary text-balance">
+            Predict your exam. Save your time.
+          </h2>
+          <p className="text-[14.5px] text-text-secondary mt-5 text-pretty">
+            Andaza analyzes 8 years of GTU papers to show you exactly what to study.
+          </p>
+        </div>
       </div>
     </div>
   );

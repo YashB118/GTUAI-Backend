@@ -1,48 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, Star, Mail, MapPin, Clock,
-  Swords, Flame, Zap, BookOpen, MessageSquare, FileText, BarChart3, Users, Shield, Lock,
+  ArrowRight, Star, Sparkles, MessageSquare, BookOpen, Users,
+  FileQuestion, Upload, Shield, Lock, Newspaper, Check, ChevronRight,
 } from "lucide-react";
 import ContactForm from "@/components/landing/ContactForm";
-import { RevealOnScroll } from "@/components/ui/RevealOnScroll";
-import { GlowCard } from "@/components/ui/GlowCard";
 import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
-import { t, type Lang } from "@/lib/translations";
-
-const BLUE = "#5865F2";
-
-const FEATURE_ICONS = [Swords, Flame, FileText, Zap, MessageSquare, BookOpen, BarChart3, Users];
-const FEATURE_COLORS = ["text-blue-400","text-pink-400","text-green-400","text-yellow-400","text-violet-400","text-sky-400","text-emerald-400","text-cyan-400"];
-const FEATURE_GLOWS  = ["rgba(88,101,242,0.18)","rgba(235,69,158,0.15)","rgba(87,242,135,0.13)","rgba(254,231,92,0.13)","rgba(139,92,246,0.15)","rgba(56,189,248,0.13)","rgba(52,211,153,0.13)","rgba(34,211,238,0.15)"];
-
-const AVATAR_COLORS = ["bg-blue-500/20 text-blue-400","bg-violet-500/20 text-violet-400","bg-emerald-500/20 text-emerald-400","bg-pink-500/20 text-pink-400","bg-amber-500/20 text-amber-400","bg-sky-500/20 text-sky-400"];
-const STATS_VALUES = ["8+", "78%", "9", "Free"];
-const PREVIEW_QUESTIONS = [
-  { fires: "🔥🔥🔥", q: "OSI Reference Model explain karo",     pct: 92, unit: 4, badge: "Baasi Hai" },
-  { fires: "🔥🔥🔥", q: "TCP/IP vs OSI — comparison + diagram", pct: 88, unit: 4, badge: null },
-  { fires: "🔥🔥",   q: "Subnetting with VLSM numerical",        pct: 74, unit: 5, badge: null },
-];
-const CHAT_BUBBLES = [
-  { side: "right" as const, text: "Bhai Andaze Se ne 5 questions predict kiye 🔥", time: "10:42 PM" },
-  { side: "left"  as const, text: "Seriously? Kitne aaye?",                          time: "10:43 PM" },
-  { side: "right" as const, text: "4 aaye! OSI model, TCP/IP, subnetting ✨",       time: "10:43 PM" },
-  { side: "left"  as const, text: "Link de bhai, sabko share karna hai",              time: "10:44 PM" },
-  { side: "right" as const, text: "Ek sec, share karta hun 📲",                       time: "10:44 PM" },
-];
-
-const COMMUNITY_MSGS = [
-  { pseudo: "BraveFalcon", side: "left"  as const, text: "OSI ka 7-layer diagram kisi ke paas hai?", time: "11:21 PM" },
-  { pseudo: "SwiftOtter",  side: "right" as const, text: "Haan bhai, unit 4 mein hai. Aur TCP/IP bhi important lag raha hai 🔥", time: "11:22 PM" },
-  { pseudo: "CalmTiger",   side: "left"  as const, text: "DBMS normal forms mujhe samajh nahi aate 😭", time: "11:23 PM" },
-  { pseudo: "BraveFalcon", side: "left"  as const, text: "Yahan puchho, sab milke samjhate hain", time: "11:23 PM" },
-];
-
-function getInitials(name: string) {
-  return name.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "?";
-}
 
 interface TestimonialData {
   id: string; name: string; branch: string | null;
@@ -50,618 +16,1026 @@ interface TestimonialData {
   quote: string; stars: number;
 }
 
+// ─── Student face SVGs ────────────────────────────────────────────────────────
+
+// Palette: South-Asian skin tones used across campus
+const FACE_PALETTE = [
+  { skin: "#F5C5A3", hair: "#1A0A00", bg: "#EEF2FF" },   // fair, black hair
+  { skin: "#D4956A", hair: "#0D0600", bg: "#FEF9EE" },   // medium, dark hair
+  { skin: "#C17A4A", hair: "#2C1507", bg: "#F0FDF4" },   // warm brown
+  { skin: "#9E6B3F", hair: "#0A0200", bg: "#FFF7ED" },   // deeper brown
+  { skin: "#B87850", hair: "#180900", bg: "#F5F3FF" },   // golden brown
+  { skin: "#E8AA80", hair: "#1C0B00", bg: "#FFF1F2" },   // light wheat
+];
+
+type StudentStyle = "short_male" | "long_female" | "glasses_male" | "hijab_female" | "curly_male" | "bun_female";
+
+function StudentFace({ style, p }: { style: StudentStyle; p: typeof FACE_PALETTE[0] }) {
+  return (
+    <>
+      {/* Face */}
+      <ellipse cx="50" cy="56" rx="22" ry="26" fill={p.skin} />
+
+      {/* Ears */}
+      <ellipse cx="28" cy="57" rx="5" ry="7" fill={p.skin} />
+      <ellipse cx="72" cy="57" rx="5" ry="7" fill={p.skin} />
+
+      {/* Eyes */}
+      <circle cx="43" cy="51" r="3.5" fill="#1A0A00" />
+      <circle cx="57" cy="51" r="3.5" fill="#1A0A00" />
+      <circle cx="44.5" cy="49.5" r="1.2" fill="white" />
+      <circle cx="58.5" cy="49.5" r="1.2" fill="white" />
+
+      {/* Nose */}
+      <ellipse cx="50" cy="58" rx="2" ry="1.5" fill={p.skin} stroke="#C4926A" strokeWidth="0.8" />
+
+      {/* Smile */}
+      <path d="M44 64 Q50 69 56 64" stroke="#8B5E3C" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+
+      {/* Hair by style */}
+      {style === "short_male" && (
+        <path d="M28 44 Q30 28 50 26 Q70 28 72 44 Q68 34 50 32 Q32 34 28 44Z" fill={p.hair} />
+      )}
+      {style === "long_female" && (
+        <>
+          <path d="M28 44 Q30 28 50 26 Q70 28 72 44 Q68 34 50 32 Q32 34 28 44Z" fill={p.hair} />
+          <rect x="26" y="42" width="8" height="38" rx="4" fill={p.hair} />
+          <rect x="66" y="42" width="8" height="38" rx="4" fill={p.hair} />
+        </>
+      )}
+      {style === "glasses_male" && (
+        <>
+          <path d="M28 44 Q30 28 50 26 Q70 28 72 44 Q68 34 50 32 Q32 34 28 44Z" fill={p.hair} />
+          {/* Glasses */}
+          <rect x="36" y="47" width="12" height="9" rx="3" fill="none" stroke="#444" strokeWidth="1.5" />
+          <rect x="52" y="47" width="12" height="9" rx="3" fill="none" stroke="#444" strokeWidth="1.5" />
+          <line x1="48" y1="51.5" x2="52" y2="51.5" stroke="#444" strokeWidth="1.5" />
+          <line x1="34" y1="51.5" x2="36" y2="51.5" stroke="#444" strokeWidth="1" />
+          <line x1="64" y1="51.5" x2="68" y2="51.5" stroke="#444" strokeWidth="1" />
+        </>
+      )}
+      {style === "hijab_female" && (
+        <>
+          <path d="M24 52 Q26 26 50 24 Q74 26 76 52 Q72 36 50 34 Q28 36 24 52Z" fill={p.hair} />
+          <path d="M24 52 Q24 78 50 80 Q76 78 76 52 L72 54 Q70 74 50 76 Q30 74 28 54Z" fill={p.hair} />
+        </>
+      )}
+      {style === "curly_male" && (
+        <>
+          <path d="M28 48 Q26 26 50 24 Q74 26 72 48 Q68 30 50 28 Q32 30 28 48Z" fill={p.hair} />
+          {/* Curly texture dots */}
+          {[32,38,44,50,56,62,68].map(x => (
+            <circle key={x} cx={x} cy={30} r="3" fill={p.hair} />
+          ))}
+          {[36,44,52,60].map(x => (
+            <circle key={x} cx={x} cy={24} r="2.5" fill={p.hair} />
+          ))}
+        </>
+      )}
+      {style === "bun_female" && (
+        <>
+          <path d="M28 44 Q30 28 50 26 Q70 28 72 44 Q68 34 50 32 Q32 34 28 44Z" fill={p.hair} />
+          <rect x="27" y="42" width="7" height="20" rx="3.5" fill={p.hair} />
+          <rect x="66" y="42" width="7" height="20" rx="3.5" fill={p.hair} />
+          {/* Bun */}
+          <circle cx="50" cy="22" r="9" fill={p.hair} />
+        </>
+      )}
+
+      {/* Neck + shoulders */}
+      <rect x="44" y="78" width="12" height="10" rx="4" fill={p.skin} />
+      <path d="M20 100 Q28 82 50 80 Q72 82 80 100" fill="#5865F2" fillOpacity="0.7" />
+    </>
+  );
+}
+
+const STUDENTS: Array<{ style: StudentStyle; p: typeof FACE_PALETTE[0]; name: string; info: string }> = [
+  { style: "short_male",    p: FACE_PALETTE[0], name: "Yash P.",   info: "CE · Sem 5" },
+  { style: "long_female",   p: FACE_PALETTE[1], name: "Priya S.",  info: "IT · Sem 3" },
+  { style: "glasses_male",  p: FACE_PALETTE[2], name: "Rahul M.",  info: "EC · Sem 7" },
+  { style: "hijab_female",  p: FACE_PALETTE[3], name: "Aisha K.",  info: "ME · Sem 4" },
+  { style: "curly_male",    p: FACE_PALETTE[4], name: "Dev R.",    info: "CS · Sem 6" },
+  { style: "bun_female",    p: FACE_PALETTE[5], name: "Neha T.",   info: "Civil · Sem 2" },
+];
+
+function StudentAvatar({ student, size = 44 }: { student: typeof STUDENTS[0]; size?: number }) {
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+      {/* Background circle */}
+      <circle cx="50" cy="50" r="50" fill={student.p.bg} />
+      <StudentFace style={student.style} p={student.p} />
+      {/* Border */}
+      <circle cx="50" cy="50" r="48" fill="none" stroke="white" strokeWidth="4" />
+    </svg>
+  );
+}
+
+function AvatarGroup({ count = 2400 }: { count?: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex -space-x-2.5">
+        {STUDENTS.slice(0, 5).map((s) => (
+          <div key={s.name} className="rounded-full ring-2 ring-bg-page overflow-hidden" title={`${s.name} — ${s.info}`}>
+            <StudentAvatar student={s} size={40} />
+          </div>
+        ))}
+      </div>
+      <div>
+        <p className="text-[13.5px] font-semibold text-text-primary leading-tight">
+          {count.toLocaleString()}+ students
+        </p>
+        <div className="flex gap-0.5 mt-0.5">
+          {[1,2,3,4,5].map(i => <Star key={i} size={10} className="text-amber-400 fill-amber-400" />)}
+          <span className="text-[10.5px] text-text-muted ml-1">4.9 / 5</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Animated counter ────────────────────────────────────────────────────────
+function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const val = useMotionValue(0);
+  const spring = useSpring(val, { stiffness: 60, damping: 18, mass: 1 });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  useEffect(() => {
+    if (inView) val.set(to);
+  }, [inView, val, to]);
+
+  useEffect(() => {
+    return spring.on("change", (v) => {
+      if (ref.current) ref.current.textContent = Math.round(v) + suffix;
+    });
+  }, [spring, suffix]);
+
+  return <span ref={ref}>0{suffix}</span>;
+}
+
+// ─── SVG Illustrations ────────────────────────────────────────────────────────
+
+function ExamPaperSVG() {
+  return (
+    <svg viewBox="0 0 280 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Paper shadow */}
+      <rect x="22" y="22" width="236" height="296" rx="16" fill="rgb(88,101,242)" opacity="0.08" />
+      {/* Paper */}
+      <rect x="12" y="12" width="236" height="296" rx="16" fill="white" />
+      <rect x="12" y="12" width="236" height="296" rx="16" stroke="rgb(234,236,240)" strokeWidth="1.5" />
+      {/* Header strip */}
+      <rect x="12" y="12" width="236" height="52" rx="16" fill="rgb(88,101,242)" opacity="0.06" />
+      <rect x="12" y="48" width="236" height="16" fill="rgb(88,101,242)" opacity="0.06" />
+      {/* Title lines */}
+      <rect x="36" y="30" width="100" height="8" rx="4" fill="rgb(88,101,242)" opacity="0.35" />
+      <rect x="36" y="44" width="64" height="6" rx="3" fill="rgb(88,101,242)" opacity="0.2" />
+
+      {/* Q1 — highlighted (predicted) */}
+      <rect x="20" y="76" width="220" height="56" rx="10" fill="rgb(16,185,129)" fillOpacity="0.07" />
+      <rect x="20" y="76" width="3" height="56" rx="2" fill="rgb(16,185,129)" />
+      {/* Q1 badge */}
+      <rect x="172" y="83" width="60" height="20" rx="10" fill="rgb(16,185,129)" fillOpacity="0.15" />
+      <text x="202" y="97" textAnchor="middle" fontSize="9" fill="rgb(16,185,129)" fontWeight="600">🔥🔥🔥 92%</text>
+      {/* Q1 text lines */}
+      <rect x="36" y="88" width="120" height="7" rx="3.5" fill="rgb(10,10,10)" opacity="0.25" />
+      <rect x="36" y="101" width="90" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.12" />
+      <rect x="36" y="113" width="60" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.08" />
+
+      {/* Q2 — highlighted */}
+      <rect x="20" y="144" width="220" height="56" rx="10" fill="rgb(88,101,242)" fillOpacity="0.06" />
+      <rect x="20" y="144" width="3" height="56" rx="2" fill="rgb(88,101,242)" />
+      <rect x="172" y="151" width="60" height="20" rx="10" fill="rgb(88,101,242)" fillOpacity="0.12" />
+      <text x="202" y="165" textAnchor="middle" fontSize="9" fill="rgb(88,101,242)" fontWeight="600">🔥🔥 78%</text>
+      <rect x="36" y="156" width="130" height="7" rx="3.5" fill="rgb(10,10,10)" opacity="0.25" />
+      <rect x="36" y="169" width="80" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.12" />
+      <rect x="36" y="181" width="65" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.08" />
+
+      {/* Q3 — normal */}
+      <rect x="36" y="218" width="140" height="7" rx="3.5" fill="rgb(10,10,10)" opacity="0.12" />
+      <rect x="36" y="231" width="100" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.08" />
+
+      {/* Q4 — normal */}
+      <rect x="36" y="258" width="155" height="7" rx="3.5" fill="rgb(10,10,10)" opacity="0.12" />
+      <rect x="36" y="271" width="90" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.08" />
+
+      {/* AI sparkle badge */}
+      <circle cx="232" cy="76" r="18" fill="rgb(88,101,242)" />
+      <text x="232" y="81" textAnchor="middle" fontSize="14">✨</text>
+    </svg>
+  );
+}
+
+function ChatBubbleSVG() {
+  return (
+    <svg viewBox="0 0 280 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Bot avatar */}
+      <circle cx="40" cy="40" r="28" fill="rgb(88,101,242)" fillOpacity="0.12" />
+      <circle cx="40" cy="40" r="28" stroke="rgb(88,101,242)" strokeOpacity="0.2" strokeWidth="1.5" />
+      <text x="40" y="46" textAnchor="middle" fontSize="20">🤖</text>
+
+      {/* AI bubble 1 */}
+      <rect x="78" y="16" width="168" height="48" rx="14" rx="14" fill="rgb(88,101,242)" fillOpacity="0.08" />
+      <rect x="78" y="16" width="168" height="48" rx="14" stroke="rgb(88,101,242)" strokeOpacity="0.2" strokeWidth="1.5" />
+      <rect x="94" y="28" width="100" height="7" rx="3.5" fill="rgb(88,101,242)" opacity="0.4" />
+      <rect x="94" y="41" width="130" height="6" rx="3" fill="rgb(88,101,242)" opacity="0.2" />
+      {/* Tail */}
+      <path d="M78 36 L60 40 L78 44 Z" fill="rgb(88,101,242)" fillOpacity="0.08" />
+
+      {/* User bubble */}
+      <rect x="34" y="86" width="168" height="40" rx="14" fill="rgb(10,10,10)" fillOpacity="0.06" />
+      <rect x="34" y="86" width="168" height="40" rx="14" stroke="rgb(10,10,10)" strokeOpacity="0.08" strokeWidth="1.5" />
+      <rect x="50" y="98" width="120" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.2" />
+      <rect x="50" y="110" width="80" height="6" rx="3" fill="rgb(10,10,10)" opacity="0.1" />
+      <path d="M202 100 L222 106 L202 112 Z" fill="rgb(10,10,10)" fillOpacity="0.06" />
+
+      {/* AI bubble 2 — with source chip */}
+      <rect x="78" y="148" width="188" height="58" rx="14" fill="rgb(88,101,242)" fillOpacity="0.08" />
+      <rect x="78" y="148" width="188" height="58" rx="14" stroke="rgb(88,101,242)" strokeOpacity="0.2" strokeWidth="1.5" />
+      <rect x="94" y="159" width="110" height="7" rx="3.5" fill="rgb(88,101,242)" opacity="0.4" />
+      <rect x="94" y="172" width="140" height="6" rx="3" fill="rgb(88,101,242)" opacity="0.2" />
+      {/* Source chip */}
+      <rect x="94" y="183" width="68" height="14" rx="7" fill="rgb(16,185,129)" fillOpacity="0.15" />
+      <text x="128" y="193" textAnchor="middle" fontSize="7" fill="rgb(16,185,129)" fontWeight="600">📄 Unit 4 Notes</text>
+      <path d="M78 165 L60 168 L78 172 Z" fill="rgb(88,101,242)" fillOpacity="0.08" />
+
+      {/* Typing dots */}
+      <circle cx="78" cy="218" r="4" fill="rgb(88,101,242)" opacity="0.3" />
+      <circle cx="90" cy="218" r="4" fill="rgb(88,101,242)" opacity="0.5" />
+      <circle cx="102" cy="218" r="4" fill="rgb(88,101,242)" opacity="0.7" />
+    </svg>
+  );
+}
+
+function CommunityLockSVG() {
+  return (
+    <svg viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Three student circles */}
+      {[
+        { cx: 60, cy: 80, label: "🦁", color: "rgb(245,158,11)" },
+        { cx: 140, cy: 60, label: "🦊", color: "rgb(88,101,242)" },
+        { cx: 220, cy: 80, label: "🐺", color: "rgb(16,185,129)" },
+      ].map((s) => (
+        <g key={s.cx}>
+          <circle cx={s.cx} cy={s.cy} r="32" fill={s.color} fillOpacity="0.1" />
+          <circle cx={s.cx} cy={s.cy} r="32" stroke={s.color} strokeOpacity="0.25" strokeWidth="1.5" />
+          <text x={s.cx} y={s.cy + 7} textAnchor="middle" fontSize="22">{s.label}</text>
+        </g>
+      ))}
+
+      {/* Connection lines */}
+      <line x1="88" y1="75" x2="110" y2="68" stroke="rgb(88,101,242)" strokeOpacity="0.2" strokeWidth="1.5" strokeDasharray="4 3" />
+      <line x1="168" y1="68" x2="192" y2="75" stroke="rgb(88,101,242)" strokeOpacity="0.2" strokeWidth="1.5" strokeDasharray="4 3" />
+
+      {/* Chat bubbles */}
+      <rect x="26" y="120" width="68" height="28" rx="10" fill="rgb(245,158,11)" fillOpacity="0.1" />
+      <rect x="26" y="120" width="68" height="28" rx="10" stroke="rgb(245,158,11)" strokeOpacity="0.25" strokeWidth="1" />
+      <rect x="36" y="129" width="48" height="6" rx="3" fill="rgb(245,158,11)" opacity="0.35" />
+      <rect x="36" y="139" width="32" height="5" rx="2.5" fill="rgb(245,158,11)" opacity="0.2" />
+
+      <rect x="106" y="108" width="68" height="28" rx="10" fill="rgb(88,101,242)" fillOpacity="0.1" />
+      <rect x="106" y="108" width="68" height="28" rx="10" stroke="rgb(88,101,242)" strokeOpacity="0.25" strokeWidth="1" />
+      <rect x="116" y="117" width="48" height="6" rx="3" fill="rgb(88,101,242)" opacity="0.35" />
+      <rect x="116" y="127" width="36" height="5" rx="2.5" fill="rgb(88,101,242)" opacity="0.2" />
+
+      <rect x="186" y="120" width="68" height="28" rx="10" fill="rgb(16,185,129)" fillOpacity="0.1" />
+      <rect x="186" y="120" width="68" height="28" rx="10" stroke="rgb(16,185,129)" strokeOpacity="0.25" strokeWidth="1" />
+      <rect x="196" y="129" width="48" height="6" rx="3" fill="rgb(16,185,129)" opacity="0.35" />
+      <rect x="196" y="139" width="28" height="5" rx="2.5" fill="rgb(16,185,129)" opacity="0.2" />
+
+      {/* Lock badge */}
+      <circle cx="140" cy="170" r="24" fill="rgb(16,185,129)" fillOpacity="0.12" />
+      <circle cx="140" cy="170" r="24" stroke="rgb(16,185,129)" strokeOpacity="0.3" strokeWidth="1.5" />
+      <text x="140" y="177" textAnchor="middle" fontSize="18">🔒</text>
+      <text x="140" y="196" textAnchor="middle" fontSize="8.5" fill="rgb(16,185,129)" fontWeight="600">E2E Encrypted</text>
+    </svg>
+  );
+}
+
+function StudyStackSVG() {
+  return (
+    <svg viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Stack of books/notes */}
+      {[
+        { y: 130, color: "rgb(88,101,242)", label: "Data Structures Notes", w: 200 },
+        { y: 110, color: "rgb(245,158,11)", label: "Computer Networks", w: 180 },
+        { y: 90,  color: "rgb(16,185,129)", label: "DBMS Textbook", w: 160 },
+        { y: 70,  color: "rgb(239,68,68)",  label: "OS Notes", w: 140 },
+      ].map((b, i) => (
+        <g key={i}>
+          <rect x={(280 - b.w) / 2} y={b.y} width={b.w} height={26} rx="8" fill={b.color} fillOpacity="0.1" />
+          <rect x={(280 - b.w) / 2} y={b.y} width={b.w} height={26} rx="8" stroke={b.color} strokeOpacity="0.3" strokeWidth="1.5" />
+          <rect x={(280 - b.w) / 2 + 10} y={b.y + 10} width={b.w - 80} height="6" rx="3" fill={b.color} opacity="0.4" />
+          {/* Type chip */}
+          <rect x={(280 - b.w) / 2 + b.w - 60} y={b.y + 7} width={50} height="14" rx="7" fill={b.color} fillOpacity="0.15" />
+          <circle cx={(280 - b.w) / 2 + 5} y={b.y + 13} r="3" fill={b.color} opacity="0.5" />
+        </g>
+      ))}
+
+      {/* Upload arrow */}
+      <circle cx="140" cy="38" r="28" fill="rgb(88,101,242)" fillOpacity="0.1" />
+      <path d="M140 52 L140 26 M130 36 L140 26 L150 36" stroke="rgb(88,101,242)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="130" y="52" width="20" height="4" rx="2" fill="rgb(88,101,242)" opacity="0.3" />
+
+      {/* Verified badge */}
+      <circle cx="236" cy="132" r="20" fill="rgb(16,185,129)" fillOpacity="0.12" />
+      <circle cx="236" cy="132" r="20" stroke="rgb(16,185,129)" strokeOpacity="0.3" strokeWidth="1.5" />
+      <text x="236" y="138" textAnchor="middle" fontSize="14">✓</text>
+    </svg>
+  );
+}
+
+function PredictionGraphSVG() {
+  // Mini bar chart of question prediction confidence
+  const bars = [
+    { h: 90, color: "rgb(16,185,129)", label: "OSI Model" },
+    { h: 76, color: "rgb(16,185,129)", label: "TCP/IP" },
+    { h: 62, color: "rgb(88,101,242)", label: "Subnetting" },
+    { h: 48, color: "rgb(88,101,242)", label: "Routing" },
+    { h: 36, color: "rgb(245,158,11)", label: "DNS" },
+    { h: 28, color: "rgb(245,158,11)", label: "HTTP" },
+  ];
+  return (
+    <svg viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Grid lines */}
+      {[0, 30, 60, 90].map(y => (
+        <line key={y} x1="48" y1={20 + y} x2="300" y2={20 + y} stroke="rgb(234,236,240)" strokeWidth="1" />
+      ))}
+      {/* Bars */}
+      {bars.map((b, i) => {
+        const x = 56 + i * 42;
+        const y = 110 - b.h;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width="28" height={b.h} rx="6" fill={b.color} fillOpacity="0.85" />
+            <text x={x + 14} y="130" textAnchor="middle" fontSize="7" fill="rgb(142,142,142)">{b.label.slice(0, 5)}</text>
+            <text x={x + 14} y={y - 4} textAnchor="middle" fontSize="7.5" fill={b.color} fontWeight="600">{b.h}%</text>
+          </g>
+        );
+      })}
+      {/* Y-axis labels */}
+      {[100, 75, 50, 25].map((v, i) => (
+        <text key={v} x="40" y={24 + i * 30} textAnchor="end" fontSize="8" fill="rgb(142,142,142)">{v}%</text>
+      ))}
+      {/* Title */}
+      <text x="174" y="150" textAnchor="middle" fontSize="9" fill="rgb(142,142,142)">Computer Networks — Prediction Confidence</text>
+    </svg>
+  );
+}
+
+// ─── Floating card mockup for hero ────────────────────────────────────────────
+function HeroMockup() {
+  return (
+    <div className="relative w-full max-w-md mx-auto select-none">
+      {/* Main prediction card */}
+      <motion.div
+        initial={{ y: 0 }}
+        animate={{ y: [-6, 6, -6] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="card p-6 shadow-elevated"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center">
+            <Sparkles size={13} className="text-accent" />
+          </div>
+          <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">AI Predicted Paper</span>
+        </div>
+        <h3 className="text-[15px] font-semibold text-text-primary mb-1">Computer Networks · Sem 5</h3>
+        <p className="text-[11.5px] text-text-muted mb-4">3 papers analyzed</p>
+
+        {[
+          { q: "Explain OSI Reference Model with diagram", tier: "🔥🔥🔥", pct: 92, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+          { q: "TCP/IP vs OSI — compare and contrast", tier: "🔥🔥🔥", pct: 88, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+          { q: "Subnetting with VLSM — numerical", tier: "🔥🔥",  pct: 74, color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-900/20"    },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 + i * 0.15, duration: 0.4 }}
+            className={`flex items-start gap-3 px-3 py-2.5 rounded-xl mb-1.5 last:mb-0 ${item.bg}`}
+          >
+            <span className="text-[13px] shrink-0 mt-0.5">{item.tier}</span>
+            <p className="text-[12px] text-text-primary flex-1 leading-snug">{item.q}</p>
+            <span className={`text-[11px] font-bold tabular-nums shrink-0 ${item.color}`}>{item.pct}%</span>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Floating stat badge — top right */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
+        transition={{ delay: 0.8, duration: 0.5, y: { duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 } }}
+        className="absolute -top-5 -right-5 card p-3 shadow-elevated"
+      >
+        <p className="text-[10px] text-text-muted">Hit rate</p>
+        <p className="text-[22px] font-bold text-emerald-600 leading-tight">78%</p>
+      </motion.div>
+
+      {/* Floating source badge — bottom left */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, y: [0, 5, 0] }}
+        transition={{ delay: 1.0, duration: 0.5, y: { duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 } }}
+        className="absolute -bottom-4 -left-4 card px-3 py-2 shadow-elevated flex items-center gap-2"
+      >
+        <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+          <Sparkles size={10} className="text-accent" />
+        </div>
+        <div>
+          <p className="text-[9px] text-text-muted">Papers analyzed</p>
+          <p className="text-[13px] font-bold text-text-primary">8+ years</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Animation variants ────────────────────────────────────────────────────────
+const fadeUp = {
+  hidden:  { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: i * 0.1 },
+  }),
+};
+
+const stagger = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+function Section({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      variants={stagger}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
 export default function LandingClient({ testimonials }: { testimonials: TestimonialData[] }) {
-  const [lang, setLang] = useState<Lang>("en");
-  const tr = t[lang];
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: "#07070F" }}>
-      <div className="grain-overlay" aria-hidden="true" />
+    <div className="min-h-screen bg-bg-page text-text-primary overflow-x-hidden">
 
       {/* ── Navbar ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06]"
-        style={{ background: "rgba(7,7,15,0.85)", backdropFilter: "blur(24px)" }}>
+      <motion.nav
+        initial={{ y: -16, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-bg-card/90 backdrop-blur-xl shadow-card border-b border-border"
+            : "bg-transparent"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <AndazeSeLogo size="lg" />
-          <div className="flex items-center gap-3">
-            {/* Language switcher in navbar */}
-            <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
-              {(["en","hi","gu"] as Lang[]).map(l => (
-                <button key={l} onClick={() => setLang(l)}
-                  className="px-2.5 py-1 rounded-md text-xs font-black transition-all"
-                  style={lang === l
-                    ? { background: BLUE, color: "white" }
-                    : { color: "rgba(255,255,255,0.4)" }}>
-                  {l === "en" ? "EN" : l === "hi" ? "हि" : "ગુ"}
-                </button>
-              ))}
-            </div>
-            <Link href="/login" className="text-sm text-white/50 hover:text-white transition-colors px-3 py-1.5 font-semibold hidden sm:block">
-              {tr.signIn}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="hidden sm:inline-flex items-center h-10 px-4 rounded-full text-[13.5px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+            >
+              Sign in
             </Link>
-            <Link href="/register"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-white text-sm font-black transition-all hover:opacity-90"
-              style={{ background: BLUE, boxShadow: "0 0 20px rgba(88,101,242,0.35)" }}>
-              {tr.startFree} <ArrowRight size={14} />
+            <Link href="/register" className="btn-primary">
+              Get started free <ArrowRight size={14} />
             </Link>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="relative pt-36 pb-16 px-6 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="orb-1 absolute w-[700px] h-[700px] rounded-full -top-40 -left-40 opacity-20"
-            style={{ background: `radial-gradient(circle, ${BLUE} 0%, transparent 65%)`, filter: "blur(100px)" }} />
-          <div className="orb-2 absolute w-[500px] h-[500px] rounded-full top-0 right-0 opacity-15"
-            style={{ background: "radial-gradient(circle, #7289DA 0%, transparent 70%)", filter: "blur(90px)" }} />
-          <div className="orb-3 absolute w-[400px] h-[400px] rounded-full bottom-0 left-1/2 opacity-10"
-            style={{ background: "radial-gradient(circle, #EB459E 0%, transparent 70%)", filter: "blur(80px)" }} />
-        </div>
+      <section className="pt-32 pb-16 px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7 text-xs font-bold"
-              style={{ background: "rgba(88,101,242,0.1)", border: "1px solid rgba(88,101,242,0.28)" }}>
-              <span style={{ color: BLUE }}>✦</span>
-              <span style={{ color: "#7289DA" }}>{tr.badge}</span>
-            </div>
+            {/* Left — copy */}
+            <div>
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="inline-flex items-center gap-2 chip bg-accent/10 text-accent mb-6"
+              >
+                <Sparkles size={12} />
+                AI-powered exam predictions for GTU
+              </motion.div>
 
-            <h1 className="font-black leading-[1.08] mb-6 tracking-tight"
-              style={{ fontSize: "clamp(36px, 5vw, 66px)" }}>
-              <span className="text-white">{tr.h1}</span><br />
-              <span className="text-white">{tr.h2}</span><br />
-              <span style={{
-                background: `linear-gradient(135deg, ${BLUE} 0%, #7289DA 50%, #EB459E 100%)`,
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                fontStyle: "italic",
-              }}>{tr.h3}</span>
-            </h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-text-primary leading-[1.0] text-balance"
+              >
+                Stop guessing.
+                <br />
+                <span className="text-accent">Know what's</span>
+                <br />
+                coming next.
+              </motion.h1>
 
-            <p className="text-white/45 text-lg leading-relaxed mb-9 max-w-xl font-medium">{tr.sub}</p>
+              <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.35 }}
+                className="text-[16px] md:text-[17px] text-text-secondary mt-6 max-w-lg leading-relaxed"
+              >
+                Andaza Se analyzes 8+ years of GTU past papers and uses AI to predict which questions will appear on your next exam — with confidence scores.
+              </motion.p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link href="/register"
-                className="cta-glow flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-base transition-all hover:scale-105"
-                style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #7289DA 100%)` }}>
-                <Swords size={17} /> {tr.cta1}
-              </Link>
-              <a href="#how-it-works"
-                className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-white/55 hover:text-white text-base font-bold transition-all hover:bg-white/5"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-                {tr.cta2}
-              </a>
-            </div>
-
-            <div className="flex flex-wrap gap-8 mb-8">
-              {STATS_VALUES.map((val, i) => (
-                <div key={i}>
-                  <div className="text-2xl font-black text-white mb-0.5">{val}</div>
-                  <div className="text-xs text-white/30 font-semibold uppercase tracking-wider">{tr.stats[i]}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {["CE","IT","ME","Civil","EE","EC","Diploma","+more"].map(b => (
-                <span key={b} className="px-3 py-1.5 rounded-full text-xs text-white/35 font-bold"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>{b}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Illustration */}
-          <div className="hidden lg:flex items-center justify-center relative">
-            <div className="absolute inset-0 rounded-full opacity-20 pointer-events-none"
-              style={{ background: `radial-gradient(circle, ${BLUE} 0%, transparent 70%)`, filter: "blur(60px)" }} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/illustrations/studying.svg" alt="Student studying"
-              className="relative z-10 w-full max-w-[500px]"
-              style={{ filter: "drop-shadow(0 0 40px rgba(88,101,242,0.2))" }} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Product preview ── */}
-      <section className="py-4 px-6 relative overflow-hidden">
-        <div className="max-w-2xl mx-auto relative">
-          <RevealOnScroll>
-            <div className="rounded-3xl overflow-hidden shadow-[0_40px_100px_rgba(88,101,242,0.15)]"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(88,101,242,0.2)", backdropFilter: "blur(20px)" }}>
-              <div className="px-5 py-4 flex items-center justify-between"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl" style={{ background: "rgba(88,101,242,0.15)", border: "1px solid rgba(88,101,242,0.25)" }}>
-                    <Swords size={16} style={{ color: BLUE }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-white">Brahmastra</p>
-                    <p className="text-[11px] text-white/30 font-semibold">{tr.previewSub}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-400">3/7 {tr.studied} ✅</span>
-                  <div className="h-4 w-px bg-white/10"/>
-                  <span className="text-xs text-white/30 font-semibold">47 {tr.analyzed}</span>
-                </div>
-              </div>
-              <div className="mx-5 mt-4 rounded-2xl px-4 py-3"
-                style={{ background: "rgba(254,231,92,0.05)", border: "1px solid rgba(254,231,92,0.12)" }}>
-                <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color: "rgba(254,231,92,0.6)" }}>{tr.professorNote}</p>
-                <p className="text-xs text-white/45 leading-relaxed font-semibold">{tr.professorNoteText}</p>
-              </div>
-              <div className="p-4 space-y-2.5">
-                {PREVIEW_QUESTIONS.map((item, i) => (
-                  <div key={i} className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
-                    style={{
-                      background: i === 0 ? "rgba(88,101,242,0.08)" : "rgba(255,255,255,0.02)",
-                      border: i === 0 ? "1px solid rgba(88,101,242,0.22)" : "1px solid rgba(255,255,255,0.05)",
-                    }}>
-                    <span className="text-lg shrink-0">{item.fires}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/80 font-semibold truncate">{item.q}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] text-white/25 font-semibold">Unit {item.unit}</span>
-                        {item.badge && (
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded"
-                            style={{ background: "rgba(235,69,158,0.12)", color: "#EB459E", border: "1px solid rgba(235,69,158,0.2)" }}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-sm font-black shrink-0" style={{ color: BLUE }}>{item.pct}%</span>
-                  </div>
-                ))}
-                <div className="rounded-2xl px-4 py-3.5 flex items-center gap-3 opacity-20 pointer-events-none select-none"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", filter: "blur(3px)" }}>
-                  <span className="text-lg">🔥🔥</span>
-                  <div className="flex-1 h-3 rounded-full bg-white/20"/>
-                  <span className="text-sm font-black" style={{ color: "#7289DA" }}>68%</span>
-                </div>
-              </div>
-              <div className="px-5 py-4 flex items-center justify-between"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <p className="text-xs text-white/20 italic font-semibold">{tr.tagline}</p>
-                <Link href="/register"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-black transition-all hover:opacity-90"
-                  style={{ background: BLUE }}>
-                  {tr.buildYours} <ArrowRight size={11} />
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="flex items-center gap-3 mt-8 flex-wrap"
+              >
+                <Link href="/register" className="btn-primary h-12 px-6 text-[15px]">
+                  Start predicting free
+                  <ArrowRight size={15} />
                 </Link>
-              </div>
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
+                <Link href="/login" className="btn-secondary h-12 px-6 text-[15px]">Sign in</Link>
+              </motion.div>
 
-      {/* ── Social Proof ── */}
-      <section className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="orb-3 absolute w-[400px] h-[400px] rounded-full right-0 top-1/2 -translate-y-1/2 opacity-10"
-            style={{ background: "radial-gradient(circle, #57F287 0%, transparent 70%)", filter: "blur(90px)" }} />
-        </div>
-        <div className="max-w-5xl mx-auto relative grid lg:grid-cols-2 gap-16 items-center">
-          <RevealOnScroll>
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-4">Students ki baatein</p>
-            <h2 className="font-black tracking-tight text-white mb-6" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>
-              {tr.studentChat}
-            </h2>
-            <p className="text-white/35 text-lg font-semibold leading-relaxed">{tr.studentChatSub}</p>
-          </RevealOnScroll>
-          <RevealOnScroll delay={120}>
-            <div className="rounded-3xl overflow-hidden shadow-2xl max-w-sm mx-auto lg:mx-0"
-              style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div className="px-4 py-3.5 flex items-center gap-3 bg-[#075E54]">
-                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-xs font-black text-white">CE</div>
-                <div>
-                  <p className="text-white font-black text-sm">CE 5th Sem 🔥</p>
-                  <p className="text-white/60 text-[11px] font-semibold">47 members</p>
-                </div>
-              </div>
-              <div className="px-3 py-4 space-y-2.5 bg-[#ECE5DD]">
-                {CHAT_BUBBLES.map((b, i) => (
-                  <div key={i} className={`flex ${b.side === "right" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-snug font-semibold shadow-sm
-                      ${b.side === "right" ? "bg-[#DCF8C6] text-[#1a1a1a] rounded-br-sm" : "bg-white text-[#1a1a1a] rounded-bl-sm"}`}>
-                      {b.text}
-                      <p className="text-[10px] text-black/30 text-right mt-1">{b.time}</p>
-                    </div>
-                  </div>
+              {/* Student avatar group — social proof */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.65 }}
+                className="mt-8"
+              >
+                <AvatarGroup count={2400} />
+              </motion.div>
+
+              {/* Trust row */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.8 }}
+                className="flex items-center gap-5 mt-5 flex-wrap"
+              >
+                {[
+                  { icon: "✓", text: "Free forever" },
+                  { icon: "✓", text: "All GTU branches" },
+                  { icon: "✓", text: "No credit card" },
+                ].map((t) => (
+                  <span key={t.text} className="flex items-center gap-1.5 text-[13px] text-text-muted">
+                    <span className="text-emerald-500 font-bold">{t.icon}</span>
+                    {t.text}
+                  </span>
                 ))}
-              </div>
+              </motion.div>
             </div>
-          </RevealOnScroll>
+
+            {/* Right — animated mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: 24, scale: 0.97 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <HeroMockup />
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ── Community Feature ── */}
-      <section className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute w-[600px] h-[600px] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10"
-            style={{ background: "radial-gradient(circle, #22D3EE 0%, transparent 70%)", filter: "blur(100px)" }} />
-        </div>
-        <div className="max-w-5xl mx-auto relative grid lg:grid-cols-2 gap-16 items-center">
-          {/* Text side */}
-          <RevealOnScroll>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-xs font-black"
-              style={{ background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.25)" }}>
-              <span style={{ color: "#22D3EE" }}>✦</span>
-              <span style={{ color: "#22D3EE" }}>{tr.communityNew} — {tr.communityBadge}</span>
-            </div>
-            <h2 className="font-black tracking-tight text-white mb-5" style={{ fontSize: "clamp(26px, 4vw, 44px)" }}>
-              {tr.communityTitle}
-            </h2>
-            <p className="text-white/40 text-lg font-semibold leading-relaxed mb-8">{tr.communitySub}</p>
-            <div className="flex flex-wrap gap-2 mb-8">
+      {/* ── Student cards scroll strip ── */}
+      <section className="py-10 px-6 overflow-hidden bg-bg-card border-y border-border">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="max-w-7xl mx-auto"
+        >
+          <p className="section-title text-center mb-6">Who&apos;s using Andaza Se</p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            {STUDENTS.map((s, i) => (
+              <motion.div
+                key={s.name}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.4 }}
+                className="card p-4 flex items-center gap-3 min-w-[180px]"
+              >
+                <div className="rounded-full overflow-hidden ring-2 ring-bg-page shrink-0">
+                  <StudentAvatar student={s} size={44} />
+                </div>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-text-primary">{s.name}</p>
+                  <p className="text-[12px] text-text-muted">{s.info}</p>
+                  <div className="flex gap-0.5 mt-1">
+                    {[1,2,3,4,5].map(n => <Star key={n} size={9} className="text-amber-400 fill-amber-400" />)}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── Stats strip ── */}
+      <section className="py-10 px-6 border-b border-border bg-bg-page">
+        <div className="max-w-5xl mx-auto">
+          <Section>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { icon: Lock,   label: tr.communityPills[0] },
-                { icon: Users,  label: tr.communityPills[1] },
-                { icon: MessageSquare, label: tr.communityPills[2] },
-                { icon: Swords, label: tr.communityPills[3] },
-              ].map(({ icon: Icon, label }) => (
-                <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white/60"
-                  style={{ background: "rgba(34,211,238,0.07)", border: "1px solid rgba(34,211,238,0.18)" }}>
-                  <Icon size={11} className="text-cyan-400" />
-                  {label}
-                </span>
+                { value: 8,   suffix: "+",  label: "Years of GTU data" },
+                { value: 78,  suffix: "%",  label: "Average prediction hit rate" },
+                { value: 12,  suffix: "+",  label: "GTU branches covered" },
+                { value: 500, suffix: "+",  label: "Papers analyzed" },
+              ].map((s, i) => (
+                <motion.div key={s.label} variants={fadeUp} custom={i}>
+                  <p className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
+                    <Counter to={s.value} suffix={s.suffix} />
+                  </p>
+                  <p className="text-[13px] text-text-muted mt-1.5">{s.label}</p>
+                </motion.div>
               ))}
             </div>
-            <Link href="/register"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-black transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)", boxShadow: "0 0 20px rgba(34,211,238,0.25)" }}>
-              Join a Study Room <ArrowRight size={14} />
-            </Link>
-          </RevealOnScroll>
+          </Section>
+        </div>
+      </section>
 
-          {/* Mock chat UI */}
-          <RevealOnScroll delay={100}>
-            <div className="rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(34,211,238,0.12)]"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(34,211,238,0.18)", backdropFilter: "blur(20px)" }}>
-              {/* Room header */}
-              <div className="px-4 py-3.5 flex items-center justify-between"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: "rgba(34,211,238,0.15)", border: "1px solid rgba(34,211,238,0.25)" }}>
-                    <Users size={14} className="text-cyan-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-white">Computer Networks</p>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      <p className="text-[11px] text-white/30 font-semibold">4 anonymous · end-to-end encrypted</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black"
-                  style={{ background: "rgba(34,211,238,0.1)", color: "#22D3EE" }}>
-                  <Shield size={9} /> E2EE
-                </div>
-              </div>
-              {/* Messages */}
-              <div className="px-4 py-4 space-y-3">
-                {/* System join message */}
-                <div className="flex justify-center">
-                  <span className="text-[10px] italic text-white/25 bg-white/5 px-3 py-0.5 rounded-full">
-                    BraveFalcon joined the room
-                  </span>
-                </div>
-                {COMMUNITY_MSGS.map((m, i) => (
-                  <div key={i} className={`flex gap-2 ${m.side === "right" ? "flex-row-reverse" : "flex-row"}`}>
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 mt-0.5"
-                      style={{ background: "rgba(34,211,238,0.12)", color: "#22D3EE" }}>
-                      {m.pseudo.slice(0, 2).toUpperCase()}
-                    </span>
-                    <div className={`flex flex-col gap-0.5 max-w-[75%] ${m.side === "right" ? "items-end" : "items-start"}`}>
-                      <span className="text-[10px] text-white/25 px-1">{m.pseudo}</span>
-                      <div className="px-3 py-2 rounded-xl text-xs text-white/70 font-semibold leading-relaxed"
-                        style={{
-                          background: m.side === "right" ? "rgba(34,211,238,0.12)" : "rgba(255,255,255,0.05)",
-                          border: m.side === "right" ? "1px solid rgba(34,211,238,0.2)" : "1px solid rgba(255,255,255,0.06)",
-                        }}>
-                        {m.text}
-                      </div>
-                      <span className="text-[9px] text-white/20 px-1">{m.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Input preview */}
-              <div className="px-4 pb-4 pt-1">
-                <div className="flex gap-2 items-center px-3.5 py-2.5 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <span className="flex-1 text-xs text-white/20 italic">Type a message… (encrypted before sending)</span>
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(34,211,238,0.2)" }}>
-                    <ArrowRight size={10} className="text-cyan-400" />
-                  </div>
-                </div>
-                <p className="text-[10px] text-white/20 mt-1.5 px-1">
-                  You are <span className="text-cyan-400 font-medium">SwiftOtter</span> · anonymous
-                </p>
-              </div>
+      {/* ── Pain → Solution ── */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <Section>
+            <motion.div variants={fadeUp} className="text-center mb-16">
+              <p className="section-title mb-3">The problem</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-text-primary text-balance">
+                GTU syllabus is huge.
+                <br />
+                <span className="text-text-muted">Exam time is not.</span>
+              </h2>
+              <p className="text-[15.5px] text-text-secondary mt-5 max-w-xl mx-auto text-pretty">
+                Every student faces the same problem: too much to study, too little time.
+                Random revision doesn&apos;t work. Luck isn&apos;t a strategy.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { emoji: "😰", title: "Syllabus too vast", desc: "Thousands of pages, weeks of content. Impossible to cover everything before the exam." },
+                { emoji: "🎲", title: "Guessing what comes", desc: "Students waste time on low-priority topics while missing the questions that actually appear." },
+                { emoji: "😤", title: "Past papers everywhere", desc: "PDFs scattered, years of data untouched. No one has time to analyze 8 years manually." },
+              ].map((p, i) => (
+                <motion.div key={p.title} variants={fadeUp} custom={i} className="card p-6 text-center">
+                  <span className="text-4xl block mb-4">{p.emoji}</span>
+                  <p className="text-[16px] font-semibold text-text-primary mb-2">{p.title}</p>
+                  <p className="text-[13.5px] text-text-secondary text-pretty">{p.desc}</p>
+                </motion.div>
+              ))}
             </div>
-          </RevealOnScroll>
+
+            <motion.div variants={fadeUp} custom={3} className="flex items-center justify-center my-10">
+              <div className="flex items-center gap-4">
+                <div className="h-px w-20 bg-border" />
+                <div className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center">
+                  <ChevronRight size={18} />
+                </div>
+                <div className="h-px w-20 bg-border" />
+              </div>
+            </motion.div>
+
+            <motion.div variants={fadeUp} custom={4} className="card p-8 md:p-10 text-center bg-accent/5 border border-accent/20">
+              <div className="inline-flex items-center gap-2 chip bg-accent/10 text-accent mb-4">
+                <Sparkles size={12} /> The solution
+              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tighter">
+                AI reads 8 years of GTU papers.<br />Tells you exactly what to study.
+              </h3>
+              <p className="text-[14.5px] text-text-secondary mt-4 max-w-lg mx-auto">
+                Andaza Se clusters every question pattern, calculates prediction confidence using Bayesian scoring, and generates model answers — all in seconds.
+              </p>
+            </motion.div>
+          </Section>
+        </div>
+      </section>
+
+      {/* ── Features with SVG illustrations ── */}
+      <section className="py-20 px-6 bg-bg-card border-y border-border">
+        <div className="max-w-7xl mx-auto">
+          <Section>
+            <motion.div variants={fadeUp} className="text-center mb-14">
+              <p className="section-title mb-3">Features</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-text-primary">
+                Every tool you need.
+                <br />
+                <span className="text-accent">Nothing you don&apos;t.</span>
+              </h2>
+            </motion.div>
+
+            {/* Bento feature grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+              {/* Feature 1 — Big card, Predictions */}
+              <motion.div variants={fadeUp} custom={0} className="card p-7 lg:col-span-2 group overflow-hidden relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center mb-4">
+                      <Sparkles size={18} />
+                    </div>
+                    <h3 className="text-[22px] font-bold text-text-primary tracking-tight mb-2">Andaza Laga</h3>
+                    <p className="text-[14px] text-text-secondary leading-relaxed">
+                      AI scans past papers, finds patterns, and ranks questions by prediction confidence. Know what&apos;s almost certain, likely, or just possible.
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                      {["Almost Certain", "Likely", "Possible"].map((t, i) => (
+                        <span key={t} className={`chip text-[11px] ${
+                          i === 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30" :
+                          i === 1 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30" :
+                          "bg-amber-100 text-amber-700 dark:bg-amber-900/30"
+                        }`}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="h-48 md:h-auto">
+                    <ExamPaperSVG />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Feature 2 — Pooch Lo */}
+              <motion.div variants={fadeUp} custom={1} className="card p-7 group overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-4">
+                  <MessageSquare size={18} />
+                </div>
+                <h3 className="text-[20px] font-bold text-text-primary tracking-tight mb-2">Pooch Lo</h3>
+                <p className="text-[13.5px] text-text-secondary mb-5">
+                  Ask anything about your GTU syllabus. AI tutor knows your subject, your semester, your papers.
+                </p>
+                <div className="h-44">
+                  <ChatBubbleSVG />
+                </div>
+              </motion.div>
+
+              {/* Feature 3 — Materials */}
+              <motion.div variants={fadeUp} custom={2} className="card p-7 group overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center mb-4">
+                  <BookOpen size={18} />
+                </div>
+                <h3 className="text-[20px] font-bold text-text-primary tracking-tight mb-2">Notes & Materials</h3>
+                <p className="text-[13.5px] text-text-secondary mb-5">
+                  Student-uploaded notes, textbooks, slides — approved, organized, and embedded into the AI.
+                </p>
+                <div className="h-44">
+                  <StudyStackSVG />
+                </div>
+              </motion.div>
+
+              {/* Feature 4 — PYQ Bank */}
+              <motion.div variants={fadeUp} custom={3} className="card p-7 group overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center mb-4">
+                  <FileQuestion size={18} />
+                </div>
+                <h3 className="text-[20px] font-bold text-text-primary tracking-tight mb-2">PYQ Bank</h3>
+                <p className="text-[13.5px] text-text-secondary mb-5">
+                  Every past year question, searchable by unit, year, and marks. With AI-generated model answers.
+                </p>
+                <div className="h-44">
+                  <PredictionGraphSVG />
+                </div>
+              </motion.div>
+
+              {/* Feature 5 — Community */}
+              <motion.div variants={fadeUp} custom={4} className="card p-7 group overflow-hidden">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center mb-4">
+                  <Users size={18} />
+                </div>
+                <h3 className="text-[20px] font-bold text-text-primary tracking-tight mb-2">Community</h3>
+                <p className="text-[13.5px] text-text-secondary mb-5">
+                  Anonymous, end-to-end encrypted study rooms. Study with students across GTU — no identity exposed.
+                </p>
+                <div className="h-44">
+                  <CommunityLockSVG />
+                </div>
+              </motion.div>
+
+            </div>
+          </Section>
         </div>
       </section>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="orb-1 absolute w-[500px] h-[500px] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-8"
-            style={{ background: `radial-gradient(circle, ${BLUE} 0%, transparent 70%)`, filter: "blur(100px)" }} />
-        </div>
-        <div className="max-w-5xl mx-auto relative">
-          <RevealOnScroll className="text-center mb-16">
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-3">{tr.howBadge}</p>
-            <h2 className="font-black tracking-tight text-white" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>{tr.howTitle}</h2>
-          </RevealOnScroll>
-          <div className="grid md:grid-cols-3 gap-5">
-            {tr.steps.map(({ emoji, title, desc }, i) => (
-              <RevealOnScroll key={i} delay={i * 100}>
-                <div className="relative p-7 rounded-3xl h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
-                  <div className="text-4xl mb-5">{emoji}</div>
-                  <div className="absolute top-5 right-5 text-[11px] font-black text-white/15">0{i+1}</div>
-                  <h3 className="font-black text-base mb-2 text-white">{title}</h3>
-                  <p className="text-sm text-white/40 leading-relaxed font-semibold">{desc}</p>
-                  <div className="absolute bottom-0 left-8 right-8 h-px"
-                    style={{ background: "linear-gradient(90deg, transparent, rgba(88,101,242,0.5), transparent)" }} />
-                </div>
-              </RevealOnScroll>
-            ))}
-          </div>
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <Section>
+            <motion.div variants={fadeUp} className="text-center mb-14">
+              <p className="section-title mb-3">How it works</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-text-primary">
+                Three steps.<br />Better marks.
+              </h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+              {/* Connector line */}
+              <div className="hidden md:block absolute top-10 left-[33%] right-[33%] h-px bg-border z-0" />
+
+              {[
+                {
+                  n: "01",
+                  icon: <FileQuestion size={22} />,
+                  title: "Select your subject",
+                  desc: "Choose any GTU subject — BE, Diploma, MBA, MCA. All branches, all semesters.",
+                  color: "bg-accent/10 text-accent",
+                },
+                {
+                  n: "02",
+                  icon: <Upload size={22} />,
+                  title: "Upload past papers",
+                  desc: "Drop 2–3 PDFs. AI extracts every question, clusters patterns, calculates frequencies.",
+                  color: "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600",
+                },
+                {
+                  n: "03",
+                  icon: <Sparkles size={22} />,
+                  title: "Get predictions",
+                  desc: "See ranked questions with confidence scores, model answers, and diagram explanations.",
+                  color: "bg-amber-100 dark:bg-amber-900/20 text-amber-600",
+                },
+              ].map((step, i) => (
+                <motion.div key={step.n} variants={fadeUp} custom={i} className="card p-6 relative z-10">
+                  <div className={`w-12 h-12 rounded-2xl ${step.color} flex items-center justify-center mb-5`}>
+                    {step.icon}
+                  </div>
+                  <p className="text-[60px] font-black text-text-muted/10 leading-none absolute top-3 right-4 pointer-events-none">{step.n}</p>
+                  <p className="text-[17px] font-bold text-text-primary mb-2">{step.title}</p>
+                  <p className="text-[13.5px] text-text-secondary leading-relaxed">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </Section>
         </div>
       </section>
 
-      {/* ── Features ── */}
-      <section id="features" className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="orb-2 absolute w-[500px] h-[500px] rounded-full left-0 top-1/2 -translate-y-1/2 opacity-8"
-            style={{ background: "radial-gradient(circle, #7289DA 0%, transparent 70%)", filter: "blur(100px)" }} />
-        </div>
-        <div className="max-w-6xl mx-auto relative">
-          <RevealOnScroll className="text-center mb-16">
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-3">{tr.featBadge}</p>
-            <h2 className="font-black tracking-tight text-white" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>{tr.featTitle}</h2>
-          </RevealOnScroll>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tr.features.map(({ title, desc }, i) => {
-              const Icon = FEATURE_ICONS[i];
-              return (
-                <RevealOnScroll key={title} delay={i * 60}>
-                  <GlowCard glowColor={FEATURE_GLOWS[i]} borderHoverColor={FEATURE_GLOWS[i].replace(/[\d.]+\)$/, "0.5)")}>
-                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
-                      style={{ background: FEATURE_GLOWS[i], border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <Icon size={19} className={FEATURE_COLORS[i]} />
+      {/* ── Privacy / trust ── */}
+      <section className="py-20 px-6 bg-bg-card border-y border-border">
+        <div className="max-w-7xl mx-auto">
+          <Section>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <motion.div variants={fadeUp}>
+                <div className="inline-flex items-center gap-2 chip bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 mb-5">
+                  <Shield size={12} />
+                  Privacy first
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-text-primary text-balance">
+                  Your data is yours.<br />Always.
+                </h2>
+                <p className="text-[15px] text-text-secondary mt-5 text-pretty max-w-lg">
+                  Community messages are AES-256-GCM encrypted before leaving your device. We store only ciphertext. Even we can&apos;t read your messages.
+                </p>
+                <div className="grid grid-cols-2 gap-3 mt-8">
+                  {[
+                    { icon: Lock, title: "AES-256-GCM", desc: "End-to-end encrypted chat" },
+                    { icon: Users, title: "Anonymous", desc: "Pseudonyms in rooms" },
+                    { icon: Shield, title: "Enrollment safe", desc: "Never shared externally" },
+                    { icon: Check, title: "HTTPS only", desc: "All traffic encrypted" },
+                  ].map(({ icon: Icon, title, desc }) => (
+                    <div key={title} className="card p-4 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center shrink-0">
+                        <Icon size={15} />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-text-primary">{title}</p>
+                        <p className="text-[11.5px] text-text-muted">{desc}</p>
+                      </div>
                     </div>
-                    <h3 className="font-black text-[15px] mb-2 text-white">{title}</h3>
-                    <p className="text-sm text-white/40 leading-relaxed font-semibold">{desc}</p>
-                  </GlowCard>
-                </RevealOnScroll>
-              );
-            })}
-          </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              <motion.div variants={fadeUp} custom={1} className="flex items-center justify-center">
+                <div className="w-full max-w-sm">
+                  <CommunityLockSVG />
+                </div>
+              </motion.div>
+            </div>
+          </Section>
         </div>
       </section>
 
       {/* ── Testimonials ── */}
-      <section id="testimonials" className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="orb-3 absolute w-[400px] h-[400px] rounded-full right-0 bottom-0 opacity-10"
-            style={{ background: "radial-gradient(circle, #EB459E 0%, transparent 70%)", filter: "blur(80px)" }} />
-        </div>
-        <div className="max-w-6xl mx-auto relative">
-          <RevealOnScroll className="text-center mb-16">
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-3">{tr.revBadge}</p>
-            <h2 className="font-black tracking-tight text-white" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>{tr.revTitle}</h2>
-          </RevealOnScroll>
-          {testimonials.length === 0 ? (
-            <div className="flex flex-col items-center gap-5 py-16 text-center">
-              <div className="text-5xl">📝</div>
-              <div>
-                <p className="font-black text-white mb-1">{tr.revEmpty}</p>
-                <p className="text-sm text-white/40 font-semibold">{tr.revEmptySub}</p>
-              </div>
-              <Link href="/register"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-black transition-all hover:scale-105"
-                style={{ background: BLUE, boxShadow: "0 0 20px rgba(88,101,242,0.3)" }}>
-                {tr.revCta} <ArrowRight size={14} />
-              </Link>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {testimonials.map((tt, idx) => {
-                const roleLabel = [tt.branch, tt.semester ? `Sem ${tt.semester}` : null].filter(Boolean).join(" · ");
-                return (
-                  <RevealOnScroll key={tt.id} delay={idx * 60}>
-                    <div className="p-6 rounded-3xl flex flex-col gap-4 transition-all duration-300 hover:scale-[1.02]"
-                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
-                      <div className="flex gap-1">
-                        {Array.from({ length: tt.stars }).map((_, i) => <Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />)}
+      {testimonials.length > 0 && (
+        <section className="py-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <Section>
+              <motion.div variants={fadeUp} className="text-center mb-12">
+                <p className="section-title mb-3">Students say</p>
+                <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-text-primary">
+                  Real results.<br />Real GTU students.
+                </h2>
+              </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {testimonials.slice(0, 6).map((t, i) => (
+                  <motion.div key={t.id} variants={fadeUp} custom={i % 3} className="card p-6">
+                    <div className="flex gap-0.5 mb-4">
+                      {Array.from({ length: 5 }).map((_, s) => (
+                        <Star key={s} size={13} className={s < t.stars ? "text-amber-400 fill-amber-400" : "text-text-muted/20"} />
+                      ))}
+                    </div>
+                    <p className="text-[14.5px] text-text-primary leading-relaxed text-pretty">&ldquo;{t.quote}&rdquo;</p>
+                    <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border">
+                      <div className="rounded-full overflow-hidden ring-2 ring-bg-page shrink-0">
+                        <StudentAvatar student={STUDENTS[i % STUDENTS.length]} size={40} />
                       </div>
-                      <p className="text-sm text-white/50 leading-relaxed flex-1 font-semibold">&ldquo;{tt.quote}&rdquo;</p>
-                      <div className="flex items-center gap-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
-                          {getInitials(tt.name)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-black text-white truncate">{tt.name}</p>
-                          {roleLabel && <p className="text-xs text-white/30 font-semibold truncate">{roleLabel}</p>}
-                          {tt.college && <p className="text-[10px] text-white/20 font-semibold truncate">{tt.college}</p>}
-                        </div>
+                      <div>
+                        <p className="text-[13px] font-semibold text-text-primary">{t.name}</p>
+                        <p className="text-[11.5px] text-text-muted">
+                          {[t.branch, t.semester && `Sem ${t.semester}`, t.college].filter(Boolean).join(" · ")}
+                        </p>
                       </div>
                     </div>
-                  </RevealOnScroll>
-                );
-              })}
-            </div>
-          )}
+                  </motion.div>
+                ))}
+              </div>
+            </Section>
+          </div>
+        </section>
+      )}
+
+      {/* ── Final CTA ── */}
+      <section className="py-28 px-6 bg-bg-card border-t border-border">
+        <div className="max-w-4xl mx-auto text-center">
+          <Section>
+            <motion.div variants={fadeUp}>
+              <p className="section-title mb-4">Ready?</p>
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-text-primary text-balance">
+                Your next exam
+                <br />
+                is predictable.
+              </h2>
+              <p className="text-[16px] text-text-secondary mt-6 max-w-md mx-auto">
+                Join GTU students who study smarter. Free. No card. Start in 30 seconds.
+              </p>
+              <div className="flex items-center justify-center gap-3 mt-9 flex-wrap">
+                <Link href="/register" className="btn-primary h-13 px-8 text-[15.5px]">
+                  Create free account <ArrowRight size={15} />
+                </Link>
+                <Link href="/login" className="btn-secondary h-13 px-8 text-[15.5px]">Already have an account</Link>
+              </div>
+              <div className="flex items-center justify-center gap-6 mt-8 flex-wrap">
+                {["Free forever", "All GTU branches", "No credit card", "Instant access"].map(t => (
+                  <span key={t} className="flex items-center gap-1.5 text-[12.5px] text-text-muted">
+                    <Check size={12} className="text-emerald-500" /> {t}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          </Section>
         </div>
       </section>
 
       {/* ── Contact ── */}
-      <section id="contact" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <RevealOnScroll className="text-center mb-14">
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-3">{tr.contactBadge}</p>
-            <h2 className="font-black tracking-tight text-white" style={{ fontSize: "clamp(28px, 4vw, 44px)" }}>{tr.contactTitle}</h2>
-          </RevealOnScroll>
-          <div className="grid md:grid-cols-5 gap-8">
-            <div className="md:col-span-2 p-6 rounded-3xl space-y-5"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
-              {[
-                { icon: Mail,   label: "Email",   value: "yashbonde21@gmail.com", href: "mailto:yashbonde21@gmail.com" },
-                { icon: MapPin, label: "Made for", value: "GTU students\nBE & Diploma — all", href: null },
-                { icon: Clock,  label: "Reply",    value: "24 hours",              href: null },
-              ].map(({ icon: Icon, label, value, href }) => (
-                <div key={label} className="flex items-start gap-4">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(88,101,242,0.12)", border: "1px solid rgba(88,101,242,0.25)" }}>
-                    <Icon size={15} style={{ color: BLUE }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-white mb-0.5">{label}</p>
-                    {href
-                      ? <a href={href} className="text-sm text-white/40 hover:text-white/80 transition-colors font-semibold">{value}</a>
-                      : <p className="text-sm text-white/40 whitespace-pre-line font-semibold">{value}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="md:col-span-3 p-7 rounded-3xl"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(12px)" }}>
+      <section className="py-16 px-6 border-t border-border">
+        <div className="max-w-3xl mx-auto">
+          <Section>
+            <motion.div variants={fadeUp} className="text-center mb-10">
+              <p className="section-title mb-3">Contact</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-text-primary">Have a question?</h2>
+              <p className="text-[14px] text-text-secondary mt-2">We reply within 24 hours.</p>
+            </motion.div>
+            <motion.div variants={fadeUp} custom={1}>
               <ContactForm />
-            </div>
-          </div>
+            </motion.div>
+          </Section>
         </div>
       </section>
 
-      {/* ── Final CTA ── */}
-      <section className="py-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="orb-1 absolute w-[900px] h-[900px] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-12"
-            style={{ background: `radial-gradient(circle, ${BLUE} 0%, transparent 55%)`, filter: "blur(90px)" }} />
-          <div className="orb-2 absolute w-[400px] h-[400px] rounded-full right-0 bottom-0 opacity-10"
-            style={{ background: "radial-gradient(circle, #EB459E 0%, transparent 70%)", filter: "blur(80px)" }} />
-        </div>
-        <div className="max-w-7xl mx-auto relative grid lg:grid-cols-2 gap-12 items-center">
-          <RevealOnScroll className="hidden lg:flex items-center justify-center">
-            <div className="relative">
-              <div className="absolute inset-0 opacity-20 pointer-events-none"
-                style={{ background: "radial-gradient(circle, #EB459E 0%, transparent 70%)", filter: "blur(60px)" }} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/illustrations/exams.svg" alt="Exam preparation"
-                className="relative z-10 w-full max-w-[480px]"
-                style={{ filter: "drop-shadow(0 0 40px rgba(235,69,158,0.15))" }} />
-            </div>
-          </RevealOnScroll>
-          <RevealOnScroll delay={100} className="text-center lg:text-left">
-            <p className="text-xs font-black uppercase tracking-widest text-white/25 mb-6">{tr.ctaBadge}</p>
-            <h2 className="font-black tracking-tight text-white mb-4 leading-tight" style={{ fontSize: "clamp(36px, 5vw, 60px)" }}>
-              {tr.ctaH.split("Andaze Se").map((part, i, arr) => (
-                <span key={i}>
-                  {part}
-                  {i < arr.length - 1 && (
-                    <span style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #EB459E 100%)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                      Andaze Se
-                    </span>
-                  )}
-                </span>
-              ))}
-            </h2>
-            <p className="text-white/35 text-xl mb-10 font-semibold">{tr.ctaSub}</p>
-            <Link href="/register"
-              className="cta-glow inline-flex items-center gap-3 px-10 py-5 rounded-2xl text-white font-black text-lg transition-all hover:scale-105"
-              style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #7289DA 100%)` }}>
-              {tr.ctaBtn} <ArrowRight size={20} />
-            </Link>
-            <p className="text-xs text-white/15 mt-5 italic font-semibold">{tr.tagline}</p>
-          </RevealOnScroll>
-        </div>
-      </section>
-
-      {/* ── Footer — Discord style ── */}
-      <footer style={{ background: "linear-gradient(180deg, #07070F 0%, #0b0b20 35%, #11114a 75%, #1a1a6e 100%)" }}>
-
-        {/* Top bar */}
-        <div style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between gap-4 flex-wrap">
-            {/* Language switcher */}
-            <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.06)" }}>
-              {([["en","English"],["hi","हिंदी"],["gu","ગુજરાતી"]] as [Lang,string][]).map(([l, label]) => (
-                <button key={l} onClick={() => setLang(l)}
-                  className="px-3 py-1.5 rounded-lg text-sm font-black transition-all"
-                  style={lang === l ? { background: BLUE, color: "white" } : { color: "rgba(255,255,255,0.4)" }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Social icons */}
-            <div className="flex items-center gap-2">
-              {[
-                { label: "X", href: "#", path: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" },
-                { label: "Instagram", href: "#", path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" },
-                { label: "GitHub", href: "https://github.com/YashB118", path: "M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" },
-                { label: "YouTube", href: "#", path: "M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" },
-              ].map(({ label, href, path }) => (
-                <a key={label} href={href} aria-label={label} target={href.startsWith("http") ? "_blank" : undefined}
-                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d={path}/></svg>
-                </a>
-              ))}
-            </div>
+      {/* ── Footer ── */}
+      <footer className="px-6 py-10 border-t border-border">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <AndazeSeLogo size="md" />
+          <p className="text-[12px] text-text-muted">© {new Date().getFullYear()} GTU ExamAI · Built for GTU students.</p>
+          <div className="flex items-center gap-5">
+            <Link href="/login"    className="text-[12.5px] text-text-muted hover:text-text-primary transition-colors">Sign in</Link>
+            <Link href="/register" className="text-[12.5px] text-text-muted hover:text-text-primary transition-colors">Register</Link>
           </div>
         </div>
-
-        {/* Link columns */}
-        <div className="max-w-7xl mx-auto px-8 py-14">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-            <div>
-              <h5 className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">{tr.footerCol1}</h5>
-              <ul className="space-y-3">
-                {["Brahmastra","Andaza Laga","Pooch Lo","Notes & Books","PYQ Bank","Community Chat"].map(l => (
-                  <li key={l}><Link href="/register" className="text-sm text-white/55 hover:text-white font-semibold transition-colors">{l}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">{tr.footerCol2}</h5>
-              <ul className="space-y-3">
-                {[["About","#"],["Contact","#contact"],["GitHub","https://github.com/YashB118"]].map(([l,h]) => (
-                  <li key={l}><a href={h} className="text-sm text-white/55 hover:text-white font-semibold transition-colors">{l}</a></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">{tr.footerCol3}</h5>
-              <ul className="space-y-3">
-                {["CE Branch","IT Branch","ME Branch","Civil","Diploma"].map(l => (
-                  <li key={l}><Link href="/register" className="text-sm text-white/55 hover:text-white font-semibold transition-colors">{l}</Link></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">{tr.footerCol4}</h5>
-              <ul className="space-y-3">
-                {["Privacy Policy","Terms of Service","Cookie Settings"].map(l => (
-                  <li key={l}><a href="#" className="text-sm text-white/55 hover:text-white font-semibold transition-colors">{l}</a></li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Massive brand name */}
-        <div className="overflow-hidden px-4 pb-0 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <p className="font-black text-white leading-[0.85] tracking-tighter select-none"
-            style={{ fontSize: "clamp(60px, 14.5vw, 220px)", opacity: 0.95 }}>
-            andaze se.
-          </p>
-        </div>
-
       </footer>
     </div>
   );

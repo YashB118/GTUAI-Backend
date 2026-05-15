@@ -12,7 +12,8 @@
       "WebFetch(domain:gujarat.result91.com)",
       "WebFetch(domain:result91.com)",
       "WebFetch(domain:ws-gtur.gtu.ac.in)",
-      "WebFetch(domain:www.npmjs.com)"
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(grep -rn \"style={{ background.*rgba\\(0,0,0\\\\|bg-black/\\\\|backdrop\" /home/empiric/Documents/GTU-ExamAI/frontend/app/\\\\\\(student\\\\\\)/predict/page.tsx)"
     ]
   }
 }

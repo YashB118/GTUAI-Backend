@@ -63,10 +63,10 @@ const EMPTY: Overview = {
   total_questions: 0, total_subjects: 0, total_patterns: 0, total_answers: 0,
 };
 
-const ACCENT = "#6C63FF";
-const BLUE = "#5B8DEF";
-const GRID = "#2A2A35";
-const TICK = "#8888A0";
+const ACCENT = "#5865F2";
+const BLUE   = "#3B82F6";
+const GRID   = "#EAECF0";   /* light-safe grid lines */
+const TICK   = "#A1A1A1";
 
 export default function AnalyticsPage() {
   const [overview, setOverview] = useState<Overview>(EMPTY);
@@ -117,30 +117,27 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <BarChart3 size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Analytics</h1>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div>
+          <p className="section-title">Insights</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Analytics</h1>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <LoadingSkeleton key={i} className="h-24 rounded-xl" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <LoadingSkeleton key={i} className="h-24 rounded-2xl" />)}
         </div>
-        <LoadingSkeleton className="h-64 rounded-xl" />
+        <LoadingSkeleton className="h-64 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-7">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BarChart3 size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Analytics</h1>
+    <div className="max-w-7xl mx-auto space-y-7">
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="section-title">Insights</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Analytics</h1>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
+        <button onClick={load} className="btn-ghost">
           <RefreshCw size={13} />
           Refresh
         </button>
@@ -171,15 +168,13 @@ export default function AnalyticsPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-bg-card border border-border rounded-xl px-4 py-4 hover:border-border/80 transition-colors">
+        {statCards.map(({ label, value, icon: Icon }) => (
+          <div key={label} className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-text-muted font-medium">{label}</p>
-              <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center`}>
-                <Icon size={13} className={color} />
-              </div>
+              <p className="text-[11.5px] text-text-muted font-medium">{label}</p>
+              <Icon size={14} className="text-text-muted" />
             </div>
-            <p className="text-2xl font-bold text-text-primary tracking-tight">{value.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-text-primary tracking-tight">{value.toLocaleString()}</p>
           </div>
         ))}
       </div>
@@ -206,7 +201,7 @@ export default function AnalyticsPage() {
                       <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="date" stroke={TICK} fontSize={10} tickFormatter={(v: string) => v.slice(5)} />
                       <YAxis stroke={TICK} fontSize={10} allowDecimals={false} />
-                      <Tooltip contentStyle={{ background: "#1A1A24", border: `1px solid ${GRID}`, borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#F0F0F5" }} />
+                      <Tooltip contentStyle={{ background: "var(--bg-card)", border: `1px solid ${GRID}`, borderRadius: 8, fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Line type="monotone" dataKey="papers" stroke={ACCENT} strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="materials" stroke={BLUE} strokeWidth={2} dot={false} />
@@ -237,7 +232,7 @@ export default function AnalyticsPage() {
                       <CartesianGrid stroke={GRID} strokeDasharray="3 3" horizontal={false} />
                       <XAxis type="number" stroke={TICK} fontSize={10} allowDecimals={false} />
                       <YAxis type="category" dataKey="name" stroke={TICK} fontSize={10} width={100} tickFormatter={(v: string) => v.length > 14 ? v.slice(0, 14) + "…" : v} />
-                      <Tooltip contentStyle={{ background: "#1A1A24", border: `1px solid ${GRID}`, borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip contentStyle={{ background: "var(--bg-card)", border: `1px solid ${GRID}`, borderRadius: 8, fontSize: 12 }} />
                       <Bar dataKey="paper_count" fill={ACCENT} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

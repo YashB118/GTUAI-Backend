@@ -176,17 +176,14 @@ export default function ApprovalsPage() {
   const pendingCount = materials.filter(m => m.approval_status === "pending").length;
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <CheckCircle size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Material Approvals</h1>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="section-title">Moderation</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Approvals</h1>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
+        <button onClick={load} className="btn-ghost">
           <RefreshCw size={13} />
           Refresh
         </button>

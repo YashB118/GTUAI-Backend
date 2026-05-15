@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Nunito, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-// Nunito — rounded, friendly, closest to Discord's gg sans
-const nunito = Nunito({
+// Inter — clean, modern sans-serif (matches reference image)
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter", // keep same var name so all existing classes still work
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-inter",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -28,40 +28,40 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Prevent flash of wrong theme */}
+        {/* Light theme default — dark is opt-in via .dark class */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
+            __html: `(function(){try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`,
           }}
         />
-        {/* Mermaid.js — browser-side diagram rendering (free, unlimited) */}
+        {/* Mermaid.js for diagrams */}
         <script
           type="module"
           dangerouslySetInnerHTML={{
             __html: `
               import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
               window.mermaid = mermaid;
-              mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+              mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
             `,
           }}
         />
       </head>
-      <body className={`${nunito.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-primary text-text-primary`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-page text-text-primary`}>
         {children}
         <Toaster
           position="bottom-right"
+          theme="system"
           toastOptions={{
             style: {
-              background: "rgb(17 17 27)",
-              border: "1px solid rgb(40 40 56 / 0.8)",
-              color: "rgb(242 242 247)",
               fontSize: "13px",
-              borderRadius: "12px",
+              borderRadius: "14px",
             },
             classNames: {
-              success: "!border-emerald-500/30",
-              error:   "!border-red-500/30",
-              info:    "!border-accent/30",
+              toast:   "!bg-bg-card !text-text-primary !border-border !shadow-card",
+              success: "!border-l-4 !border-l-emerald-500",
+              error:   "!border-l-4 !border-l-red-500",
+              info:    "!border-l-4 !border-l-blue-500",
+              warning: "!border-l-4 !border-l-amber-500",
             },
           }}
         />

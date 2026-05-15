@@ -29,27 +29,25 @@ export default function ContactForm() {
     }
   };
 
-  const field = "w-full bg-bg-elevated border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/60 transition-colors";
+  const field = "input";
 
   if (sent) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-        <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
-          <CheckCircle className="text-emerald-400" size={28} />
+      <div className="card p-12 text-center">
+        <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <CheckCircle size={26} />
         </div>
-        <div>
-          <p className="text-lg font-semibold text-text-primary">Message sent!</p>
-          <p className="text-sm text-text-secondary mt-1">We&apos;ll get back to you within 24 hours.</p>
-        </div>
+        <p className="text-[17px] font-semibold text-text-primary mt-4">Message sent!</p>
+        <p className="text-[13.5px] text-text-secondary mt-1">We&apos;ll get back to you within 24 hours.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="card p-7 space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1.5">Your Name</label>
+          <label className="block text-[13px] font-medium text-text-primary mb-2">Your name</label>
           <input
             className={field}
             placeholder="Raj Patel"
@@ -59,7 +57,7 @@ export default function ContactForm() {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1.5">Email Address</label>
+          <label className="block text-[13px] font-medium text-text-primary mb-2">Email</label>
           <input
             type="email"
             className={field}
@@ -71,7 +69,7 @@ export default function ContactForm() {
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-text-secondary mb-1.5">Subject</label>
+        <label className="block text-[13px] font-medium text-text-primary mb-2">Subject</label>
         <input
           className={field}
           placeholder="Question about predictions"
@@ -81,9 +79,9 @@ export default function ContactForm() {
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-text-secondary mb-1.5">Message</label>
+        <label className="block text-[13px] font-medium text-text-primary mb-2">Message</label>
         <textarea
-          className={`${field} resize-none`}
+          className={`${field} resize-none min-h-[120px] py-3`}
           rows={5}
           placeholder="Tell us how we can help..."
           value={form.message}
@@ -92,19 +90,19 @@ export default function ContactForm() {
         />
       </div>
       {error && (
-        <p className="text-xs text-red-400 bg-red-500/8 border border-red-500/15 rounded-lg px-3 py-2">{error}</p>
+        <p className="text-[12.5px] text-status-error bg-status-error/10 rounded-xl px-4 py-2.5">{error}</p>
       )}
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="btn-primary w-full h-12"
       >
         {loading ? (
-          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
         ) : (
           <Send size={15} />
         )}
-        {loading ? "Sending..." : "Send Message"}
+        {loading ? "Sending..." : "Send message"}
       </button>
     </form>
   );

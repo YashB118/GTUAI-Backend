@@ -159,22 +159,22 @@ export default function ChatPage() {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border shrink-0 bg-bg-card">
           <button
             onClick={() => setSidebarOpen((v) => !v)}
-            className="p-1.5 rounded-md hover:bg-bg-elevated text-text-muted hover:text-text-primary transition-colors md:hidden"
+            className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-primary transition-colors md:hidden"
           >
             <Brain size={16} />
           </button>
           <Brain size={18} className="text-accent hidden md:block" />
-          <span className="font-semibold text-sm text-text-primary">GTU GPT</span>
+          <span className="font-semibold text-[14px] text-text-primary tracking-tight">GTU GPT</span>
           <div className="flex-1" />
 
           {/* Subject picker */}
           <div className="relative">
             <button
               onClick={() => setShowSubjectMenu((v) => !v)}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-bg-elevated transition-colors text-text-secondary"
+              className="chip hover:bg-border transition-colors"
             >
               {selectedSubject?.name ?? "Select Subject"}
               <ChevronDown size={12} />
@@ -202,7 +202,7 @@ export default function ChatPage() {
 
           <button
             onClick={handleNewSession}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors"
+            className="btn-primary h-8 px-3 text-[12.5px]"
           >
             <Plus size={13} />
             New
@@ -266,8 +266,8 @@ export default function ChatPage() {
         )}
 
         {/* Input bar */}
-        <div className="px-4 py-3 border-t border-border shrink-0">
-          <div className="flex gap-2 items-end bg-bg-card border border-border rounded-xl px-3 py-2">
+        <div className="px-5 py-4 shrink-0 bg-bg-card border-t border-border">
+          <div className="flex gap-2 items-end bg-bg-page border border-border rounded-2xl px-4 py-3 focus-within:border-accent/40 transition-colors">
             <textarea
               ref={textareaRef}
               value={input}
@@ -276,19 +276,19 @@ export default function ChatPage() {
               placeholder={noSession ? "Start a chat first..." : "Ask GTU GPT anything..."}
               disabled={noSession || streaming}
               rows={1}
-              className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted resize-none outline-none min-h-[24px] max-h-[120px] disabled:opacity-50"
+              className="flex-1 bg-transparent text-[14px] text-text-primary placeholder:text-text-muted resize-none outline-none min-h-[24px] max-h-[120px] disabled:opacity-50"
               style={{ overflowY: input.split("\n").length > 4 ? "auto" : "hidden" }}
             />
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || noSession || streaming}
-              className="p-1.5 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              className="p-2 rounded-full bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
             >
-              <Send size={15} />
+              <Send size={14} />
             </button>
           </div>
-          <p className="text-xs text-text-muted mt-1.5 text-center">
-            GTU GPT uses past papers + your study materials. Verify answers before exams.
+          <p className="text-[11.5px] text-text-muted mt-2 text-center">
+            Uses past papers + materials. Verify before exams.
           </p>
         </div>
       </div>

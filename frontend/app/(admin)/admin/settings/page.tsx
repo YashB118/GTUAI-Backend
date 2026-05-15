@@ -95,29 +95,32 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Settings size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Settings</h1>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div>
+          <p className="section-title">Config</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Settings</h1>
         </div>
-        <LoadingSkeleton className="h-64 rounded-xl" />
+        <LoadingSkeleton className="h-64 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Settings size={20} className="text-accent" />
-        <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Settings</h1>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div>
+        <p className="section-title">Config</p>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Settings</h1>
+        <p className="text-[13.5px] text-text-secondary mt-1">Tune AI prediction weights and platform behavior.</p>
       </div>
 
       {/* Prediction weights */}
-      <div className="bg-bg-card border border-border rounded-xl">
-        <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sliders size={14} className="text-accent" />
-            <h2 className="text-sm font-semibold text-text-primary">Prediction Scoring Weights</h2>
+      <div className="card overflow-hidden p-0">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Sliders size={14} className="text-accent" />
+            </div>
+            <h2 className="text-[14px] font-semibold text-text-primary">Prediction Scoring Weights</h2>
           </div>
           <span className={`text-xs ${Math.abs(sum - 100) < 0.1 ? "text-text-muted" : "text-amber-400"}`}>
             Sum: {sum.toFixed(1)} {Math.abs(sum - 100) < 0.1 ? "(balanced)" : "(non-100)"}
@@ -166,7 +169,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleSave}
                 disabled={!dirty || saving}
-                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-primary"
               >
                 <Save size={13} />
                 {saving ? "Saving…" : "Save weights"}

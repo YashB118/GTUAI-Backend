@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CheckCircle, FileText,
   GraduationCap, Users, BarChart3, Settings, X,
-  // Wallet, Ticket, Zap,  // coins/coupons/challenges — disabled
+  ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,42 +14,44 @@ import { api } from "@/lib/api";
 
 const navItems = [
   { href: "/admin/dashboard",  icon: LayoutDashboard, label: "Dashboard",  badge: false },
-  { href: "/admin/approvals",  icon: CheckCircle,     label: "Approvals",   badge: true  },
-  { href: "/admin/papers",     icon: FileText,        label: "Papers",      badge: false },
-  { href: "/admin/subjects",   icon: GraduationCap,   label: "Subjects",    badge: false },
-  { href: "/admin/users",      icon: Users,           label: "Users",       badge: false },
-  { href: "/admin/analytics",   icon: BarChart3,       label: "Analytics",   badge: false },
-  // { href: "/admin/coins",       icon: Wallet,          label: "Coins",       badge: false },  // coins disabled
-  // { href: "/admin/coupons",     icon: Ticket,          label: "Coupons",     badge: false },  // coupons disabled
-  // { href: "/admin/challenges",  icon: Zap,             label: "Challenges",  badge: false },  // challenges disabled
-  { href: "/admin/settings",    icon: Settings,        label: "Settings",    badge: false },
+  { href: "/admin/approvals",  icon: CheckCircle,     label: "Approvals",  badge: true  },
+  { href: "/admin/papers",     icon: FileText,        label: "Papers",     badge: false },
+  { href: "/admin/subjects",   icon: GraduationCap,   label: "Subjects",   badge: false },
+  { href: "/admin/users",      icon: Users,           label: "Users",      badge: false },
+  { href: "/admin/analytics",  icon: BarChart3,       label: "Analytics",  badge: false },
+  { href: "/admin/settings",   icon: Settings,        label: "Settings",   badge: false },
 ];
 
-const COLLAPSED = 60;
-const EXPANDED  = 230;
+const COLLAPSED = 68;
+const EXPANDED  = 232;
 
-const sidebarSpring = {
-  type: "spring" as const,
-  stiffness: 400,
-  damping: 35,
-  mass: 0.8,
-};
+const sidebarSpring = { type: "spring" as const, stiffness: 380, damping: 32, mass: 0.7 };
 
 const labelVariants = {
   hidden:  { opacity: 0, x: -6 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.13, delay: 0.06 } },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.14, delay: 0.05 } },
   exit:    { opacity: 0, x: -6, transition: { duration: 0.08 } },
 };
 
-interface AdminSidebarProps {
-  open?: boolean;
-  onClose?: () => void;
-}
+interface AdminSidebarProps { open?: boolean; onClose?: () => void; }
 
 export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
-  const [hovered, setHovered] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gtu_sidebar_collapsed");
+    setCollapsed(saved === "true");
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed(v => {
+      const next = !v;
+      localStorage.setItem("gtu_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +69,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-20 bg-black/80 backdrop-blur-sm lg:hidden" onClick={onClose} />
+        <div className="fixed inset-0 z-20 bg-black/30 backdrop-blur-sm lg:hidden" onClick={onClose} />
       )}
 
       {/* Mobile drawer */}
@@ -75,82 +77,73 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         initial={false}
         animate={{ x: open ? 0 : "-100%" }}
         transition={sidebarSpring}
-        className="fixed top-0 left-0 z-30 h-full w-[240px] flex flex-col glass border-r border-border lg:hidden"
+        className="fixed top-0 left-0 z-30 h-full w-[260px] flex flex-col bg-bg-card border-r border-border lg:hidden shadow-modal"
       >
-        <div className="flex items-center justify-between h-14 px-5">
-          <span className="text-xs text-text-muted font-semibold">Admin</span>
-          <button onClick={onClose} className="text-text-muted p-1.5 rounded-lg hover:bg-bg-elevated">
+        <div className="flex items-center justify-between h-16 px-5">
+          <span className="text-[13px] text-text-primary font-semibold">Admin</span>
+          <button onClick={onClose} className="text-text-muted p-2 rounded-xl hover:bg-bg-elevated">
             <X size={16} />
           </button>
         </div>
-        <div className="h-px bg-border/50 mx-4" />
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-3 space-y-1">
           {navItems.map(({ href, icon: Icon, label, badge }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             const showBadge = badge && pendingCount > 0;
             return (
               <Link key={href} href={href} onClick={onClose}
                 className={cn(
-                  "flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[14px] font-medium transition-colors",
                   active ? "bg-accent/10 text-accent" : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
                 )}>
-                <span className="flex items-center gap-3.5">
-                  <Icon size={16} className={cn("shrink-0", active ? "text-accent" : "text-text-muted")} />
+                <span className="flex items-center gap-3">
+                  <Icon size={17} strokeWidth={active ? 2.2 : 1.8} className="shrink-0" />
                   {label}
                 </span>
                 {showBadge && (
-                  <span className="text-xs font-semibold bg-amber-500/15 text-amber-400 rounded-full px-1.5 min-w-[20px] text-center">
-                    {pendingCount}
-                  </span>
+                  <span className="chip text-[11px] bg-status-warn/15 text-status-warn">{pendingCount}</span>
                 )}
               </Link>
             );
           })}
         </nav>
-        <div className="px-5 py-3.5 border-t border-border/50">
-          <p className="text-xs text-text-muted">GTU ExamAI · Admin</p>
-        </div>
       </motion.aside>
 
-      {/* Desktop hover-expand rail */}
+      {/* Desktop rail */}
       <motion.aside
-        className="hidden lg:flex flex-col h-screen border-r border-border glass sticky top-0 shrink-0 z-20 overflow-hidden"
-        animate={{ width: hovered ? EXPANDED : COLLAPSED }}
+        className="hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-20 overflow-hidden bg-bg-card border-r border-border"
+        animate={{ width: collapsed ? COLLAPSED : EXPANDED }}
         transition={sidebarSpring}
-        onHoverStart={() => setHovered(true)}
-        onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
-        <div className="h-14 border-b border-border/50 shrink-0" />
+        <div className="h-16 shrink-0" />
 
-        {/* Nav */}
-        <nav className="flex-1 flex flex-col py-3 gap-1 px-2 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 flex flex-col py-2 gap-0.5 px-3 overflow-y-auto overflow-x-hidden">
           {navItems.map(({ href, icon: Icon, label, badge }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             const showBadge = badge && pendingCount > 0;
             return (
               <Link key={href} href={href} className={cn(
-                "relative flex items-center h-11 rounded-xl px-2.5 shrink-0 transition-colors duration-100",
-                active ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text-primary hover:bg-bg-elevated"
+                "relative flex items-center h-10 rounded-xl px-3 shrink-0 transition-colors",
+                active ? "bg-accent/10 text-accent" : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
               )}>
-                <span className="relative flex items-center justify-center w-6 h-6 shrink-0">
-                  <Icon size={20} />
-                  {showBadge && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-bold text-white flex items-center justify-center">
+                <span className="relative flex items-center justify-center w-5 h-5 shrink-0">
+                  <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                  {showBadge && collapsed && (
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-status-warn text-[9px] font-bold text-white flex items-center justify-center">
                       {pendingCount > 9 ? "9+" : pendingCount}
                     </span>
                   )}
                 </span>
 
                 <AnimatePresence>
-                  {hovered && (
+                  {!collapsed && (
                     <motion.span
                       key={`label-${href}`}
                       variants={labelVariants}
                       initial="hidden"
                       animate="visible"
                       exit="exit"
-                      className="ml-3 text-sm font-medium whitespace-nowrap overflow-hidden"
+                      className="ml-3 text-[13.5px] font-medium whitespace-nowrap overflow-hidden"
                     >
                       {label}
                     </motion.span>
@@ -158,40 +151,49 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                  {hovered && showBadge && (
+                  {!collapsed && showBadge && (
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="ml-auto text-xs font-semibold bg-amber-500/15 text-amber-400 rounded-full px-1.5 shrink-0"
+                      className="ml-auto chip text-[11px] bg-status-warn/15 text-status-warn shrink-0"
                     >
                       {pendingCount}
                     </motion.span>
                   )}
                 </AnimatePresence>
-
-                {active && <span className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-sm bg-accent" />}
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-3.5 border-t border-border/50 flex items-center gap-3 shrink-0">
-          <span className="text-xs text-text-muted shrink-0">A</span>
-          <AnimatePresence>
-            {hovered && (
-              <motion.span
-                key="footer"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { delay: 0.1 } }}
-                exit={{ opacity: 0 }}
-                className="text-xs text-text-muted whitespace-nowrap"
-              >
-                GTU ExamAI · Admin
-              </motion.span>
+        <div className="px-3 py-3 shrink-0">
+          <button
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand" : "Collapse"}
+            className={cn(
+              "flex items-center h-9 rounded-xl transition-colors w-full text-text-muted hover:text-text-primary hover:bg-bg-elevated",
+              collapsed ? "justify-center px-0" : "px-3 gap-3"
             )}
-          </AnimatePresence>
+          >
+            <span className="flex items-center justify-center w-5 h-5 shrink-0">
+              {collapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
+            </span>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  key="toggle-label"
+                  variants={labelVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="text-[12.5px] font-medium whitespace-nowrap overflow-hidden"
+                >
+                  Collapse
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
         </div>
       </motion.aside>
     </>

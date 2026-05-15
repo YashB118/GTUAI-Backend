@@ -34,35 +34,33 @@ export function RoomCard({ room, onJoin }: RoomCardProps) {
   const isFull = room.participant_count >= room.max_participants;
 
   return (
-    <div className="group glass border border-border/50 rounded-2xl p-4 hover:border-accent/30 transition-all duration-200 hover:shadow-lg hover:shadow-accent/5 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
+    <div className="card card-hover p-5 flex flex-col gap-3 group">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1.5">
             {room.is_public ? (
-              <Globe size={13} className="text-green-400 shrink-0" />
+              <Globe size={12} className="text-emerald-500 shrink-0" />
             ) : (
-              <Lock size={13} className="text-yellow-400 shrink-0" />
+              <Lock size={12} className="text-amber-500 shrink-0" />
             )}
-            <h3 className="font-semibold text-sm text-text-primary truncate">{room.name}</h3>
+            <h3 className="font-semibold text-[15px] text-text-primary truncate tracking-tight">{room.name}</h3>
           </div>
-          <Badge variant="accent" className="text-[10px] px-2 py-0">
-            {room.subject}
-          </Badge>
+          <Badge variant="accent">{room.subject}</Badge>
         </div>
         <div
           className={cn(
-            "flex items-center gap-1 text-xs shrink-0 px-2 py-1 rounded-full",
+            "flex items-center gap-1.5 text-[11.5px] font-medium shrink-0 px-2.5 py-1 rounded-full",
             isFull
-              ? "bg-red-500/10 text-red-400"
+              ? "bg-red-100 text-red-700"
               : room.participant_count > 0
-              ? "bg-green-500/10 text-green-400"
-              : "bg-bg-elevated text-text-muted"
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-bg-muted text-text-muted"
           )}
         >
           <span
             className={cn(
               "w-1.5 h-1.5 rounded-full",
-              isFull ? "bg-red-400" : room.participant_count > 0 ? "bg-green-400 animate-pulse" : "bg-text-muted"
+              isFull ? "bg-red-500" : room.participant_count > 0 ? "bg-emerald-500 animate-pulse" : "bg-text-muted"
             )}
           />
           <Users size={11} />
@@ -71,17 +69,15 @@ export function RoomCard({ room, onJoin }: RoomCardProps) {
       </div>
 
       {room.description && (
-        <p className="text-xs text-text-muted leading-relaxed line-clamp-2">{room.description}</p>
+        <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">{room.description}</p>
       )}
 
-      <div className="flex items-center justify-between mt-auto">
-        <div className="flex items-center gap-1 text-[11px] text-text-muted">
+      <div className="flex items-center justify-between mt-auto pt-1">
+        <div className="flex items-center gap-1.5 text-[11.5px] text-text-muted">
           <Clock size={11} />
           <span>{timeAgo(room.last_activity_at)}</span>
           {room.message_retention === "ephemeral" && (
-            <span className="ml-2 px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 text-[10px]">
-              ephemeral
-            </span>
+            <span className="ml-1 chip text-[10px] bg-violet-100 text-violet-700">ephemeral</span>
           )}
         </div>
         <Button
@@ -89,7 +85,6 @@ export function RoomCard({ room, onJoin }: RoomCardProps) {
           variant={isFull ? "secondary" : "primary"}
           disabled={isFull}
           onClick={() => onJoin(room.id)}
-          className="text-xs h-7 px-3"
         >
           {isFull ? "Full" : "Join"}
         </Button>

@@ -129,62 +129,56 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Users</h1>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="section-title">User management</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary mt-2">Users</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 bg-bg-card border border-border hover:border-accent/40 text-text-secondary hover:text-text-primary rounded-lg px-3 py-1.5 text-xs transition-all"
-          >
-            <Download size={12} />
+          <button onClick={handleExport} className="btn-secondary">
+            <Download size={13} />
             Export CSV
           </button>
-          <button
-            onClick={load}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-          >
+          <button onClick={load} className="btn-ghost">
             <RefreshCw size={13} />
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex gap-3">
-          <Stat label="Total" value={users.length} />
-          <Stat label="Students" value={users.filter(u => u.role === "student").length} />
-          <Stat label="Admins" value={users.filter(u => u.role === "admin").length} color="text-accent" />
-          <Stat label="Suspended" value={users.filter(u => u.suspended).length} color="text-red-400" />
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex gap-3 flex-wrap">
+          <Stat label="Total"     value={users.length} />
+          <Stat label="Students"  value={users.filter(u => u.role === "student").length} />
+          <Stat label="Admins"    value={users.filter(u => u.role === "admin").length} color="text-accent" />
+          <Stat label="Suspended" value={users.filter(u => u.suspended).length} color="text-status-error" />
         </div>
 
-        <div className="relative w-72">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <div className="relative w-full md:w-80">
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search name, email, enrollment..."
-            className="w-full bg-bg-card border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent placeholder:text-text-muted"
+            placeholder="Search name, email, enrollment…"
+            className="input pl-10"
           />
         </div>
       </div>
 
       {loading ? (
         <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map(i => <LoadingSkeleton key={i} className="h-14 rounded-xl" />)}
+          {[1, 2, 3, 4, 5].map(i => <LoadingSkeleton key={i} className="h-14 rounded-2xl" />)}
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-bg-card border border-border rounded-xl p-12 text-center">
+        <div className="card p-12 text-center">
           <Users size={28} className="mx-auto text-text-muted mb-3" />
-          <p className="text-sm text-text-secondary">{search ? "No users match search" : "No users yet"}</p>
+          <p className="text-[14px] text-text-secondary">{search ? "No users match search" : "No users yet"}</p>
         </div>
       ) : (
-        <div className="bg-bg-card border border-border rounded-xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-border bg-bg-elevated">
+        <div className="card overflow-hidden p-0">
+          <div className="grid grid-cols-12 gap-2 px-5 py-3 border-b border-border bg-bg-elevated">
             <div className="col-span-3 text-xs font-medium text-text-muted uppercase tracking-wide">Name</div>
             <div className="col-span-3 text-xs font-medium text-text-muted uppercase tracking-wide">Email</div>
             <div className="col-span-2 text-xs font-medium text-text-muted uppercase tracking-wide">Enrollment</div>
@@ -266,7 +260,7 @@ export default function UsersPage() {
               <button
                 onClick={handlePromote}
                 disabled={actionId === confirmPromote.id}
-                className="bg-accent hover:bg-accent-hover text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50"
+                className="btn-primary h-9 px-3.5 text-[12.5px]"
               >
                 Promote
               </button>
@@ -280,9 +274,9 @@ export default function UsersPage() {
 
 function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
   return (
-    <div className="bg-bg-card border border-border rounded-xl px-4 py-2.5">
-      <p className="text-xs text-text-muted">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-text-primary"}`}>{value}</p>
+    <div className="card p-4 min-w-[110px]">
+      <p className="text-[11.5px] text-text-muted font-medium">{label}</p>
+      <p className={`text-2xl font-bold tracking-tight mt-0.5 ${color || "text-text-primary"}`}>{value}</p>
     </div>
   );
 }

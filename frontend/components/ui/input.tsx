@@ -9,11 +9,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, id, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {label && (
           <label
             htmlFor={id}
-            className="text-[11px] font-medium uppercase tracking-[0.07em] text-text-muted"
+            className="text-[13px] font-medium text-text-primary"
           >
             {label}
           </label>
@@ -22,19 +22,17 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={id}
           className={cn(
-            // Base — theme-aware background + hairline border
-            "w-full rounded-lg bg-bg-elevated border border-border",
-            "px-3.5 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted",
-            // Focus — tight accent ring
-            "focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/15 focus:bg-bg-card",
-            "transition-all duration-200",
+            "h-11 w-full rounded-xl bg-bg-card border border-border",
+            "px-4 text-[14px] text-text-primary placeholder:text-text-muted",
+            "focus:outline-none focus:border-accent/60 focus:ring-4 focus:ring-accent/10",
+            "transition-all duration-150",
             "disabled:opacity-40 disabled:cursor-not-allowed",
-            error && "border-red-500/50 focus:border-red-500/60 focus:ring-red-500/15",
+            error && "border-status-error/60 focus:border-status-error focus:ring-status-error/10",
             className
           )}
           {...props}
         />
-        {error && <p className="text-[11px] text-red-400 mt-0.5">{error}</p>}
+        {error && <p className="text-[12px] text-status-error">{error}</p>}
       </div>
     );
   }

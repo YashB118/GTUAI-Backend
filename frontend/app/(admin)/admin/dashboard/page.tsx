@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FileText, Users, CheckCircle, Clock,
+  FileText, Users, CheckCircle, Clock,
   BookOpen, GraduationCap, Sparkles, BarChart3, Settings, MessageSquare,
-  RefreshCw, AlertCircle, Upload,
+  RefreshCw, AlertCircle, ArrowRight,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import Link from "next/link";
@@ -23,11 +23,7 @@ interface Overview {
   total_answers: number;
 }
 
-interface AdminMe {
-  sub: string;
-  email: string;
-  role: string | null;
-}
+interface AdminMe { sub: string; email: string; role: string | null; }
 
 const EMPTY: Overview = {
   total_students: 0, total_admins: 0, total_papers: 0, total_materials: 0,
@@ -63,216 +59,138 @@ export default function AdminDashboard() {
   const isEmpty = !loading && !error && stats.total_papers === 0 && stats.total_students === 0;
 
   const statCards = [
-    {
-      label: "Total Students", value: stats.total_students, icon: Users,
-      color: "text-accent", bg: "bg-accent/10",
-      hint: stats.total_students === 0 ? "No signups yet" : null,
-    },
-    {
-      label: "Question Papers", value: stats.total_papers, icon: FileText,
-      color: "text-blue-400", bg: "bg-blue-400/10",
-      hint: stats.total_papers === 0 ? "Upload the first paper" : null,
-    },
-    {
-      label: "Approved Materials", value: stats.approved_materials, icon: BookOpen,
-      color: "text-emerald-400", bg: "bg-emerald-400/10",
-      hint: stats.approved_materials === 0 ? "None approved yet" : null,
-    },
-    {
-      label: "Questions Extracted", value: stats.total_questions, icon: Sparkles,
-      color: "text-violet-400", bg: "bg-violet-400/10",
-      hint: stats.total_questions === 0 ? "Process papers to extract" : null,
-    },
-    {
-      label: "Subjects", value: stats.total_subjects, icon: GraduationCap,
-      color: "text-amber-400", bg: "bg-amber-400/10",
-      hint: stats.total_subjects === 0 ? "Add subjects to get started" : null,
-    },
-    {
-      label: "Answers Generated", value: stats.total_answers, icon: MessageSquare,
-      color: "text-cyan-400", bg: "bg-cyan-400/10",
-      hint: null,
-    },
+    { label: "Students",       value: stats.total_students,      icon: Users },
+    { label: "Papers",         value: stats.total_papers,        icon: FileText },
+    { label: "Materials",      value: stats.approved_materials,  icon: BookOpen },
+    { label: "Questions",      value: stats.total_questions,     icon: Sparkles },
+    { label: "Subjects",       value: stats.total_subjects,      icon: GraduationCap },
+    { label: "Answers",        value: stats.total_answers,       icon: MessageSquare },
   ];
 
   const adminActions = [
-    {
-      href: "/admin/approvals",
-      label: "Review pending materials",
-      desc: stats.pending_approvals > 0 ? `${stats.pending_approvals} awaiting review` : "All clear",
-      icon: CheckCircle,
-      urgent: stats.pending_approvals > 0,
-    },
-    {
-      href: "/admin/papers",
-      label: "Question papers",
-      desc: stats.total_papers > 0
-        ? `${stats.total_papers} papers · ${stats.total_questions} questions extracted`
-        : "Upload the first GTU question paper",
-      icon: FileText,
-      urgent: false,
-    },
-    {
-      href: "/admin/users",
-      label: "User management",
-      desc: stats.total_students > 0
-        ? `${stats.total_students} students · ${stats.total_admins} admins`
-        : "No students yet — share the platform link",
-      icon: Users,
-      urgent: false,
-    },
-    {
-      href: "/admin/subjects",
-      label: "Subjects",
-      desc: stats.total_subjects > 0
-        ? `${stats.total_subjects} subjects configured`
-        : "Add subjects before uploading papers",
-      icon: GraduationCap,
-      urgent: stats.total_subjects === 0,
-    },
-    {
-      href: "/admin/analytics",
-      label: "Analytics dashboard",
-      desc: "Charts · uploads · top subjects",
-      icon: BarChart3,
-      urgent: false,
-    },
-    {
-      href: "/admin/settings",
-      label: "Prediction settings",
-      desc: "Scoring weights · cache control",
-      icon: Settings,
-      urgent: false,
-    },
+    { href: "/admin/approvals", label: "Pending approvals",
+      desc: stats.pending_approvals > 0 ? `${stats.pending_approvals} waiting` : "All clear",
+      icon: CheckCircle, urgent: stats.pending_approvals > 0 },
+    { href: "/admin/papers",    label: "Question papers",
+      desc: `${stats.total_papers} papers · ${stats.total_questions} questions`, icon: FileText, urgent: false },
+    { href: "/admin/users",     label: "User management",
+      desc: `${stats.total_students} students · ${stats.total_admins} admins`, icon: Users, urgent: false },
+    { href: "/admin/subjects",  label: "Subjects",
+      desc: `${stats.total_subjects} configured`, icon: GraduationCap, urgent: stats.total_subjects === 0 },
+    { href: "/admin/analytics", label: "Analytics", desc: "Charts · trends · top subjects", icon: BarChart3, urgent: false },
+    { href: "/admin/settings",  label: "Settings",  desc: "Prediction weights · cache", icon: Settings, urgent: false },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-7">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <LayoutDashboard size={20} className="text-accent" />
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Admin Dashboard</h1>
+    <div className="max-w-7xl mx-auto">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-7">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">Admin</h1>
+          {adminMe?.email && (
+            <p className="text-[13.5px] text-text-muted mt-1">{adminMe.email}</p>
+          )}
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
-          <RefreshCw size={13} />
-          Refresh
+        <button onClick={load} className="btn-ghost">
+          <RefreshCw size={13} /> Refresh
         </button>
       </div>
 
-      {/* Auth error */}
+      {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 bg-red-500/8 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
-          <AlertCircle size={15} />
-          <div>
-            <p className="font-medium">{error}</p>
+        <div className="card p-4 mb-5 flex items-center gap-3 border-l-4 border-l-status-error">
+          <AlertCircle size={16} className="text-status-error shrink-0" />
+          <div className="text-[13.5px]">
+            <p className="font-medium text-text-primary">{error}</p>
             {error.toLowerCase().includes("admin") && (
-              <p className="text-xs text-red-400/70 mt-0.5">
-                Your account may not have admin role set in Supabase user_metadata.
+              <p className="text-[12px] text-text-muted mt-0.5">
+                Your account may not have admin role in Supabase user_metadata.
               </p>
             )}
           </div>
         </div>
       )}
 
-      {/* Pending approvals */}
+      {/* Pending approvals alert */}
       {stats.pending_approvals > 0 && (
-        <Link
-          href="/admin/approvals"
-          className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/25 rounded-xl px-4 py-3 text-sm text-amber-400 hover:bg-amber-500/12 transition-colors"
-        >
-          <Clock size={15} />
-          <span><strong>{stats.pending_approvals}</strong> material{stats.pending_approvals !== 1 ? "s" : ""} waiting for approval</span>
-          <span className="ml-auto text-xs font-medium">Review →</span>
+        <Link href="/admin/approvals" className="block mb-6">
+          <div className="card card-hover p-5 flex items-center gap-4 border-l-4 border-l-amber-500">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+              <Clock size={18} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[15px] font-semibold text-text-primary">
+                {stats.pending_approvals} material{stats.pending_approvals !== 1 ? "s" : ""} waiting for review
+              </p>
+              <p className="text-[12.5px] text-text-muted mt-0.5">Approve to make available to students</p>
+            </div>
+            <ArrowRight size={15} className="text-text-muted" />
+          </div>
         </Link>
       )}
 
-      {/* Getting started hint when DB is empty */}
+      {/* Empty hint */}
       {isEmpty && (
-        <div className="bg-bg-card border border-accent/20 rounded-xl px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary mb-1">Getting started</p>
-          <p className="text-xs text-text-secondary mb-3">
-            Database is empty. Start here to populate the platform:
-          </p>
-          <ol className="space-y-1.5 text-xs text-text-secondary list-decimal list-inside">
-            <li>Go to <Link href="/admin/subjects" className="text-accent hover:underline">Subjects</Link> and add branches + semesters</li>
-            <li>Go to <Link href="/admin/papers" className="text-accent hover:underline">Papers</Link> and upload GTU question papers</li>
-            <li>Wait for AI processing to extract questions automatically</li>
-            <li>Students can then get predictions and AI answers</li>
+        <div className="card p-6 mb-6">
+          <p className="text-[15px] font-semibold text-text-primary mb-1">Getting started</p>
+          <p className="text-[13px] text-text-muted mb-3">Database is empty. Start here:</p>
+          <ol className="space-y-1.5 text-[13px] text-text-secondary list-decimal list-inside">
+            <li>Add subjects via <Link href="/admin/subjects" className="text-accent hover:underline">Subjects</Link></li>
+            <li>Upload papers in <Link href="/admin/papers" className="text-accent hover:underline">Papers</Link></li>
+            <li>Wait for AI processing to extract questions</li>
+            <li>Students can get predictions and answers</li>
           </ol>
         </div>
       )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {statCards.map(({ label, value, icon: Icon, color, bg, hint }) => (
-          <div key={label} className="bg-bg-card border border-border rounded-xl px-4 py-4">
+      {/* Stat grid — big numbers like reference image */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
+        {statCards.map(({ label, value, icon: Icon }) => (
+          <div key={label} className="card p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-text-muted font-medium">{label}</p>
-              <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center`}>
-                <Icon size={13} className={color} />
-              </div>
+              <p className="text-[12px] text-text-muted font-medium">{label}</p>
+              <Icon size={14} className="text-text-muted" />
             </div>
-            <p className="text-2xl font-bold text-text-primary tracking-tight">
+            <p className="text-3xl font-bold text-text-primary tracking-tight">
               {loading ? "—" : value.toLocaleString()}
             </p>
-            {!loading && hint && value === 0 && (
-              <p className="text-[11px] text-text-muted mt-1">{hint}</p>
-            )}
           </div>
         ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick actions */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <p className="section-title mb-3">Quick actions</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {adminActions.map(({ href, label, desc, icon: Icon, urgent }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 bg-bg-card border rounded-xl px-4 py-3.5 hover:bg-bg-elevated transition-all group ${
-                urgent ? "border-amber-500/30 hover:border-amber-500/50" : "border-border hover:border-accent/30"
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${urgent ? "bg-amber-500/10" : "bg-bg-elevated group-hover:bg-accent/10"} transition-colors`}>
-                <Icon size={14} className={urgent ? "text-amber-400" : "text-text-muted group-hover:text-accent transition-colors"} />
+            <Link key={href} href={href} className="block">
+              <div className={`card card-hover p-5 flex items-center gap-3 group ${urgent ? "border-l-4 border-l-amber-500" : ""}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${urgent ? "bg-amber-100 text-amber-600" : "bg-bg-muted text-text-secondary"}`}>
+                  <Icon size={17} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14.5px] font-semibold text-text-primary">{label}</p>
+                  <p className="text-[12.5px] text-text-muted truncate">{desc}</p>
+                </div>
+                <ArrowRight size={14} className="text-text-muted/50 group-hover:text-text-primary transition-colors" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-text-primary">{label}</p>
-                <p className="text-xs text-text-muted truncate">{desc}</p>
-              </div>
-              <span className="text-text-muted/50 group-hover:text-accent transition-colors text-xs">→</span>
             </Link>
           ))}
         </div>
       </div>
 
-      {/* Platform status */}
-      <div className="bg-bg-card border border-emerald-500/20 rounded-xl px-4 py-3.5 flex items-center gap-3">
-        <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-text-secondary">
-            <span className="text-emerald-400 font-medium">Backend connected</span>
-            {adminMe?.email && (
-              <span className="text-text-muted"> · Admin: <span className="text-text-secondary">{adminMe.email}</span></span>
-            )}
-          </p>
-        </div>
+      {/* Status footer */}
+      <div className="card p-4 mt-7 flex items-center gap-3">
+        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+        <p className="text-[13px] text-text-secondary flex-1">
+          <span className="text-emerald-600 font-medium">Backend connected</span>
+        </p>
         {!loading && (
-          <div className="flex items-center gap-3 text-xs text-text-muted">
-            <span className="flex items-center gap-1">
-              <Upload size={10} className="text-blue-400" />
-              {stats.total_papers} papers
-            </span>
-            <span className="flex items-center gap-1">
-              <Users size={10} className="text-accent" />
-              {stats.total_students} students
-            </span>
+          <div className="flex items-center gap-3 text-[12px] text-text-muted">
+            <span>{stats.total_papers} papers</span>
+            <span>·</span>
+            <span>{stats.total_students} students</span>
           </div>
         )}
       </div>

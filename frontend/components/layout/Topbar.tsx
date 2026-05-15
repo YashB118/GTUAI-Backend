@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { Menu, LogOut, Search } from "lucide-react";
 import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-// import { StreakBadge } from "@/components/ui/StreakBadge";   // coins/streak disabled
-// import { CoinBalance } from "@/components/ui/CoinBalance";   // coins/streak disabled
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -35,79 +34,68 @@ export function Topbar({
   };
 
   return (
-    <header className="h-14 flex items-center gap-3 px-4 lg:px-5 sticky top-0 z-10 bg-bg-primary/90 backdrop-blur-xl border-b border-border/60">
+    <header className="h-16 flex items-center gap-4 px-5 lg:px-7 sticky top-0 z-10 bg-bg-card border-b border-border" style={{ transition: "background-color 0.2s ease" }}>
 
       {/* Mobile: hamburger */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden text-text-muted hover:text-text-primary transition-colors p-1.5 rounded-lg hover:bg-bg-elevated shrink-0"
+        className="lg:hidden text-text-secondary hover:text-text-primary transition-colors p-2 -ml-1 rounded-xl hover:bg-bg-elevated shrink-0"
       >
-        <Menu size={17} />
+        <Menu size={18} />
       </button>
 
-      {/* Desktop: Andaze Se wordmark */}
-      <div className="hidden lg:flex items-center gap-2 shrink-0">
+      {/* Desktop: wordmark */}
+      <div className="hidden lg:flex items-center gap-2.5 shrink-0">
         <AndazeSeLogo size="lg" />
         {userRole === "admin" && (
-          <span className="text-[10px] text-text-muted font-semibold px-1.5 py-0.5 rounded-md bg-bg-elevated border border-border">
-            Admin
-          </span>
+          <span className="chip text-[11px] font-semibold">Admin</span>
         )}
       </div>
 
-      {/* Search — takes remaining space */}
+      {/* Search — pill input */}
       <button
         onClick={onSearchClick}
-        className="flex-1 max-w-sm flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-bg-elevated border border-border hover:border-border/80 transition-colors text-text-muted text-sm text-left"
+        className="flex-1 max-w-md flex items-center gap-3 h-10 px-4 rounded-full bg-bg-card hover:bg-bg-elevated border border-border transition-colors text-text-muted text-[13px] text-left"
       >
-        <Search size={12} className="shrink-0" />
-        <span className="flex-1">Search...</span>
-        <kbd className="hidden sm:inline text-[10px] border border-border/60 rounded px-1.5 py-0.5 font-mono shrink-0">⌘K</kbd>
+        <Search size={14} className="shrink-0" />
+        <span className="flex-1">Search anything…</span>
+        <kbd className="hidden sm:inline text-[10px] bg-bg-muted rounded-md px-1.5 py-0.5 font-mono shrink-0 text-text-muted">⌘K</kbd>
       </button>
 
-      {/* Right — avatar */}
-      <div className="flex items-center gap-2 ml-auto">
-        {/* coins/streak disabled
-        {userRole === "student" && (
-          <>
-            <StreakBadge />
-            <CoinBalance />
-          </>
-        )}
-        */}
-
-        {/* Avatar + dropdown */}
+      {/* Right cluster */}
+      <div className="flex items-center gap-1 ml-auto">
+        <ThemeToggle />
         <div className="relative">
           <button
             onClick={() => setShowMenu(v => !v)}
-            className="flex items-center gap-1.5 hover:bg-bg-elevated rounded-lg px-1.5 py-1 transition-colors"
+            className="flex items-center gap-2.5 hover:bg-bg-elevated rounded-full pl-1 pr-3 py-1 transition-colors"
             aria-label="User menu"
           >
             <UserAvatar name={userName} size="sm" />
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium text-text-primary leading-none">{userName.split(" ")[0]}</p>
+              <p className="text-[13px] font-semibold text-text-primary leading-tight">{userName.split(" ")[0]}</p>
               {userBranch && userSemester && (
-                <p className="text-xs text-text-muted leading-none mt-0.5">{userBranch} S{userSemester}</p>
+                <p className="text-[11px] text-text-muted leading-tight">{userBranch} · Sem {userSemester}</p>
               )}
             </div>
           </button>
 
           {showMenu && (
             <>
-              <div className="fixed inset-0" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden z-50 animate-scale-in shadow-modal border border-border bg-bg-card">
-                <div className="px-3.5 py-3">
-                  <p className="text-[12px] font-semibold text-text-primary">{userName}</p>
+              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+              <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl overflow-hidden z-50 animate-scale-in shadow-menu bg-bg-card border border-border">
+                <div className="px-4 py-3.5">
+                  <p className="text-[13px] font-semibold text-text-primary">{userName}</p>
                   <p className="text-[11px] text-text-muted mt-0.5">
                     {userRole === "admin" ? "Administrator" : `${userBranch ?? ""} · Sem ${userSemester ?? ""}`}
                   </p>
                 </div>
-                <div className="h-px bg-border mx-3" />
+                <div className="divider mx-3" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] text-text-secondary hover:text-red-400 hover:bg-bg-elevated transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-text-secondary hover:text-status-error hover:bg-bg-elevated transition-colors"
                 >
-                  <LogOut size={12} />
+                  <LogOut size={13} />
                   Sign out
                 </button>
               </div>
