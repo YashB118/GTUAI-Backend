@@ -9,8 +9,9 @@ from slowapi import _rate_limit_exceeded_handler
 from config import settings
 from middleware.limiter import limiter
 from routers import auth, papers, materials
-from routers import subjects, predictions, questions, answers, admin, chat, testimonials, oracle
-from routers import coins, challenges, coupons, admin_coins, diagrams, community
+from routers import subjects, predictions, questions, answers, admin, chat, testimonials
+# from routers import oracle  # Brahmastra disabled — to be rebuilt as standalone feature
+from routers import coins, challenges, coupons, admin_coins, diagrams, community, news
 from routers.coins import streaks_router
 
 logging.basicConfig(
@@ -69,7 +70,7 @@ app.include_router(answers.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(testimonials.router)
-app.include_router(oracle.router)
+# app.include_router(oracle.router)  # Brahmastra disabled — to be rebuilt as standalone feature
 app.include_router(coins.router)
 app.include_router(streaks_router)
 app.include_router(challenges.router)
@@ -77,6 +78,7 @@ app.include_router(coupons.router)
 app.include_router(admin_coins.router)
 app.include_router(diagrams.router)
 app.include_router(community.router)
+app.include_router(news.router)
 
 
 @app.on_event("startup")

@@ -1,43 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Sparkles, BookOpen, FileQuestion,
-  Upload, MessageSquare, Swords, X, Users,
+  Upload, MessageSquare, X, Users, ChevronRight, ChevronLeft,
+  // Swords,          // Brahmastra disabled — to be rebuilt
   // Trophy, Wallet,  // leaderboard/coins — disabled
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard",     icon: LayoutDashboard, label: "Home",          special: false },
-  { href: "/brahmastra",    icon: Swords,          label: "Brahmastra",    special: true  },
-  { href: "/predict",       icon: Sparkles,        label: "Andaza Laga",   special: false },
-  { href: "/chat",          icon: MessageSquare,   label: "Pooch Lo",      special: false },
-  { href: "/materials",     icon: BookOpen,        label: "Notes & Books", special: false },
-  { href: "/question-bank", icon: FileQuestion,    label: "PYQ Bank",      special: false },
-  { href: "/my-uploads",    icon: Upload,          label: "Meri Files",    special: false },
-  { href: "/community",    icon: Users,           label: "Community",     special: false },
-  // { href: "/leaderboard",  icon: Trophy,          label: "Leaderboard",   special: false },  // leaderboard disabled
-  // { href: "/coins",        icon: Wallet,          label: "My Coins",      special: false },  // coins disabled
+  { href: "/dashboard",     icon: LayoutDashboard, label: "Home"          },
+  // { href: "/brahmastra", icon: Swords,          label: "Brahmastra"    },  // Brahmastra disabled — to be rebuilt
+  { href: "/predict",       icon: Sparkles,        label: "Andaza Laga"   },
+  { href: "/chat",          icon: MessageSquare,   label: "Pooch Lo"      },
+  { href: "/materials",     icon: BookOpen,        label: "Notes & Books" },
+  { href: "/question-bank", icon: FileQuestion,    label: "PYQ Bank"      },
+  { href: "/my-uploads",    icon: Upload,          label: "Meri Files"    },
+  { href: "/community",     icon: Users,           label: "Community"     },
+  // { href: "/leaderboard",  icon: Trophy,         label: "Leaderboard"   },  // leaderboard disabled
+  // { href: "/coins",        icon: Wallet,         label: "My Coins"      },  // coins disabled
 ];
 
 const COLLAPSED = 60;
-const EXPANDED  = 230;
+const EXPANDED  = 224;
 
 const sidebarSpring = {
   type: "spring" as const,
-  stiffness: 400,
-  damping: 35,
-  mass: 0.8,
+  stiffness: 380,
+  damping: 32,
+  mass: 0.7,
 };
 
 const labelVariants = {
-  hidden: { opacity: 0, x: -6 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.13, delay: 0.06 } },
-  exit:    { opacity: 0, x: -6, transition: { duration: 0.08 } },
+  hidden:  { opacity: 0, x: -8 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.14, delay: 0.05 } },
+  exit:    { opacity: 0, x: -8, transition: { duration: 0.08 } },
 };
 
 interface StudentSidebarProps {
@@ -46,8 +47,24 @@ interface StudentSidebarProps {
 }
 
 export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
-  const pathname  = usePathname();
-  const [hovered, setHovered] = useState(false);
+  const pathname = usePathname();
+
+  // Desktop collapsed state — persisted in localStorage (default: expanded)
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gtu_sidebar_collapsed");
+    // Default expanded unless user explicitly collapsed before
+    setCollapsed(saved === "true");
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed(v => {
+      const next = !v;
+      localStorage.setItem("gtu_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   return (
     <>
@@ -73,7 +90,7 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
         </div>
         <div className="h-px bg-border/50 mx-4" />
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(({ href, icon: Icon, label, special }) => {
+          {navItems.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
@@ -82,44 +99,35 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                 onClick={onClose}
                 className={cn(
                   "flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-colors",
-                  special
-                    ? active
-                      ? "bg-blue-500/15 text-blue-300 border border-blue-500/30"
-                      : "text-blue-400/90 border border-blue-500/15 bg-blue-500/5"
-                    : active
-                      ? "bg-accent/10 text-accent"
-                      : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                  active
+                    ? "bg-accent/10 text-accent"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
                 )}
               >
-                <Icon size={16} className={cn(
-                  "shrink-0",
-                  special ? (active ? "text-blue-300" : "text-blue-400") : active ? "text-accent" : "text-text-muted"
-                )} />
+                <Icon size={16} className={cn("shrink-0", active ? "text-accent" : "text-text-muted")} />
                 {label}
-                {special && <span className="ml-auto text-xs text-blue-500/60">⚔️</span>}
               </Link>
             );
           })}
         </nav>
         <div className="px-5 py-3.5 border-t border-border/50">
-          <p className="text-xs text-blue-400/50 italic">Sirf wahi jo aayega.</p>
+          <p className="text-xs text-text-muted/50 italic">GTU ExamAI</p>
         </div>
       </motion.aside>
 
-      {/* ── Desktop: Framer Motion hover-expand rail ── */}
+      {/* ── Desktop: click-toggle rail ── */}
       <motion.aside
         className="hidden lg:flex flex-col h-screen border-r border-border glass sticky top-0 shrink-0 z-20 overflow-hidden"
-        animate={{ width: hovered ? EXPANDED : COLLAPSED }}
+        animate={{ width: collapsed ? COLLAPSED : EXPANDED }}
         transition={sidebarSpring}
-        onHoverStart={() => setHovered(true)}
-        onHoverEnd={() => setHovered(false)}
         style={{ willChange: "width" }}
       >
+        {/* Topbar-height spacer */}
         <div className="h-14 border-b border-border/50 shrink-0" />
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col py-3 gap-1 px-2 overflow-y-auto overflow-x-hidden">
-          {navItems.map(({ href, icon: Icon, label, special }) => {
+        <nav className="flex-1 flex flex-col py-3 gap-0.5 px-2 overflow-y-auto overflow-x-hidden">
+          {navItems.map(({ href, icon: Icon, label }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
@@ -127,23 +135,19 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                 href={href}
                 className={cn(
                   "relative flex items-center h-11 rounded-xl px-2.5 shrink-0 transition-colors duration-100",
-                  special
-                    ? active
-                      ? "bg-blue-500/20 text-blue-300"
-                      : "text-blue-400/70 hover:bg-blue-500/10 hover:text-blue-400"
-                    : active
-                      ? "bg-accent/15 text-accent"
-                      : "text-text-muted hover:text-text-primary hover:bg-bg-elevated"
+                  active
+                    ? "bg-accent/15 text-accent"
+                    : "text-text-muted hover:text-text-primary hover:bg-bg-elevated"
                 )}
               >
                 {/* Icon — always visible */}
                 <span className="flex items-center justify-center w-6 h-6 shrink-0">
-                  <Icon size={20} />
+                  <Icon size={19} />
                 </span>
 
                 {/* Label — animated in/out */}
                 <AnimatePresence>
-                  {hovered && (
+                  {!collapsed && (
                     <motion.span
                       key={`label-${href}`}
                       variants={labelVariants}
@@ -157,46 +161,47 @@ export function StudentSidebar({ open, onClose }: StudentSidebarProps) {
                   )}
                 </AnimatePresence>
 
-                {/* Brahmastra ⚔️ badge */}
-                {special && hovered && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="ml-auto text-xs shrink-0 whitespace-nowrap text-blue-500/50"
-                  >
-                    ⚔️
-                  </motion.span>
-                )}
-
-                {/* Active bar */}
+                {/* Active indicator bar */}
                 {active && (
-                  <span className={cn(
-                    "absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-sm",
-                    special ? "bg-blue-400" : "bg-accent"
-                  )} />
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-l-sm bg-accent" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-3.5 border-t border-border/50 flex items-center gap-3 shrink-0">
-          <span className="text-xs text-text-muted shrink-0">v6</span>
-          <AnimatePresence>
-            {hovered && (
-              <motion.span
-                key="tagline"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { delay: 0.1 } }}
-                exit={{ opacity: 0 }}
-                className="text-xs text-blue-400/40 italic whitespace-nowrap"
-              >
-                Sirf wahi jo aayega.
-              </motion.span>
+        {/* Toggle button */}
+        <div className="px-2 py-3 border-t border-border/50 shrink-0">
+          <button
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "flex items-center h-9 rounded-xl transition-colors duration-100 w-full",
+              "text-text-muted hover:text-text-primary hover:bg-bg-elevated",
+              collapsed ? "justify-center px-0" : "px-2.5 gap-3"
             )}
-          </AnimatePresence>
+          >
+            <span className="flex items-center justify-center w-6 h-6 shrink-0">
+              {collapsed
+                ? <ChevronRight size={16} />
+                : <ChevronLeft  size={16} />
+              }
+            </span>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  key="toggle-label"
+                  variants={labelVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="text-xs whitespace-nowrap overflow-hidden"
+                >
+                  Collapse
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
         </div>
       </motion.aside>
     </>

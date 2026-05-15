@@ -13,9 +13,9 @@ GTU ExamAI is an AI-powered exam preparation platform built specifically for stu
 
 | Feature | Student-Facing Name | Description |
 |---|---|---|
-| Exam Predictions | Andaza Laga | Bayesian ML-scored question predictions per subject |
+| Exam Predictions | Andaza Laga | Bayesian ML-scored question predictions per subject, with auto-generated diagrams |
 | AI Chat Tutor | Pooch Lo | RAG-backed conversational AI tutor per subject |
-| Exam Brief | Brahmastra | Aggregated prediction brief with shareable public link |
+| Exam Brief | Brahmastra | **Disabled** — code commented out, to be rebuilt as a standalone redesigned feature |
 | Study Materials | Materials | Upload and browse approved notes, textbooks, handwritten material |
 | Question Bank | Question Bank | Browse all extracted questions from past GTU papers |
 | Model Answers | Answers | LLM-generated answers cached against question patterns |
@@ -84,7 +84,8 @@ The system follows a three-tier architecture:
 1. Admin or student uploads a past GTU question paper (PDF).
 2. Background worker extracts questions via PDF parsing, generates embeddings, clusters similar questions into `question_patterns`, and scores each pattern using five Bayesian signals.
 3. Student requests predictions for a subject. The backend returns scored patterns from the DB (or triggers fresh generation), plus web-scraped supplementary analysis.
-4. Brahmastra assembles these predictions into a tiered brief (Certain / Likely / Watch), generates an LLM professor-voice summary, and caches the result for 24 hours.
+4. For each predicted question, the frontend calls `/diagrams/detect-type` and, if a diagram is warranted, `/diagrams/generate` — the result renders inline in the answer modal.
+5. ~~Brahmastra~~ — **disabled**. The oracle/brief assembly layer is commented out and will be redesigned as a standalone feature.
 
 ### AI Chat Tutor (Pooch Lo)
 1. Student sends a message in a chat session for a specific subject.
@@ -102,8 +103,8 @@ The system follows a three-tier architecture:
 
 - **Andaza Laga:** The exam predictions feature (Hindi: "make a guess")
 - **Pooch Lo:** The AI chat tutor (Hindi: "ask it")
-- **Brahmastra:** The premium exam brief feature (named after the mythological ultimate weapon)
-- **Oracle:** Backend name for the Brahmastra engine
+- **Brahmastra:** The exam brief feature — currently **disabled**. Code is commented out for future redesign.
+- **Oracle:** Backend internal name for the Brahmastra engine (`/oracle` routes, `oracle_engine.py`, `oracle_briefs` table) — router commented out in `main.py`
 - **question_patterns:** Normalized clusters of similar questions across years, the central unit of prediction logic
 - **prediction_score:** 0–100 Bayesian score assigned to each pattern
 - **Tiers:** HIGH / MEDIUM / LOW (predictions), Certain / Likely / Watch (Brahmastra brief)

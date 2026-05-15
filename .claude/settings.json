@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:gsms.gtu.ac.in)",
+      "WebFetch(domain:set.gtu.ac.in)",
+      "WebFetch(domain:gtu.org.in)",
+      "WebFetch(domain:teb.gujarat.gov.in)",
+      "WebFetch(domain:dte.gujarat.gov.in)",
+      "WebFetch(domain:www.freejobalert.com)",
+      "WebFetch(domain:s3-ap-southeast-1.amazonaws.com)",
+      "WebFetch(domain:www.selectyouruniversity.com)",
+      "WebFetch(domain:gujarat.result91.com)",
+      "WebFetch(domain:result91.com)",
+      "WebFetch(domain:ws-gtur.gtu.ac.in)",
+      "WebFetch(domain:www.npmjs.com)"
+    ]
+  }
+}

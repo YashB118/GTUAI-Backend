@@ -33,12 +33,12 @@ async function fetchWithAuth(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
-// Public — no auth needed (Brahmastra share links)
-export async function getBrahmastraByShareId(shareId: string) {
-  const res = await fetch(`${BASE_URL}/oracle/share/${shareId}`);
-  if (!res.ok) throw new Error("Brief not found or expired");
-  return res.json();
-}
+// Brahmastra share links — disabled until Brahmastra is rebuilt
+// export async function getBrahmastraByShareId(shareId: string) {
+//   const res = await fetch(`${BASE_URL}/oracle/share/${shareId}`);
+//   if (!res.ok) throw new Error("Brief not found or expired");
+//   return res.json();
+// }
 
 export const api = {
   get: (path: string) => fetchWithAuth(path),
@@ -50,11 +50,11 @@ export const api = {
     fetchWithAuth(path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: (path: string) => fetchWithAuth(path, { method: "DELETE" }),
 
-  // Brahmastra — auth required
-  getBrahmastraBrief: (subjectId: string, forceRefresh = false) =>
-    fetchWithAuth(`/oracle/${subjectId}${forceRefresh ? "?force_refresh=true" : ""}`),
-  postBrahmastraFeedback: (subjectId: string, body: { question_text: string; appeared: boolean }) =>
-    fetchWithAuth(`/oracle/${subjectId}/feedback`, { method: "POST", body: JSON.stringify(body) }),
+  // Brahmastra — disabled until rebuilt
+  // getBrahmastraBrief: (subjectId: string, forceRefresh = false) =>
+  //   fetchWithAuth(`/oracle/${subjectId}${forceRefresh ? "?force_refresh=true" : ""}`),
+  // postBrahmastraFeedback: (subjectId: string, body: { question_text: string; appeared: boolean }) =>
+  //   fetchWithAuth(`/oracle/${subjectId}/feedback`, { method: "POST", body: JSON.stringify(body) }),
 
   upload: async (path: string, formData: FormData) => {
     const token = await getToken();

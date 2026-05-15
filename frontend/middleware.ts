@@ -27,7 +27,8 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
-  const isPublicRoute = isAuthRoute || pathname === "/" || pathname.startsWith("/brahmastra/share");
+  // pathname.startsWith("/brahmastra/share") — Brahmastra disabled, public share routes removed
+  const isPublicRoute = isAuthRoute || pathname === "/";
   const isAdminRoute = pathname.startsWith("/admin");
 
   if (!session && !isPublicRoute) {

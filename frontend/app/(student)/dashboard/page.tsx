@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import {
-  Swords, ArrowRight, Upload, MessageSquare,
+  // Swords,         // Brahmastra disabled — to be rebuilt
+  ArrowRight, Upload, MessageSquare,
   BookOpen, FileQuestion, Sparkles, Star, PenLine, CheckCircle,
+  Newspaper, ExternalLink, RefreshCw,
   // Flame, Trophy,  // coins/streak disabled
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -112,6 +114,23 @@ export default function StudentDashboard() {
   // const [streak, setStreak]   = useState<StreakData | null>(null);  // coins disabled
   // const [coins, setCoins]     = useState<CoinData | null>(null);    // coins disabled
 
+  // Last-visited subject (populated by predict page via localStorage)
+  const [lastSubject, setLastSubject] = useState<{ id: string; name: string } | null>(null);
+
+  // GTU News
+  interface NewsItem {
+    id: string;
+    title: string;
+    date: string;
+    source: string;
+    url: string | null;
+    preview: string | null;
+    tag: string;
+  }
+  const [news,        setNews]        = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError,   setNewsError]   = useState(false);
+
   // Review state
   const [showReview,      setShowReview]      = useState(false);
   const [reviewStars,     setReviewStars]     = useState(5);
@@ -133,6 +152,17 @@ export default function StudentDashboard() {
         .eq("id", user.id)
         .maybeSingle();
       if (data) setProfile(data);
+
+      // Restore last-used subject from predict page
+      const lsId   = localStorage.getItem("gtu_last_subject_id");
+      const lsName = localStorage.getItem("gtu_last_subject_name");
+      if (lsId && lsName) setLastSubject({ id: lsId, name: lsName });
+
+      // Fetch GTU news
+      api.get("/news/gtu?limit=12")
+        .then((d: { items: NewsItem[] }) => setNews(d.items || []))
+        .catch(() => setNewsError(true))
+        .finally(() => setNewsLoading(false));
 
       /* coins disabled — login reward + streak/coin fetch removed
       const [loginRes, streakRes, coinRes] = await Promise.allSettled([
@@ -179,6 +209,24 @@ export default function StudentDashboard() {
     } finally {
       setReviewSubmitting(false);
     }
+  };
+
+  const TAG_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+    timetable: { label: "Timetable", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+    result:    { label: "Result",    color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20"    },
+    form:      { label: "Form",      color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20"  },
+    circular:  { label: "Circular",  color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20"},
+    notice:    { label: "Notice",    color: "text-text-muted",  bg: "bg-bg-elevated border-border"         },
+    holiday:   { label: "Holiday",   color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20"   },
+  };
+
+  const refreshNews = () => {
+    setNewsLoading(true);
+    setNewsError(false);
+    api.get("/news/gtu?limit=12&force=true")
+      .then((d: { items: typeof news }) => setNews(d.items || []))
+      .catch(() => setNewsError(true))
+      .finally(() => setNewsLoading(false));
   };
 
   return (
@@ -251,13 +299,10 @@ export default function StudentDashboard() {
       )}
       */}
 
-      {/* ── Main grid: left content + right review panel ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+      {/* ── Main content — single column ── */}
+      <div className="space-y-6">
 
-        {/* ── LEFT column ── */}
-        <div className="space-y-6">
-
-          {/* Brahmastra hero card */}
+          {/* Brahmastra hero card — disabled until Brahmastra is rebuilt
           <motion.div {...fadeUp(0.1)}>
           <Link href="/brahmastra" className="block">
             <div
@@ -285,8 +330,6 @@ export default function StudentDashboard() {
                     Activate <ArrowRight size={14} />
                   </div>
                 </div>
-
-                {/* Preview rows — horizontal on wide screens */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { fire: "🔥🔥🔥", label: "Almost Certain", pct: "90%+", color: "text-blue-400", bg: "bg-blue-500/8 border-blue-500/20" },
@@ -306,15 +349,37 @@ export default function StudentDashboard() {
             </div>
           </Link>
           </motion.div>
+          */}
 
           {/* Daily challenge — coins disabled
           <DailyChallenge onCoinsEarned={(n) => setCoins(prev => prev ? { ...prev, balance: prev.balance + n } : prev)} />
           */}
 
+          {/* Continue where you left off */}
+          {lastSubject && (
+            <motion.div {...fadeUp(0.12)}>
+              <Link
+                href={`/predict?subject=${lastSubject.id}`}
+                className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border border-accent/25 bg-accent/5 hover:border-accent/45 hover:bg-accent/8 transition-all duration-200 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
+                    <Sparkles size={17} className="text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-muted font-medium">Continue where you left off</p>
+                    <p className="text-sm font-semibold text-text-primary mt-0.5">{lastSubject.name}</p>
+                  </div>
+                </div>
+                <ArrowRight size={15} className="text-text-muted group-hover:text-accent transition-colors shrink-0" />
+              </Link>
+            </motion.div>
+          )}
+
           {/* Feature cards */}
           <motion.div {...fadeUp(0.17)}>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
-              Baki features
+              Features
             </p>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {FEATURE_CARDS.map(({ href, icon: Icon, label, desc, color, border, bg }) => (
@@ -341,11 +406,124 @@ export default function StudentDashboard() {
               ))}
             </div>
           </motion.div>
-        </div>
 
-        {/* ── RIGHT column: review card ── */}
-        <motion.div {...fadeUp(0.24)} className="lg:sticky lg:top-4">
-      <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
+          {/* ── GTU Latest News ── */}
+          <motion.div {...fadeUp(0.21)}>
+            <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/15 flex items-center justify-center shrink-0">
+                    <Newspaper size={15} className="text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">GTU Latest Updates</p>
+                    <p className="text-xs text-text-muted">Circulars, timetables, results</p>
+                  </div>
+                </div>
+                <button
+                  onClick={refreshNews}
+                  disabled={newsLoading}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-40"
+                  title="Refresh news"
+                >
+                  <RefreshCw size={13} className={newsLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
+
+              {/* News list */}
+              <div className="divide-y divide-border/40">
+                {newsLoading && (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="px-5 py-3.5 flex items-start gap-3">
+                      <div className="w-16 h-4 rounded bg-bg-elevated animate-pulse shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3.5 w-3/4 rounded bg-bg-elevated animate-pulse" />
+                        <div className="h-3 w-1/3 rounded bg-bg-elevated animate-pulse" />
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {newsError && !newsLoading && (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm text-text-muted">Could not load news.</p>
+                    <button onClick={refreshNews} className="mt-2 text-xs text-accent hover:underline">
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {!newsLoading && !newsError && news.map((item) => {
+                  const tag = TAG_CONFIG[item.tag] || TAG_CONFIG.notice;
+                  const dateStr = item.date
+                    ? new Date(item.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                    : "";
+                  return (
+                    <div key={item.id} className="px-5 py-3.5 flex items-start gap-3 hover:bg-bg-elevated/50 transition-colors group">
+                      {/* Tag badge */}
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border whitespace-nowrap shrink-0 mt-0.5 ${tag.bg} ${tag.color}`}>
+                        {tag.label}
+                      </span>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-text-primary leading-snug line-clamp-2">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {dateStr && (
+                            <span className="text-[11px] text-text-muted">{dateStr}</span>
+                          )}
+                          <span className="text-[11px] text-text-muted/50">·</span>
+                          <span className="text-[11px] text-text-muted/60">{item.source}</span>
+                        </div>
+                      </div>
+
+                      {/* Link */}
+                      {item.url && (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="shrink-0 p-1.5 rounded-lg text-text-muted/40 group-hover:text-accent transition-colors"
+                          title="Open"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {!newsLoading && !newsError && news.length === 0 && (
+                  <div className="px-5 py-8 text-center">
+                    <p className="text-sm text-text-muted">No news available right now.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              {!newsLoading && news.length > 0 && (
+                <div className="px-5 py-3 border-t border-border/40 flex items-center justify-between">
+                  <p className="text-xs text-text-muted/50">Updates from GTU official site + Telegram</p>
+                  <a
+                    href="https://t.me/gtu_announcement"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-accent hover:underline flex items-center gap-1"
+                  >
+                    Follow channel <ExternalLink size={10} />
+                  </a>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Review card — bottom of page */}
+          <motion.div {...fadeUp(0.24)}>
+          <div className="rounded-2xl border border-border bg-bg-card overflow-hidden">
         {reviewSent ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <CheckCircle size={32} className="text-emerald-400" />
@@ -441,9 +619,9 @@ export default function StudentDashboard() {
           </>
         )}
       </div>
-        </motion.div>
+          </motion.div>
 
-      </div>{/* end main grid */}
+      </div>{/* end main content */}
     </div>
   );
 }

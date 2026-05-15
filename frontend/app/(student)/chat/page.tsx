@@ -40,11 +40,13 @@ export default function ChatPage() {
 
   const { streaming, streamText, suggestions, error, sendMessage } = useChatStream();
 
-  // Load subjects
+  // Load subjects — restore last-used subject from localStorage
   useEffect(() => {
     api.get("/subjects/").then((data: Subject[]) => {
       setSubjects(data);
-      if (data.length) setSelectedSubject(data[0]);
+      const lastId = localStorage.getItem("gtu_last_subject_id");
+      const match  = lastId && data.find((s: Subject) => s.id === lastId);
+      setSelectedSubject(match || data[0] || null);
     }).catch(() => {});
   }, []);
 
@@ -182,7 +184,12 @@ export default function ChatPage() {
                 {subjects.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => { setSelectedSubject(s); setShowSubjectMenu(false); }}
+                    onClick={() => {
+                setSelectedSubject(s);
+                setShowSubjectMenu(false);
+                localStorage.setItem("gtu_last_subject_id", s.id);
+                localStorage.setItem("gtu_last_subject_name", s.name);
+              }}
                     className="block w-full text-left px-3 py-2 text-xs hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-colors"
                   >
                     <span className="font-medium">{s.name}</span>
