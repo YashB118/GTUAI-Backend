@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an improvement or new feature.
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What pain point does this solve? Who feels it?
+      placeholder: Students can't share a single predicted question with friends on WhatsApp — only the whole brief.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you solve it? Mockups, API shape, UX flow — anything.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you ruled out and why.
+    validations:
+      required: false
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Frontend only
+        - Backend only
+        - Both
+        - Docs
+        - Unsure
+    validations:
+      required: true

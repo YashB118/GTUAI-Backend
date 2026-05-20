@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/YashB118/GTUAI-Backend/security/advisories/new
+    about: Report a security vulnerability privately.
+  - name: Daily growth plan
+    url: https://github.com/YashB118/GTUAI-Backend/blob/main/DAILY.md
+    about: See the 30-day backlog before opening a feature request.
