@@ -7,6 +7,7 @@ import { ArrowRight, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { AndazeSeLogo } from "@/components/ui/AndazeSeLogo";
+import { captureEvent } from "@/lib/posthog";
 
 const BRANCHES = [
   { value: "CE",    label: "Computer Engineering (CE)" },
@@ -71,6 +72,12 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Registration failed");
+      captureEvent("user_signed_up", {
+        email: form.email,
+        branch: form.branch,
+        semester: parseInt(form.semester),
+        college: form.college || null,
+      });
       router.push("/login?registered=1");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");

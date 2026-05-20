@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import "./globals.css";
 
 // Inter — clean, modern sans-serif (matches reference image)
@@ -47,7 +48,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-bg-page text-text-primary`}>
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
         <Toaster
           position="bottom-right"
           theme="system"

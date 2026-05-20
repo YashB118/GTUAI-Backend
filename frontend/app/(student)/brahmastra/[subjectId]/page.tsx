@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 // import { notifyCoinsEarned } from "@/lib/coinEvents";  // coins disabled
 import DiagramBlock from "@/components/shared/DiagramBlock";
+import { captureEvent } from "@/lib/posthog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -128,6 +129,15 @@ function AnswerSheet({
         readyToWriteAnswer:     data.ready_to_write_answer,
       });
       setLoading(false);
+      captureEvent("answer_generated", {
+        source: "brahmastra",
+        subject_id: subjectId,
+        marks: question.marks || 7,
+        tier: question.tier,
+        confidence: question.confidence,
+        pattern_id: question.pattern_id,
+        is_fallback: Boolean(data.is_fallback),
+      });
 
       // Always generate diagram — use detected type if available, else "block"
       const diagramType =

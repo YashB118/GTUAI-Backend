@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { toast } from "sonner";
+import { captureEvent } from "@/lib/posthog";
 
 interface Subject {
   id: string;
@@ -362,6 +363,12 @@ function PredictInner() {
       setPredictions(data.predictions || []);
       setPaperCount(data.paper_count || 0);
       setSources(data.sources || []);
+      captureEvent("prediction_viewed", {
+        subject_id: subjectId,
+        prediction_count: (data.predictions || []).length,
+        paper_count: data.paper_count || 0,
+        force_refresh: forceRefresh,
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("401") || msg.includes("403")) {
@@ -490,6 +497,14 @@ function PredictInner() {
       };
       if (p.pattern_id && !data.is_fallback) answersCache.current[cacheKey] = payload;
       setModalAnswer(payload);
+      captureEvent("answer_generated", {
+        source: "predict",
+        subject_id: selectedSubjectIdRef.current,
+        marks: p.expected_marks ?? 7,
+        confidence: p.confidence,
+        pattern_id: p.pattern_id,
+        is_fallback: Boolean(data.is_fallback),
+      });
     } catch {
       if (activeLoadRef.current !== loadId) return;
       setModalAnswer({ text: "Failed to generate answer. Please try again.", sources: [] });
